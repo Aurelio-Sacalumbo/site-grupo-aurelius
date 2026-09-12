@@ -12,8 +12,7 @@ if ($_SERVER['HTTP_HOST'] === 'localhost' || $_SERVER['REMOTE_ADDR'] === '127.0.
     $db_pass = ""; 
     $db_name = "aurelius_salao";
 } else {
-    // Configuração de Produção com o seu Host completo do Aiven
-    $db_host = getenv('DB_HOST') ?: "mysql-1a34c184-aureliosacalumbo42-bf60.a.aivencloud.com";
+     $db_host = getenv('DB_HOST') ?: "mysql-1a34c184-aureliosacalumbo42-bf60.a.aivencloud.com";
     $db_port = getenv('DB_PORT') ?: 22002;
     $db_user = getenv('DB_USER') ?: "avnadmin";
     $db_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm";
