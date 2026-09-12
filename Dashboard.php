@@ -1,105 +1,44 @@
 <?php
 // =========================================================================
-// 🔮 ECOSSISTEMA MESTRE - MOTOR DE AUTENTICAÇÃO E REDIRECIONAMENTO DE ABAS
+// 🔮 ECOSSISTEMA MESTRE - MOTOR DE CAPTURA SAAS (TABELA: USUARIO)
 // =========================================================================
+
+// 1. Inicializa a sessão e inclui a conexão segura com SSL (Aiven/Render)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-date_default_timezone_set('Africa/Luanda');
+include_once __DIR__ . '/Conexao.php';
 
-// IMPORTAÇÃO DA CONEXÃO CENTRAL MESTRE
-require_once __DIR__ . "/config/Banco.php";
-$mysqli = $conexao_link ?? $conexao_aurelius ?? $mysqli ?? null;
+// 2. Captura dinamicamente o ID (código) enviado pelo clique do botão ENTRAR
+$id_atual = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-// 🟢 CORREÇÃO CRÍTICA: Ponte com Porta Separada para Evitar o Erro 2002 (Connection Refused)
-if (!$mysqli || !($mysqli instanceof mysqli) || @mysqli_ping($mysqli) === false) {
-    $db_host = getenv('DB_HOST') ?: "altaria.proxy.rlwy.net";
-    $db_port = getenv('DB_PORT') ?: "52030";
-    $db_user = getenv('DB_USER') ?: "root";
-    $db_pass = getenv('DB_PASSWORD') ?: "tPzDwXGkyczyyYdcyvLmHLSMmfZmnMIZ";
-    $db_name = getenv('DB_NAME') ?: "railway";
-
-    $mysqli = mysqli_init();
-    if (!@mysqli_real_connect($mysqli, $db_host, $db_user, $db_pass, $db_name, (int)$db_port)) {
-        // Fallback secundário para o XAMPP local se estiver a rodar no computador offline
-        $mysqli = @mysqli_connect("127.0.0.1", "root", "", "aurelius_salao");
-    }
+if ($id_atual === 0) {
+    die("🚨 Erro de Acesso: Nenhuma barbearia foi selecionada no painel central.");
 }
 
-if ($mysqli && !mysqli_connect_errno()) {
-    $mysqli->set_charset("utf8mb4");
+// 3. Consulta as informações exclusivas da barbearia parceira na tabela 'usuario'
+$busca_loja = mysqli_query($mysqli, "SELECT * FROM usuario WHERE codigo = $id_atual AND nivel = 'parceiro_hospedado'");
+$dados_loja = mysqli_fetch_assoc($busca_loja);
+
+if (!$dados_loja) {
+    die("🚨 Erro do Ecossistema: Os dados desta barbearia parceira não foram localizados no banco.");
 }
 
-// Captura e memoriza a intenção de rota do cliente vinda do botão ENTRAR
-if (isset($_GET['acceder_a']) && $mysqli) {
-    $_SESSION['barbearia_alvo_slug'] = mysqli_real_escape_string($mysqli, trim($_GET['acceder_a']));
-}
+// 4. Variáveis mapeadas a partir das colunas reais do teu phpMyAdmin
+$nome_exibicao = $dados_loja['nome'] ?? 'Sem Nome'; // Ex: Barbearia Branca, LOOK NOVO
+$logo_exibicao = !empty($dados_loja['logo_empresa']) ? 'upload/' . $dados_loja['logo_empresa'] : 'upload/default.png';
+$preco_base    = $dados_loja['preco'] ?? 0.00;
+$localizacao   = $dados_loja['endereco'] ?? 'Não informada'; // Ex: Huambo, Namibe
 
-$erro = [];
+// 📊 5. METRICAS E FATURAMENTOS DA BARBEARIA ATUAL
+// Filtra as tabelas agregadas usando a coluna indexadora correta 'id_loja'
+$query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_loja = $id_atual");
+$dados_vendas = mysqli_fetch_assoc($query_vendas);
+$faturamento_total = $dados_vendas['total'] ?? 0.00;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mysqli) {
-    $email = isset($_POST['email']) ? mysqli_real_escape_string($mysqli, trim($_POST['email'])) : '';
-    $senha_raw = isset($_POST['senha']) ? trim($_POST['senha']) : '';
-
-    if (empty($email) || empty($senha_raw)) {
-        $erro[] = "Por favor, preencha o seu e-mail e a palavra-passe.";
-    } else {
-        $senha_cripto = md5($senha_raw);
-
-        // Busca o cliente de forma global no ecossistema
-        $query_cliente = mysqli_query($mysqli, "SELECT * FROM `usuario` WHERE `email` = '$email' AND `senha` = '$senha_cripto' LIMIT 1");
-
-        if ($query_cliente && mysqli_num_rows($query_cliente) > 0) {
-            $dados_cliente = mysqli_fetch_assoc($query_cliente); 
-        
-            // Grava os trincos de sessão do Cliente Global
-            $_SESSION['cliente_logado']  = true;
-            $_SESSION['cliente_id']      = $dados_cliente['codigo']; // ID ÚNICO DO CLIENTE
-            $_SESSION['cliente_nome']    = $dados_cliente['nome'];
-            $_SESSION['cliente_email']   = $dados_cliente['email'];
-            $_SESSION['tipo_conta']      = $dados_cliente['nivel']; // Guarda se é 'cliente' ou 'parceiro_hospedado'
-
-            // Limpa as bolhas de alertas antigos na navegação
-            $_SESSION['bloqueio_bolha_barbearia'] = true;
-
-            // =========================================================================
-            // 🔒 TRAVA DE SEGURANÇA E DIRECIONAMENTO DE ABAS
-            // =========================================================================
-            if ($dados_cliente['nivel'] === 'cliente') {
-                
-                if (!empty($_SESSION['barbearia_alvo_slug'])) {
-                    $barbearia_escolhida = $_SESSION['barbearia_alvo_slug'];
-                } else {
-                    $barbearia_escolhida = !empty($_SESSION['barbearia_selecionada']) ? trim($_SESSION['barbearia_selecionada']) : 'Principal';
-                }
-                
-                $ficheiro_destino = $barbearia_escolhida . ".php";
-
-                if (file_exists(__DIR__ . "/" . $ficheiro_destino)) {
-                    header("Location: " . $ficheiro_destino);
-                    exit();
-                } else {
-                    header("Location: Principal.php?erro_pagina=1&nome_tentado=" . urlencode($barbearia_escolhida));
-                    exit();
-                }
-                
-            } else {
-                // Rota padrão para Gestores / Donos de Barbearias (Dashboard.php)
-                $destino_admin = !empty($dados_cliente['slug']) ? trim($dados_cliente['slug']) . ".php" : "Dashboard.php";
-                
-                if (file_exists(__DIR__ . "/" . $destino_admin)) {
-                    header("Location: " . $destino_admin);
-                } else {
-                    header("Location: Dashboard.php"); // Fallback seguro para o painel mestre corrigido
-                }
-                exit();
-            }
-
-        } else {
-            $erro[] = "Credenciais inválidas. Verifique o e-mail ou a palavra-passe.";
-        }
-    }
-}
+$query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_loja = $id_atual");
+$dados_func = mysqli_fetch_assoc($query_funcionarios);
+$total_funcionarios = $dados_func['total_func'] ?? 0;
 ?>
 
 
@@ -604,6 +543,23 @@ nav {
     }
 }
 </style>
+
+<div class="card-faturamento">
+    <h3>Faturamento Total</h3>
+    <p>Kz <?php echo number_format($faturamento_total, 2, ',', '.'); ?></p>
+</div>
+
+<div class="card-equipa">
+    <h3>Profissionais Ativos</h3>
+    <p><?php echo (int)$total_funcionarios; ?> Colaboradores</p>
+</div>
+
+
+
+
+
+
+
 
 
 

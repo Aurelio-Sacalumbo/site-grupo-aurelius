@@ -22,31 +22,20 @@ include_once __DIR__ . "/Conexao.php";
 $cupao_desconto = $_SESSION['cupao_ativo'] ?? "";
 $total_barbearias_real = 0;
 
-// Reaproveita a instância PDO criada pelo Banco.php / Conexao.php de forma segura
+// =========================================================================
+// 🟢 REAPROVEITAMENTO INTELIGENTE DA INFRAESTRUTURA CENTRAL ASSEGURADA
+// =========================================================================
 $conexao_link = $conexao_link ?? $conexao_aurelius ?? $conexao ?? $mysqli ?? null;
 
-// 🟢 2. CONFIGURAÇÃO DA PONTE MYSQLI DINÂMICA
 if (!$conexao_link || !($conexao_link instanceof mysqli)) {
-    $db_host = getenv('DB_HOST') ?: "127.0.0.1";
-    $db_port = getenv('DB_PORT') ?: "3306";
-    $db_user = getenv('DB_USER') ?: "root";
-    $db_pass = getenv('DB_PASSWORD') ?: "";
-    $db_name = getenv('DB_NAME') ?: "aurelius_salao";
-    
-    $conexao_link = @mysqli_connect($db_host, $db_user, $db_pass, $db_name, (int)$db_port);
-}
-
-if ($conexao_link && !mysqli_connect_errno()) {
-    mysqli_set_charset($conexao_link, "utf8mb4");
-    mysqli_query($conexao_link, "SET SESSION sql_mode=''");
-} else {
-    die("<div style='padding:20px; background:#0f172a; color:#ef4444; font-family:sans-serif; border:1px solid #ef4444; border-radius:12px; margin:20px;'>
-            <strong>Erro de Infraestrutura SaaS:</strong> A base de dados principal está temporariamente inacessível. Verifique o motor MySQL no XAMPP.
+    die("<div style='padding:20px; background:#0f172a; color:#ef4444; font-family:sans-serif;'>
+            <strong>Erro de Infraestrutura:</strong> O arquivo Conexao.php central não foi localizado na raiz do servidor.
          </div>");
 }
 
 $mysqli = $conexao_link;
 $conexao_aurelius = $conexao_link;
+
 
 // =========================================================================
 // 📅 3. PROCESSAMENTO DE MARCAÇÕES / RESERVAS VIA FORMULÁRIO (PWA)
@@ -1606,14 +1595,15 @@ if (!empty($arquivo_logo) && file_exists(__DIR__ . "/uploads/" . $arquivo_logo))
                                 </div>
                                 
                                <!-- Botão ENTRAR Vermelho Original -->
-                               <span style="color:yellow; font-size:10px;">Link no banco: <?php echo $row['link_destino']; ?></span>
+                              <!-- Botão ENTRAR Dinâmico e Compatível com Linux (Render) -->
+
+                              <span style="color:yellow; font-size:10px;">Link no banco: <?php echo $row['link_destino']; ?></span>
 
 
 
-<a href="<?php echo htmlspecialchars(ucfirst(trim($link_destino))); ?>" target="_blank" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
-<button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 6px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 8px rgba(211,47,47,0.2) !important; outline: none;">ENTRAR</button>
-</a>
-                                
+                              <a href="Dashboard.php?id=<?php echo htmlspecialchars($row['codigo'] ?? '0'); ?>" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
+                              <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 6px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 8px rgba(211,47,47,0.2) !important; outline: none;">ENTRAR</button>
+                          </a>
                                <!-- Seletor Azul de Informações do Balcão -->
                                <select style="width: 100% !important; background: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; padding: 4px; font-size: 11px; border-radius: 4px; outline: none; cursor: pointer; margin-top: 5px;">
                                    <option><?php echo $ano_cadastro; ?></option>
