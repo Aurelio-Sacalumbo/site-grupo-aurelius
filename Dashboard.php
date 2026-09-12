@@ -30,24 +30,38 @@ $logo_exibicao = !empty($dados_loja['logo_empresa']) ? 'upload/' . $dados_loja['
 $preco_base    = $dados_loja['preco'] ?? 0.00;
 $localizacao   = $dados_loja['endereco'] ?? 'Não informada'; // Ex: Huambo, Namibe
 
-// 📊 5. METRICAS E FATURAMENTOS DA BARBEARIA ATUAL (Alinhado com a tabela usuario)
-// Filtra o histórico de vendas usando a coluna indexadora correta 'codigo'
-$query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE codigo = $id_atual");
-if (!$query_vendas) {
-    // Caso a tabela historico_vendas utilize 'id_usuario' como ligação:
-    $query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_usuario = $id_atual");
-}
-$dados_vendas = mysqli_fetch_assoc($query_vendas);
-$faturamento_total = $dados_vendas['total'] ?? 0.00;
+// 📊 5. METRICAS E FATURAMENTOS DA BARBEARIA ATUAL
+$faturamento_total = 0.00;
+$total_funcionarios = 0;
 
-// Filtra os funcionários cadastrados que trabalham especificamente nesta barbearia
-$query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE codigo = $id_atual");
-if (!$query_funcionarios) {
-    // Caso a tabela funcionarios utilize 'id_usuario' como ligação:
-    $query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_usuario = $id_atual");
+// Teste 1: Tenta buscar faturamento usando 'id_usuario'
+$query_vendas = @mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_usuario = $id_atual");
+
+// Teste 2: Se falhar, tenta buscar usando 'usuario_id'
+if (!$query_vendas) {
+    $query_vendas = @mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE usuario_id = $id_atual");
 }
-$dados_func = mysqli_fetch_assoc($query_funcionarios);
-$total_funcionarios = $dados_func['total_func'] ?? 0;
+
+// Se alguma das duas consultas funcionar, captura o valor
+if ($query_vendas) {
+    $dados_vendas = mysqli_fetch_assoc($query_vendas);
+    $faturamento_total = $dados_vendas['total'] ?? 0.00;
+}
+
+
+// Teste 3: Tenta buscar funcionários usando 'id_usuario'
+$query_funcionarios = @mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_usuario = $id_atual");
+
+// Teste 4: Se falhar, tenta buscar usando 'usuario_id'
+if (!$query_funcionarios) {
+    $query_funcionarios = @mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE usuario_id = $id_atual");
+}
+
+// Se funcionar, captura o valor
+if ($query_funcionarios) {
+    $dados_func = mysqli_fetch_assoc($query_funcionarios);
+    $total_funcionarios = $dados_func['total_func'] ?? 0;
+}
 ?>
 
 
