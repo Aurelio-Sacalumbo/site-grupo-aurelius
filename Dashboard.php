@@ -34,33 +34,31 @@ $localizacao   = $dados_loja['endereco'] ?? 'Não informada'; // Ex: Huambo, Nam
 $faturamento_total = 0.00;
 $total_funcionarios = 0;
 
-// Teste 1: Tenta buscar faturamento usando 'id_usuario'
-$query_vendas = @mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_usuario = $id_atual");
+// 1. Array com todas as possíveis colunas de ligação do ecossistema
+$possiveis_colunas = ['id_usuario', 'usuario_id', 'id_loja', 'loja_id', 'codigo_loja'];
 
-// Teste 2: Se falhar, tenta buscar usando 'usuario_id'
-if (!$query_vendas) {
-    $query_vendas = @mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE usuario_id = $id_atual");
+// 2. Loop inteligente para encontrar a coluna correta de faturamento
+foreach ($possiveis_colunas as $coluna) {
+    $query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE $coluna = $id_atual");
+    if ($query_vendas && mysqli_num_rows($query_vendas) > 0) {
+        $dados_vendas = mysqli_fetch_assoc($query_vendas);
+        if ($dados_vendas['total'] !== null) {
+            $faturamento_total = $dados_vendas['total'];
+            break; // Encontrou a coluna certa, interrompe o loop
+        }
+    }
 }
 
-// Se alguma das duas consultas funcionar, captura o valor
-if ($query_vendas) {
-    $dados_vendas = mysqli_fetch_assoc($query_vendas);
-    $faturamento_total = $dados_vendas['total'] ?? 0.00;
-}
-
-
-// Teste 3: Tenta buscar funcionários usando 'id_usuario'
-$query_funcionarios = @mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_usuario = $id_atual");
-
-// Teste 4: Se falhar, tenta buscar usando 'usuario_id'
-if (!$query_funcionarios) {
-    $query_funcionarios = @mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE usuario_id = $id_atual");
-}
-
-// Se funcionar, captura o valor
-if ($query_funcionarios) {
-    $dados_func = mysqli_fetch_assoc($query_funcionarios);
-    $total_funcionarios = $dados_func['total_func'] ?? 0;
+// 3. Loop inteligente para encontrar a coluna correta de funcionários
+foreach ($possiveis_colunas as $coluna) {
+    $query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE $coluna = $id_atual");
+    if ($query_funcionarios) {
+        $dados_func = mysqli_fetch_assoc($query_funcionarios);
+        $total_funcionarios = $dados_func['total_func'] ?? 0;
+        if ($total_funcionarios > 0) {
+            break; // Encontrou registros, interrompe o loop
+        }
+    }
 }
 ?>
 

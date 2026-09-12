@@ -1,7 +1,7 @@
 <?php
-// =========================================================================
-// 🔮 ECOSSISTEMA MESTRE - LIGAÇÃO TOTALMENTE MYSQL (XAMPP LOCAL & AIVEN NUVEM)
-// =========================================================================
+// Desativa o relatório estrito de exceções para permitir testes dinâmicos de colunas
+mysqli_report(MYSQLI_REPORT_OFF);
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
