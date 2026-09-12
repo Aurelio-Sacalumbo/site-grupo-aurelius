@@ -565,24 +565,6 @@ nav {
 }
 </style>
 
-<div class="card-faturamento">
-    <h3>Faturamento Total</h3>
-    <p>Kz <?php echo number_format($faturamento_total, 2, ',', '.'); ?></p>
-</div>
-
-<div class="card-equipa">
-    <h3>Profissionais Ativos</h3>
-    <p><?php echo (int)$total_funcionarios; ?> Colaboradores</p>
-</div>
-
-
-
-
-
-
-
-
-
 
 </head>
 <body>

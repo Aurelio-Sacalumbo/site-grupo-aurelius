@@ -1,0 +1,21 @@
+body{ background: black; }
+.div_nav{ text-align: center; color: white; font-family: serif; font-size: 40px; float: right; margin:20px; }
+#img{ width: 20px; height: 30px; }
+.navi{ background: black; }
+.divi{ font-size: 50px; font-family: serif; margin-bottom:50px;}
+#letra{color:white; font-size: 100px; font-family: serif; margin:100px; text-align: center; border: 1px solid white; border-block-start-color: rgb(6, 7, 27); width: 1300px; border-bottom-right-radius: 70px; border-bottom-left-radius: 70px;}
+ .divo a{color:  white;  font-size:16px; font-family: monospace; text-decoration: none; border: 1px double rgb(253, 253, 253);}
+    .divo a:houver{ color: maroon; font-family: Courier New, Courier; background: white; }
+.section{ backgrond: red; padding:9px; text-align: center;}
+
+
+#form{  backgrond: green;  padding: 20px;  }
+.footer{ backgrund: yellow; padding: 15px;}
+.div-footer{ backgrund:white; padding:10px;} 
+.ul{ backgound:rgb(136, 106, 106); padding:5px; color: rgb(3, 21, 36);  }
+ul li{display:inline-block; margin:4px; background: blck; border: 1px double blue; }
+ul li a{ text-decoration: none; color: rgb(255, 251, 251); backgrund:rgb(67, 3, 185); border-radius: 5px;  }
+
+background:linear-gradient(green,greenyellow,blue, violet); height: 100%;
+
+
