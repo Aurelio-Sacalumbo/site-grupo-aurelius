@@ -1606,9 +1606,13 @@ if (!empty($arquivo_logo) && file_exists(__DIR__ . "/uploads/" . $arquivo_logo))
                                 </div>
                                 
                                <!-- Botão ENTRAR Vermelho Original -->
-                               <a href="<?php echo htmlspecialchars($link_destino); ?>" target="_blank" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
-                                   <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 6px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 8px rgba(211,47,47,0.2) !important; outline: none;">ENTRAR</button>
-                               </a>
+                               <span style="color:yellow; font-size:10px;">Link no banco: <?php echo $row['link_destino']; ?></span>
+
+
+
+<a href="<?php echo htmlspecialchars(ucfirst(trim($link_destino))); ?>" target="_blank" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
+<button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 6px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 8px rgba(211,47,47,0.2) !important; outline: none;">ENTRAR</button>
+</a>
                                 
                                <!-- Seletor Azul de Informações do Balcão -->
                                <select style="width: 100% !important; background: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; padding: 4px; font-size: 11px; border-radius: 4px; outline: none; cursor: pointer; margin-top: 5px;">
