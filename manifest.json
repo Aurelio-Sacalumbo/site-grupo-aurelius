@@ -1,0 +1,23 @@
+{
+  "name": "Grupo Aurélius - Portal de Estética",
+  "short_name": "Aurélius",
+  "description": "Ecosistema de Estética & E-commerce - Agendamentos e Triagem Mercantil",
+  "start_url": "Principal.php",
+  "display": "standalone",
+  "background_color": "#0b0f19",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "uploads/OIP (6).webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "uploads/OIP (6).webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}

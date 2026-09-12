@@ -1597,7 +1597,6 @@ if (!empty($arquivo_logo) && file_exists(__DIR__ . "/uploads/" . $arquivo_logo))
                                <!-- Botão ENTRAR Vermelho Original -->
                               <!-- Botão ENTRAR Dinâmico e Compatível com Linux (Render) -->
 
-                              <span style="color:yellow; font-size:10px;">Link no banco: <?php echo $row['link_destino']; ?></span>
 
 
 
@@ -1923,8 +1922,9 @@ function moverCarrosselSalores(direcao) {
                      <div class="tag-posicionada" style="position: absolute; top: 10px; right: 10px; background: #ca8a04; color: #fff; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🔥 Campeão de Atendimentos</div>
                      
                      <div style="width: 100px; height: 90px; background: #fff; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #ca8a04; flex-shrink: 0;">
-                         <img src="<?= $logo_s ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                     </div>
+    <!-- Injetado prefixo de segurança upload/ -->
+    <img src="upload/<?php echo htmlspecialchars(basename($logo_s)); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+</div>
                      
                      <div class="zona-texto" style="text-align: left; min-width: 0; flex: 1;">
                          <h4 style="color: #fff; margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($melhor_salao['nome']) ?></h4>
@@ -2522,9 +2522,11 @@ $stmtGlobal = $pdo->prepare("
  
              <!-- 👤 CABEÇALHO DA LOJA DINÂMICO -->
              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                 <div style="width: 36px; height: 36px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
-                     <img src="<?php echo $foto_perfil_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                 </div>
+    <div style="width: 36px; height: 36px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
+        <!-- Injetado prefixo de segurança upload/ -->
+        <img src="upload/<?php echo htmlspecialchars(basename($foto_perfil_loja)); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+    </div>
+
                  <div style="min-width: 0; flex: 1;">
                      <strong style="color: #ffffff; font-size: 13.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;"><?php echo $loja_nome; ?></strong>
                      <span style="color: #94a3b8; font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
