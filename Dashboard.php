@@ -30,13 +30,22 @@ $logo_exibicao = !empty($dados_loja['logo_empresa']) ? 'upload/' . $dados_loja['
 $preco_base    = $dados_loja['preco'] ?? 0.00;
 $localizacao   = $dados_loja['endereco'] ?? 'Não informada'; // Ex: Huambo, Namibe
 
-// 📊 5. METRICAS E FATURAMENTOS DA BARBEARIA ATUAL
-// Filtra as tabelas agregadas usando a coluna indexadora correta 'id_loja'
-$query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_loja = $id_atual");
+// 📊 5. METRICAS E FATURAMENTOS DA BARBEARIA ATUAL (Alinhado com a tabela usuario)
+// Filtra o histórico de vendas usando a coluna indexadora correta 'codigo'
+$query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE codigo = $id_atual");
+if (!$query_vendas) {
+    // Caso a tabela historico_vendas utilize 'id_usuario' como ligação:
+    $query_vendas = mysqli_query($mysqli, "SELECT SUM(valor_total) as total FROM historico_vendas WHERE id_usuario = $id_atual");
+}
 $dados_vendas = mysqli_fetch_assoc($query_vendas);
 $faturamento_total = $dados_vendas['total'] ?? 0.00;
 
-$query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_loja = $id_atual");
+// Filtra os funcionários cadastrados que trabalham especificamente nesta barbearia
+$query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE codigo = $id_atual");
+if (!$query_funcionarios) {
+    // Caso a tabela funcionarios utilize 'id_usuario' como ligação:
+    $query_funcionarios = mysqli_query($mysqli, "SELECT COUNT(*) as total_func FROM funcionarios WHERE id_usuario = $id_atual");
+}
 $dados_func = mysqli_fetch_assoc($query_funcionarios);
 $total_funcionarios = $dados_func['total_func'] ?? 0;
 ?>
