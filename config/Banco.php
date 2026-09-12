@@ -1,21 +1,20 @@
 <?php
 // =========================================================================
-// 📂 RETAGUARDA TÉCNICA - HERANÇA FACILITADORA DO ECOSSISTEMA SaaS
+// 🔮 ECOSSISTEMA MESTRE - MOTOR CONFIG BANCO (PONTE GLOBAL DE INFRAESTRUTURA)
 // =========================================================================
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+// 1. Inclui a central de conexões garantindo o caminho correto
+include_once __DIR__ . '/../Conexao.php';
+
+// 2. Sistema de redundância e mapeamento de variáveis de segurança
+if (!isset($mysqli)) {
+    if (isset($conexao_aurelius)) { $mysqli = $conexao_aurelius; }
+    elseif (isset($conexao_link)) { $mysqli = $conexao_link; }
+    elseif (isset($conexao))      { $mysqli = $conexao; }
+    elseif (isset($link))         { $mysqli = $link; }
 }
 
-// Inclui o arquivo Conexao.php que está um nível acima (na raiz)
-if (!isset($pdo) || !isset($mysqli)) {
-    if (file_exists(__DIR__ . "/../Conexao.php")) {
-        include_once(__DIR__ . "/../Conexao.php");
-    }
+// 3. Validação final para travar o ecossistema caso a conexão venha a falhar
+if (!isset($mysqli) || !$mysqli) {
+    die("Erro do Ecossistema: A conexão no arquivo 'config/Banco.php' não foi encontrada ou é inválida.");
 }
-
-// Pontes Globais de Compatibilidade
-$conexao_link     = $mysqli;
-$conexao_aurelius = $mysqli;
-$conexao          = $mysqli;
-$link             = $mysqli;
