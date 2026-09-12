@@ -1,0 +1,19 @@
+# =========================================================================
+# 🟢 EXPANSÃO DE MEMÓRIA PARA CARREGAMENTO DE REELS E FOTOS PREMIUM (64MB)
+# =========================================================================
+php_value upload_max_filesize 64M
+php_value post_max_size 64M
+php_value memory_limit 128M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# =========================================================================
+# 🔀 DIRETIVAS DE REDIRECIONAMENTO NATIVO DO GRUPO AURÉLIUS
+# =========================================================================
+DirectoryIndex Principal.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # Se o utilizador tentar aceder ao index.html ou à raiz, reencaminha para o Principal.php
+    RewriteRule ^index\.html$ Principal.php [NC,R=301,L]
+</IfModule>
