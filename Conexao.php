@@ -67,8 +67,13 @@ try {
     die("🚨 Falha na infraestrutura PDO Aurélius Central: " . $e->getMessage());
 }
 
-// 🟢 4. MAPA GLOBAL DE COMPATIBILIDADE (Garante que nenhuma variável antiga quebre)
+// 🔓 COLA AS DUAS LINHAS EXATAMENTE AQUI:
+mysqli_query($mysqli, "SET SESSION sql_mode=''");
+$pdo->exec("SET SESSION sql_mode=''");
+
+// 🟢 4. MAPA GLOBAL DE COMPATIBILIDADE
 $conexao_link     = $mysqli;
 $conexao_aurelius = $mysqli;
 $conexao          = $mysqli;
 $link             = $mysqli;
+?>
