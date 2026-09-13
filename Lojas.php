@@ -290,7 +290,7 @@ while ($prod_real = $query_reais->fetch_assoc()) {
                <?php else: ?>
                    <div style="color: #64748b; font-size: 14px; grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #0f172a; border-radius: 12px; border: 1px dashed #334155; width: 100%;">
                        <span style="font-size: 32px; display: block; margin-bottom: 10px;">📦</span>
-                       Esta loja parceira registou-se com sucesso, mas ainda não adicionou cosméticos ou equipamentos ao catálogo.
+                       Esta loja ainda não adicionou cosméticos ou equipamentos ao catálogo.
                    </div>
                <?php endif; ?>
            </div>

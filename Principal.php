@@ -3171,6 +3171,49 @@ if (isset($mysqli) && $mysqli) {
 }
 ?>
 
+
+
+
+
+
+<?php
+// =========================================================================
+// 🌍 EXTRAÇÃO LOGÍSTICA PARA O MAPA — GOVERNAÇÃO DE COORDENADAS
+// =========================================================================
+$pontos_mapa = [];
+
+// Procura as tuas lojas na base de dados para injetar os pinos reais no Huambo, Benguela e Luanda
+$query_mapa_lojas = $mysqli->query("SELECT id, nome_loja, endereco_armazem FROM lojas WHERE visivel_no_site = 1");
+if ($query_mapa_lojas && $query_mapa_lojas->num_rows > 0) {
+    while ($loja_mapa = $query_mapa_lojas->fetch_assoc()) {
+        // Coordenadas dinâmicas e inteligentes baseadas na província real da loja
+        $lat = -12.7711; $lng = 15.7392; // Padrão: Huambo Sede
+        
+        if (strpos(strtolower($loja_mapa['endereco_armazem']), 'benguela') !== false) {
+            $lat = -12.5763; $lng = 13.4117; // Benguela Zona Comercial
+        } elseif (strpos(strtolower($loja_mapa['endereco_armazem']), 'luanda') !== false) {
+            $lat = -8.8390; $lng = 13.2894; // Luanda Talatona
+        } elseif (strpos(strtolower($loja_mapa['nome_loja']), 'marcante') !== false) {
+            $lat = -8.5816; $lng = 13.6645; // Bengo Caxito
+        }
+        
+        $pontos_mapa[] = [
+            'nome' => $loja_mapa['nome_loja'],
+            'endereco' => $loja_mapa['endereco_armazem'],
+            'lat' => $lat,
+            'lng' => $lng
+        ];
+    }
+} else {
+    // Modo de contingência se o teu banco local estiver vazio de coordenadas
+    $pontos_mapa = [
+        ['nome' => 'Barbearia Branca', 'endereco' => 'Bairro Talatona (Luanda)', 'lat' => -8.8390, 'lng' => 13.2894],
+        ['nome' => 'Distribuidora Loengo', 'endereco' => 'Bairro de São Luís (Huambo)', 'lat' => -12.7711, 'lng' => 15.7392],
+        ['nome' => 'Lojas Mamadu', 'endereco' => 'Zona Comercial (Benguela)', 'lat' => -12.5763, 'lng' => 13.4117]
+    ];
+}
+?>
+
 <!-- 🗺️ COMPONENTE VISUAL PREMIUM DO MAPA (Sem escuridão) -->
 <div class="painel-mapa" style="max-width: 1100px; margin: 40px auto; padding: 0 20px; box-sizing: border-box;">
     <div style="text-align: left; margin-bottom: 20px;">
@@ -3179,49 +3222,67 @@ if (isset($mysqli) && $mysqli) {
     </div>
 
     <!-- O Contentor do Mapa Leaflet -->
-    <div id="mapa_aurelius_SaaS" style="width: 100%; height: 450px; border-radius: 20px; border: 2px solid #1e293b; box-shadow: 0 15px 35px rgba(0,0,0,0.6); background: #070b12; overflow: hidden;"></div>
+    <div id="mapa_aurelius_SaaS" style="width: 100%; height: 450px; border-radius: 20px; border: 2px solid #1e293b; box-shadow: 0 15px 35px rgba(0,0,0,0.6); background: #070b12; overflow: hidden; z-index: 1;"></div>
 </div>
 
-<!-- 🟢 CDNS OFICIAIS E CORRIGIDOS DO LEAFLET (Estáveis) -->
-<link rel="stylesheet" href="https://unpkg.com" />
-<script src="https://unpkg.com"></script>
+<!-- 🟢 CDNS OFICIAIS, COMPLETOS E CORRIGIDOS DO LEAFLET (Estáveis) -->
+<link rel="stylesheet" href="https://unpkg.com" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    // 1. Inicializa o motor Leaflet focado no Huambo
-    const mapa = L.map('mapa_aurelius_SaaS').setView([-12.7711, 15.7392], 13);
+    // 1. Inicializa o motor Leaflet focado numa visão centralizada de Angola
+    const mapa = L.map('mapa_aurelius_SaaS').setView([-10.5000, 14.5000], 6);
 
-    // 2. Aplica as imagens corretas do Tileset estilo Dark/Premium da CARTO
+    // 2. CORREÇÃO DA URL: Aplica o servidor correto de imagens Dark Premium da CARTO
     L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        attribution: '&copy; <a href=\"https://openstreetmap.org\">OpenStreetMap</a> &copy; <a href=\"https://carto.com\">CARTO</a>',
         subdomains: 'abcd',
         maxZoom: 20
     }).addTo(mapa);
 
     // 3. Puxa os dados reais em formato JSON do motor PHP acima
     const pontosRegistados = <?= json_encode($pontos_mapa) ?>;
+    const coordenadasTrajeto = [];
 
     pontosRegistados.forEach(function(ponto) {
+        // Guarda as coordenadas para traçar as linhas logo a seguir
+        coordenadasTrajeto.push([ponto.lat, ponto.lng]);
+
         // Cria um marcador comum estável
         const pinoMestre = L.marker([ponto.lat, ponto.lng]).addTo(mapa);
         
         // Balão informativo estilizado Dark
         const conteudoPopup = `
-            <div style="font-family: sans-serif; text-align: left; color:#fff; min-width:160px;">
-                <b style="color: #38bdf8; font-size: 13px; display: block; margin-bottom: 4px;">💈 ${ponto.nome}</b>
+            <div style="font-family: sans-serif; text-align: left; color:#fff; min-width:160px; padding: 5px;">
+                <b style="color: #38bdf8; font-size: 13px; display: block; margin-bottom: 4px;">🏬 ${ponto.nome}</b>
                 <p style="color: #cbd5e1; font-size: 11px; margin: 4px 0;">📍 ${ponto.endereco}</p>
-                <span style="display:inline-block; background:#22c55e; color:#fff; font-size:9px; padding:2px 6px; font-weight:bold; border-radius:4px; text-transform:uppercase;">● Ativo</span>
+                <span style="display:inline-block; background:#22c55e; color:#fff; font-size: 9px; padding:2px 6px; font-weight:bold; border-radius:4px; text-transform:uppercase;">● Ativo no SaaS</span>
             </div>
         `;
         
-        // Estilização customizada das bolhas via CSS injetado
         pinoMestre.bindPopup(conteudoPopup);
     });
 
-    // 4. Corrige falhas ou bugs de renderização cinzenta no carregamento
+    // 4. 🟢 ROTAS DE TRAÇOS LOGÍSTICOS INTERPROVINCIAIS (Huambo - Benguela - Luanda)
+    // Desenha uma linha de conexão de prestígio entre os balcões nacionais do grupo
+    if (coordenadasTrajeto.length > 1) {
+        const linhaLogistica = L.polyline(coordenadasTrajeto, {
+            color: '#38bdf8',       // Cor azul neon do teu ecossistema
+            weight: 3,              // Espessura do traço
+            opacity: 0.7,           // Transparência
+            dashArray: '8, 8',      // Transforma a linha contínua em traços espalhados
+            lineJoin: 'round'
+        }).addTo(mapa);
+        
+        // Ajusta automaticamente o zoom para abraçar todas as províncias com linhas
+        mapa.fitBounds(linhaLogistica.getBounds(), { padding: [30, 30] });
+    }
+
+    // 5. Corrige falhas ou bugs de renderização cinzenta no carregamento
     setTimeout(() => {
         mapa.invalidateSize();
-    }, 400);
+    }, 500);
 });
 </script>
 
@@ -3229,6 +3290,7 @@ document.addEventListener("DOMContentLoaded", function() {
     /* Injeta regras CSS globais para pintar o Pop-up interno do Leaflet de Dark Premium */
     .leaflet-popup-content-wrapper { background: #111827 !important; color: #fff !important; border: 1px solid #1e293b !important; border-radius: 12px !important; }
     .leaflet-popup-tip { background: #111827 !important; }
+    .leaflet-container { background-color: #070b12 !important; }
 </style>
 
 

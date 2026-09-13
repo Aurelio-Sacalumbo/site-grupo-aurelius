@@ -75,14 +75,28 @@ if (isset($_GET['redefinir_pin_urgente']) && !empty($_GET['tel_ref'])) {
 // 🟢 3. PROCESSAMENTO DE COMPRA E VALIDAÇÃO EXCLUSIVA DE PIN ÚNICO
 $exibir_fatura_final = false;
 $fatura_dados = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'])) {
-    $cliente_nome = trim($_POST['nome_cliente']);
+    $cliente_nome     = trim($_POST['nome_cliente']);
     $cliente_telefone = trim($_POST['cliente_telefone']); 
-    $quantidade_comprada = intval($_POST['quantidade_selecionada']);
-    $modalidade_entrega = trim($_POST['modalidade_entrega']);
-    $tipo_pagamento = trim($_POST['tipo_pagamento']);
-    $canal_pagamento = trim($_POST['canal_pagamento']);
-    $pin_digitado = trim($_POST['pin_unitel_confirmacao']);
+    
+    // 🟢 RESOLUÇÃO DO WARNING DA LINHA 81: Varre de forma inteligente todos os nomes possíveis que o HTML pode enviar
+    $quantidade_comprada = 1;
+    if (isset($_POST['quantidade_selecionada'])) {
+        $quantidade_comprada = intval($_POST['quantidade_selecionada']);
+    } elseif (isset($_POST['quantidade_pretendida'])) {
+        $quantidade_comprada = intval($_POST['quantidade_pretendida']);
+    } elseif (isset($_POST['quantidade'])) {
+        $quantidade_comprada = intval($_POST['quantidade']);
+    }
+    
+    // Proteção estrita de inventário
+    if ($quantidade_comprada <= 0) { $quantidade_comprada = 1; }
+
+    $modalidade_entrega = trim($_POST['modalidade_entrega'] ?? 'buscar');
+    $tipo_pagamento     = trim($_POST['tipo_pagamento'] ?? 'total');
+    $canal_pagamento    = trim($_POST['canal_pagamento'] ?? 'unitel_money');
+    $pin_digitado       = trim($_POST['pin_unitel_confirmacao'] ?? '');
 
     $valor_bruto = $preco_tabela * $quantidade_comprada;
     $taxa_frete = ($modalidade_entrega === 'levar') ? 1500.00 : 0.00;
@@ -95,11 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'
     if ($canal_pagamento === 'unitel_money') {
         // 🔒 CONTROLO ANTIFRAUDE DE PROPRIEDADE DO PIN
         if ($acao_requerida_pin === 'validar') {
+            // Se o PIN não coincidir, barra com o aviso e oferece o gatilho reativo calibrado
             if ($pin_digitado !== $pin_existente_db) {
-                // PIN Incorreto -> Oferece opção de Redefinição forçada
-                die("<div style='background:#7f1d1d; color:#fff; padding:30px; font-family:sans-serif; text-align:center; border-radius:12px; margin:50px auto; max-width:520px;'>
-                        🚨 <b>Erro de Autenticação Unitel Money:</b> O PIN digitado não confere com o código único registado para este número.<br><br>
-                        <a href='Unitele.php?redefinir_pin_urgente=1&tel_ref=$cliente_telefone&id_produto_comprado=$id_produto_get' style='background:#eab308; color:#000; padding:10px 20px; text-decoration:none; font-weight:bold; border-radius:30px; display:inline-block; margin-top:10px;'>Obrigar Redefinição de Senha</a>
+                die("<div style='background:#7f1d1d; color:#fff; padding:30px; font-family:sans-serif; text-align:center; border-radius:12px; margin:50px auto; max-width:520px; box-shadow:0 10px 25px rgba(0,0,0,0.5); border:1px solid #ef4444;'>
+                        <span style='font-size:40px; display:block; margin-bottom:10px;'>🚨</span>
+                        <b>Erro de Autenticação Unitel Money:</b> O PIN digitado não confere com o código único registado para este número.<br><br>
+                        <p style='font-size:13px; color:#cbd5e1;'>Se o cliente esqueceu a senha, o gestor pode forçar a redefinição imediata abaixo.</p>
+                        <a href='Unitele.php?redefinir_pin_urgente=1&tel_ref=$cliente_telefone&id_produto_comprado=$id_produto_get' style='background:#eab308; color:#000; padding:12px 24px; text-decoration:none; font-weight:bold; border-radius:30px; display:inline-block; margin-top:15px; text-transform:uppercase; font-size:12px; letter-spacing:0.5px;'>Obrigar Redefinição de Senha</a>
                      </div>");
             }
         } else {
@@ -107,7 +123,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'
             if (strlen($pin_digitado) < 4) {
                 die("<script>alert('❌ Erro: O novo PIN deve conter pelo menos 4 caracteres.'); window.history.back();</script>");
             }
-             // 🟢 CORREÇÃO DO ERRO FATAL: Alterado de .num_rows para ->num_rows
              $check_ex = $mysqli->query("SELECT id FROM `clientes` WHERE `telefone` = '$cliente_telefone' LIMIT 1");
              if ($check_ex && $check_ex->num_rows > 0) {
                  $mysqli->query("UPDATE `clientes` SET `senha` = '$pin_digitado' WHERE `telefone` = '$cliente_telefone'");
@@ -116,7 +131,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'
              }
         }
     }
-
     $status_trabalho = ($tipo_pagamento === 'adiantado') ? 'Adiantado PARCIAL' : 'Pago TOTAL';
     $comissao_aurelius = $valor_final_venda * 0.10;
     $valor_liquido_parceiro = $valor_final_venda - $comissao_aurelius;
@@ -170,22 +184,169 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
     <title>Checkout Corporativo Aurélius</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #070b12; color: #fff; font-family: system-ui, sans-serif; padding: 20px; }
-        .seccao-cadastro { background: #111827; border: 2px solid <?= $cor_tema ?>; border-radius: 16px; max-width: 550px; margin: 40px auto; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.6); }
-        .campo-grupo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; text-align: left; }
-        .campo-grupo label { font-size: 12.5px; color: #94a3b8; font-weight: 600; }
-        .campo-grupo input, .campo-grupo select { padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13.5px; outline: none; width: 100%; color-scheme: dark; }
-        .fatura-box { background: #070b12; padding: 15px; border-radius: 10px; border: 1px solid #1f2937; margin-bottom: 20px; }
-        .linha-fatura { display: flex; justify-content: space-between; font-size: 13px; color: #94a3b8; margin-bottom: 8px; }
-        .linha-fatura span:last-child { font-weight: bold; color: #fff; }
-        .total-row { border-top: 1px solid #1f2937; padding-top: 10px; margin-top: 10px; font-size: 15px; font-weight: bold; }
-        .total-row span:last-child { color: #eab308 !important; font-size: 17px; }
-        .btn-pagar { width: 100%; background: <?= $cor_tema ?>; color: white; border: none; padding: 14px; font-size: 13.5px; font-weight: bold; border-radius: 8px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.2s; }
-        .btn-pagar:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-sair { display: inline-block; background: #1e293b; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 11px; border: 1px solid #334155; margin-bottom: 20px; text-transform: uppercase; }
         
-        /* Estilos da Fatura Recibo */
-        .fatura-recibo-container { background: #fff; color: #000; padding: 30px; border-radius: 12px; max-width: 500px; margin: 40px auto; box-shadow: 0 10px 25px rgba(255,255,255,0.05); font-family: monospace; border-top: 8px solid #22c55e; text-align: left; }
+        body { 
+            background: #070b12; 
+            color: #fff; 
+            font-family: system-ui, -apple-system, sans-serif; 
+            padding: 12px 10px; /* Reduzido para dar mais espaço útil no ecrã do telemóvel */
+            min-height: 100vh;
+        }
+        
+        /* 📱 CONTAINER DE CADASTRO/CHECKOUT RESPONSIVO */
+        .seccao-cadastro { 
+            background: #111827; 
+            border: 2px solid <?= $cor_tema ?>; 
+            border-radius: 16px; 
+            width: 100%;
+            max-width: 550px; 
+            margin: 15px auto; /* Reduzida a margem para não flutuar longe do topo */
+            padding: 20px 15px; /* Espaçamento interno otimizado para mobile */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+        }
+        
+        .campo-grupo { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 6px; 
+            margin-bottom: 15px; 
+            text-align: left; 
+        }
+        
+        .campo-grupo label { 
+            font-size: 12.5px; 
+            color: #94a3b8; 
+            font-weight: 600; 
+        }
+        
+        /* 🟢 PREVINE ZOOM DO TELEMÓVEL: font-size em 16px impede o zoom automático do navegador no input */
+        .campo-grupo input, 
+        .campo-grupo select { 
+            padding: 12px 14px; 
+            background: #070b12; 
+            border: 1px solid #374151; 
+            border-radius: 8px; 
+            color: #fff; 
+            font-size: 16px; 
+            outline: none; 
+            width: 100%; 
+            color-scheme: dark; 
+            transition: border-color 0.2s;
+        }
+        
+        .campo-grupo input:focus,
+        .campo-grupo select:focus {
+            border-color: <?= $cor_tema ?>;
+        }
+        
+        .fatura-box { 
+            background: #070b12; 
+            padding: 15px; 
+            border-radius: 10px; 
+            border: 1px solid #1f2937; 
+            margin-bottom: 20px; 
+        }
+        
+        .linha-fatura { 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 13px; 
+            color: #94a3b8; 
+            margin-bottom: 8px; 
+        }
+        
+        .linha-fatura span:last-child { 
+            font-weight: bold; 
+            color: #fff; 
+        }
+        
+        .total-row { 
+            border-top: 1px solid #1f2937; 
+            padding-top: 10px; 
+            margin-top: 10px; 
+            font-size: 15px; 
+            font-weight: bold; 
+        }
+        
+        .total-row span:last-child { 
+            color: #eab308 !important; 
+            font-size: 17px; 
+        }
+        
+        .btn-pagar { 
+            width: 100%; 
+            background: <?= $cor_tema ?>; 
+            color: white; 
+            border: none; 
+            padding: 14px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+            transition: 0.2s; 
+        }
+        
+        .btn-pagar:hover { 
+            opacity: 0.9; 
+            transform: translateY(-1px); 
+        }
+        
+        .btn-sair { 
+            display: block; /* Mudado para block para melhor alinhamento em ecrãs pequenos */
+            width: fit-content;
+            background: #1e293b; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            text-decoration: none; 
+            font-weight: bold; 
+            font-size: 11px; 
+            border: 1px solid #334155; 
+            margin-bottom: 15px; 
+            text-transform: uppercase; 
+        }
+        
+        /* 📱 RECIBO DE FATURA RESPONSIVO */
+        .fatura-recibo-container { 
+            background: #fff; 
+            color: #000; 
+            padding: 20px 15px; /* Reduzido o padding para não cortar o texto nas laterais */
+            border-radius: 12px; 
+            width: 100%;
+            max-width: 500px; 
+            margin: 20px auto; 
+            box-shadow: 0 10px 25px rgba(255,255,255,0.05); 
+            font-family: monospace; 
+            border-top: 8px solid #22c55e; 
+            text-align: left; 
+            box-sizing: border-box;
+        }
+
+        /* 🟢 MEDIA QUERIES: Regras exclusivas para otimização em telemóveis */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px 6px;
+            }
+            .seccao-cadastro {
+                margin: 10px auto;
+                padding: 16px 12px;
+                border-radius: 12px;
+            }
+            .fatura-recibo-container {
+                margin: 10px auto;
+                padding: 18px 12px;
+                font-size: 12px; /* Encolhe ligeiramente a fonte tipográfica do recibo para caber faturas grandes */
+            }
+            /* Ajuste para grids com múltiplos campos lado a lado */
+            .grid-dupla-mobile {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 10px !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -228,24 +389,24 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
             <div style="text-align: center; margin-top: 30px; border-top: 2px dashed #000; padding-top: 15px; font-size: 11px;">
                 <p><b>Método:</b> <?= $fatura_dados['canal'] ?> (<?= $fatura_dados['status'] ?>)</p>
                 <p style="margin-top: 10px; font-weight: bold;">✓ OBRIGADO PELA PREFERÊNCIA EM ANGOLA!</p>
-                <a href="Principal.php" style="display:block; margin-top:20px; background:#000; color:#fff; padding:10px; text-decoration:none; font-weight:bold; border-radius:6px; text-align:center;">Fechar e Concluir</a>
+                <a href="Lojas.php" style="display:block; margin-top:20px; background:#000; color:#fff; padding:10px; text-decoration:none; font-weight:bold; border-radius:6px; text-align:center;">Fechar e Concluir</a>
             </div>
         </div>
     <?php else: ?>
 
-        <a href="Principal.php" class="btn-sair">✕ VOLTAR</a>
+        <a href="Lojas.php" class="btn-sair">✕ VOLTAR</a>
 
         <div class="seccao-cadastro">
             <h2>Checkout: <?= $label_gateway ?></h2>
 
             <div class="crm-badge" style="background: <?= $cor_crm ?>15; color: <?= $cor_crm ?>; border-color: <?= $cor_crm ?>30;">
-                📊 Auditoria de Perfil: <?= $status_crm_cliente ?>
+                Perfil: <?= $status_crm_cliente ?>
             </div>
 
             <div style="background: #0f172a; padding: 15px; border-radius: 10px; margin-bottom: 18px; border-left: 4px solid <?= $cor_tema ?>; text-align: left;">
                 <strong style="color: #00d2ff; font-size: 14px; display: block;"><?= htmlspecialchars($nome_parceiro_real) ?></strong>
                 <span style="font-size: 14px; color: #fff; display: block; margin-top: 4px; font-weight: bold;"><?= htmlspecialchars($nome_produto) ?></span>
-                <p style="font-size: 11px; color: #94a3b8; margin-top: 6px;">Inventário Restante no Balcão: <strong style="color: #fff;"><?= $stock_maximo ?> un.</strong></p>
+                <p style="font-size: 11px; color: #94a3b8; margin-top: 6px;">Inventário Restante no Balcão: <strong style="color: #fff;"><?= $stock_maximo ?> unidade.</strong></p>
             </div>
 
             <form id="form_checkout_real" method="POST" action="">
@@ -254,28 +415,39 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="campo-grupo">
                         <label>Nome do Cliente:</label>
-                        <input type="text" name="nome_cliente" value="<?= isset($_POST['nome_cliente']) ? htmlspecialchars($_POST['nome_cliente']) : 'Cliente Visitante' ?>" required>
+                        <input type="text" name="nome_cliente" value="<?= isset($_POST['nome_cliente']) ? htmlspecialchars($_POST['nome_cliente']) : '' ?>" required>
                     </div>
                     <div class="campo-grupo">
-                        <label>Telefone do Cliente:</label>
-                        <div style="display: flex; gap: 6px;">
-                            <input type="tel" name="cliente_telefone" id="telefone_input" value="<?= htmlspecialchars($telefone_busca) ?>" placeholder="Ex: 925347372" onkeyup="verificarEstatutoVip(this.value)" required autocomplete="off" style="flex: 1;">
-                            <button type="submit" formaction="Unitele.php?id_produto_comprado=<?= $id_produto_get ?>&gateway=<?= $gateway_atual ?>" style="background: #38bdf8; color: #000; border: none; padding: 0 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 11px; text-transform: uppercase;">Validar</button>
-                        </div>
+                    <label>Telefone do Cliente:</label>
+                    <div style="display: flex; gap: 6px;">
+                        <!-- 🟢 LOCK NUMÉRICO: inputmode abre o teclado de números e o oninput remove letras instantaneamente -->
+                        <input type="tel" 
+                               name="cliente_telefone" 
+                               id="telefone_input" 
+                               value="<?= htmlspecialchars($telefone_busca) ?>" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*" 
+                               oninput="this.value = this.value.replace(/[^0-9]/g, ''); verificarEstatutoVip(this.value);" 
+                               required 
+                               autocomplete="off" 
+                               style="flex: 1;">
                     </div>
+                </div>
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                     <div class="campo-grupo">
-                        <label>Modalidade de Logística:</label>
+                        <label>Modalidade:</label>
                         <select name="modalidade_entrega" id="frete_select" onchange="atualizarFaturaReal()">
-                            <option value="buscar">Vou buscar ao vosso encontro (Preço Normal)</option>
-                            <option value="levar">Prefiro que levem/Frete (+ 1.500 Kz)</option>
+                        <option value="buscar">Selecione </option>
+                            <option value="buscar">Buscar no local (Preço Normal)</option>
+                            <option value="levar">Vêem ao meu encontro/Frete (+ 1.500 Kz)</option>
                         </select>
                     </div>
                     <div class="campo-grupo">
                         <label>Condição de Faturamento:</label>
                         <select name="tipo_pagamento" id="pagamento_select" onchange="atualizarFaturaReal()">
+                        <option value="total">Selecione </option>
                             <option value="total">Pagar Valor Total (100%)</option>
                             <option value="adiantado">Pagar Adiantado (Sinal de 50%)</option>
                         </select>
@@ -287,7 +459,7 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
                         <label>Canal de Pagamento Digital:</label>
                         <select name="canal_pagamento" id="canal_select" onchange="atualizarFaturaReal()">
                             <option value="unitel_money" <?= $gateway_atual === 'unitel_money' ? 'selected' : '' ?>>📱 Carteira Unitel Money Express</option>
-                            <option value="mcx_xpress" <?= $gateway_atual === 'mcx_xpress' ? 'selected' : '' ?>>💳 Aplicativo Multicaixa Express (EMIS)</option>
+                            <option value="mcx_xpress" <?= $gateway_atual === 'mcx_xpress' ? 'selected' : '' ?>> Multicaixa Express (EMIS)</option>
                             <option value="referencia_bancaria">🏦 Gerar Referência Única Interbancária</option>
                         </select>
                     </div>
@@ -295,21 +467,46 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
                         <label>Quantidade Pretendida:</label>
                         <select name="quantidade_selecionada" id="qtd_select" onchange="atualizarFaturaReal()">
                             <?php for($i = 1; $i <= $stock_maximo; $i++): ?>
-                                <option value="<?= $i ?>" <?= $i == $quantidade_inicial ? 'selected' : '' ?>><?= $i ?> un.</option>
+                                <option value="<?= $i ?>" <?= $i == $quantidade_inicial ? 'selected' : '' ?>><?= $i ?> unidade.</option>
                             <?php endfor; ?>
                         </select>
                     </div>
                 </div>
 
                 <div class="campo-grupo" id="bloco_pin_unitel_money">
-                    <?php if($acao_requerida_pin === 'validar'): ?>
-                        <label style="color: #38bdf8;">🔑 Digite o seu PIN Único de Cliente Registado:</label>
-                        <input type="password" name="pin_unitel_confirmacao" id="pin_input" placeholder="Insira o seu PIN cadastrado" autocomplete="off">
-                        <span style="font-size: 10.5px; color: #eab308; display: block; margin-top: 4px;">💡 Esqueceu o código? Clique aqui: <a href="Unitele.php?redefinir_pin_urgente=1&tel_ref=<?= $telefone_busca ?>&id_produto_comprado=<?= $id_produto_get ?>" style="color:#ff4b2b; font-weight:bold; text-decoration:none;">Redefinir PIN de Segurança</a></span>
-                    <?php else: ?>
-                        <label style="color: #22c55e;">✨ Crie o seu PIN Único de Segurança (Primeiro Acesso):</label>
-                        <input type="password" name="pin_unitel_confirmacao" id="pin_input" placeholder="Crie um PIN alfanumérico com mais de 4 caracteres" autocomplete="off">
-                    <?php endif; ?>
+                <?php if ($acao_requerida_pin === 'validar'): ?>
+                <label style="color: #38bdf8; font-size: 12.5px; font-weight: 600;">🔒 Insira o seu PIN de Confirmação:</label>
+                <input type="password" 
+                       name="pin_unitel_confirmacao" 
+                       id="pin_input" 
+                       placeholder="Insira o seu PIN cadastrado" 
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       maxlength="6"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                       autocomplete="off" 
+                       style="width: 100%; padding: 12px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 16px; outline: none; margin-top: 5px;">
+                
+                <span style="font-size: 11px; color: #eab308; display: block; margin-top: 6px; line-height: 1.4; text-align: left;">
+                    💡 Esqueceu o código? Clique aqui: 
+                    <a href="Unitele.php?redefinir_pin_urgente=1&tel_ref=<?= urlencode($telefone_busca) ?>&id_produto_comprado=<?= $id_produto_get ?>" style="color:#f87171; font-weight:bold; text-decoration:none; border-bottom: 1px dashed #f87171;">Redefinir PIN de Segurança</a>
+                </span>
+
+            <?php else: ?>
+                <label style="color: #22c55e; font-size: 12.5px; font-weight: 600;">✨ Crie o seu PIN Único (Primeiro Acesso):</label>
+                <input type="password" 
+                       name="pin_unitel_confirmacao" 
+                       id="pin_input_novo" 
+                       placeholder="Crie um PIN numérico (Mínimo 4 dígitos)" 
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       maxlength="6"
+                       oninput="this.value = this.value.replace(/[^0-9]/g, '');"
+                       autocomplete="off" 
+                       style="width: 100%; padding: 12px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 16px; outline: none; margin-top: 5px;">
+                
+                <span style="font-size: 10.5px; color: #64748b; display: block; margin-top: 4px; text-align: left;">Este código será solicitado nas tuas próximas compras para evitar fraudes com o teu número.</span>
+            <?php endif; ?>
                 </div>
 
                 <?php 
@@ -324,14 +521,14 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
 
                 <div class="fatura-box">
                     <div class="linha-fatura"><span>Produtos Subtotal:</span><span id="txt_bruto">0,00 Kz</span></div>
-                    <div class="linha-fatura" id="linha_frete" style="color:#38bdf8;"><span>Taxa de Logística/Frete:</span><span id="txt_frete_val">0,00 Kz</span></div>
+                    <div class="linha-fatura" id="linha_frete" style="color:#38bdf8;"><span>Taxas de Frete:</span><span id="txt_frete_val">0,00 Kz</span></div>
                     <div class="linha-fatura" id="linha_desc_vip" style="display:none; color:#4ade80;"><span>Desconto VIP Especial (20%):</span><span id="txt_desc_vip">-0,00 Kz</span></div>
                     <div class="linha-fatura" style="border-bottom: 1px dashed #1f2937; padding-bottom: 8px; margin-bottom: 8px;"><span>Taxa Intermediação (10%):</span><span style="color: #f87171;" id="txt_taxa">-0,00 Kz</span></div>
                     <div class="linha-fatura total-row" style="color: #fff; font-size: 15px; font-weight: bold;"><span>Total Geral da Operação:</span><span id="txt_total" style="color: #eab308; font-size:18px;">0,00 Kz</span></div>
                     <div class="linha-fatura total-row" id="linha_adiantado" style="display:none; border-top:1px dashed #334155; color:#00ff87; margin-top: 10px; padding-top: 10px;"><span>Sinal Requerido (50%):</span><span id="txt_adiantado_val">0,00 Kz</span></div>
                 </div>
 
-                <button type="submit" name="executar_venda_final" onclick="return validarPinUnitelAntesDeSubmeter()" class="btn-pagar">⚡ Confirmar e Finalizar Transação com Sucesso</button>
+                <button type="submit" name="executar_venda_final" onclick="return validarPinUnitelAntesDeSubmeter()" class="btn-pagar">⚡ Finalizar Transação</button>
             </form>
         </div>
         <script>
@@ -420,21 +617,26 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
                 }
             }
         }
-
+ 
         function validarPinUnitelAntesDeSubmeter() {
+            // Procura o seletor do canal de pagamento usando os IDs novos ou antigos do teu projeto
             const e_canal = document.getElementById('canal_pagamento') || document.getElementById('canal_select');
-            const e_pin   = document.getElementById('pin_input') || document.getElementById('pinUnitel');
+            // Procura o input do PIN (seja de validação ou de primeiro acesso)
+            const e_pin   = document.getElementById('pin_input') || document.getElementById('pin_input_novo') || document.getElementById('pinUnitel');
             
             const canal = e_canal ? e_canal.value : '';
             const pin   = e_pin ? e_pin.value.trim() : '';
             
-            if (canal === 'unitel_money') {
+            // Só valida obrigatoriedade se o método selecionado for estritamente o Unitel Money
+            if (canal === 'unitel_money' || canal === 'unitel') {
                 if (pin.length < 4) {
                     alert("❌ Erro de Autenticação Unitel Money: Introduza o seu PIN ou token de segurança único para validar a cobrança!");
-                    return false;
+                    if(e_pin) e_pin.focus(); // Coloca o cursor diretamente no campo para facilitar o toque
+                    return false; // Trava o formulário
                 }
             }
-            return true;
+            
+            return true; // Liberta o formulário para faturamento se estiver tudo correto
         }
 
         // Inicialização protegida contra elementos nulos

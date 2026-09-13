@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome_produto'])) {
         if ($mysqli->query($sql_inserir_novo) || $stmt_baixa->affected_rows > 0) {
             // 🟢 Injeta um token de tempo único no redirecionamento para quebrar a cache
             $token_atualizacao = time();
-            echo "<script>alert('✓ Transação processada e stock atualizado no balcão!'); window.location.href='Principal.php?refresh=" . $token_atualizacao . "';</script>";
+            echo "<script>alert('✓ Transação processada e stock atualizado no balcão!'); window.location.href='Lojas.php?refresh=" . $token_atualizacao . "';</script>";
             exit();
         } else {
             $mensagem_feedback = "🚨 Erro ao gravar na base de dados: " . $mysqli->error;
@@ -104,8 +104,9 @@ $query_seletor_lojas = $mysqli->query($sql_seletor);
 <body>
 
 <div class="form-container">
-    <h3 style="color: #fff; margin-top: 0; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; font-size: 16px; letter-spacing: 0.5px; border-left: 3px solid #38bdf8; padding-left: 8px;">🚀 Direcionar Novo Cosmético</h3>
-    <p style="color: #64748b; font-size: 12.5px; margin: 0 0 22px 0; text-align: left; line-height: 1.4;">Escolha a empresa ou salão de destino para isolar os dados e evitar misturas na vitrina principal.</p>
+<a class="btn-hub-lojas" href="Lojas.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 80px;">Voltar</a>
+    <h3 style="color: #fff; margin-top: 0; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; font-size: 16px; letter-spacing: 0.5px; border-left: 3px solid #38bdf8; padding-left: 8px;"> Escolher produto Novo</h3>
+    <p style="color: #64748b; font-size: 12.5px; margin: 0 0 22px 0; text-align: left; line-height: 1.4;">Escolha a empresa ou salão de destino.</p>
     
     <?php if(!empty($mensagem_feedback)): ?>
         <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #f87171; padding: 10px; border-radius: 6px; color: #f87171; margin-bottom: 15px; font-size: 13px; text-align: center;"><?php echo $mensagem_feedback; ?></div>
@@ -115,7 +116,7 @@ $query_seletor_lojas = $mysqli->query($sql_seletor);
         
         <label class="label-premium" style="color: #eab308;">Para qual Empresa deseja enviar este produto?</label>
         <select name="loja_destino_id" class="input-campo" style="border-color: #ca8a04; background: #070b12; cursor: pointer;" required>
-            <option value="" style="color: #64748b;">-- Escolha a Empresa de Destino --</option>
+            <option value="" style="color: #64748b;"> Escolha a Empresa de Destino </option>
             <?php 
             if ($query_seletor_lojas && $query_seletor_lojas->num_rows > 0):
                 while($loja_opc = $query_seletor_lojas->fetch_assoc()): 
@@ -128,16 +129,16 @@ $query_seletor_lojas = $mysqli->query($sql_seletor);
         </select>
 
         <label class="label-premium">Nome do Produto / Artigo:</label>
-        <input type="text" name="nome_produto" class="input-campo" placeholder="Ex: Pomada Efeito Matte Elegance" required>
+        <input type="text" name="nome_produto" class="input-campo" required>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div>
                 <label class="label-premium">Preço de Venda (Kz):</label>
-                <input type="number" step="0.01" name="preco" class="input-campo" placeholder="4500" required>
+                <input type="number" step="0.01" name="preco" class="input-campo"  required>
             </div>
             <div>
                 <label class="label-premium">Quantidade Stock:</label>
-                <input type="number" name="stock_atual" class="input-campo" placeholder="12" required>
+                <input type="number" name="stock_atual" class="input-campo"  required>
             </div>
         </div>
 
@@ -147,7 +148,7 @@ $query_seletor_lojas = $mysqli->query($sql_seletor);
         <button type="submit" class="btn-enviar">Disponibilizar no Balcão Escolhido ⚡</button>
         
         <div style="text-align: center; margin-top: 20px;">
-            <a href="Principal.php" style="color: #64748b; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.2s;">← Retornar à Vitrina Pública</a>
+            <a href="Lojas.php" style="color: #64748b; text-decoration: none; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; transition: color 0.2s;">← Retornar à Vitrina Pública</a>
         </div>
     </form>
 </div>

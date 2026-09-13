@@ -1,18 +1,23 @@
 <?php
+// 🟢 GARANTIA MESTRE DO RENDER: Deve ser a linha 1 absoluta do arquivo!
 if (session_status() === PHP_SESSION_NONE) { 
-    session_start(); 
+    @session_start(); 
 }
-require_once __DIR__ . "/config/Banco.php";
+date_default_timezone_set('Africa/Luanda');
 
-// Inicializa variáveis de controlo de tentativas na sessão
+// 🛡️ INICIALIZAÇÃO DE SEGURANÇA: Evita avisos de chaves indefinidas no primeiro acesso
 if (!isset($_SESSION['tentativas_login'])) { $_SESSION['tentativas_login'] = 0; }
 if (!isset($_SESSION['bloqueio_tempo'])) { $_SESSION['bloqueio_tempo'] = 0; }
+
+// Se fores incluir o Conexao.php ou config, faz logo abaixo
+include_once("Conexao.php"); 
 
 // Verifica se o utilizador ainda está dentro do tempo de bloqueio (15 minutos = 900 segundos)
 $tempo_atual = time();
 if ($_SESSION['tentativas_login'] >= 3 && ($tempo_atual - $_SESSION['bloqueio_tempo']) < 900) {
     $tempo_restante = ceil((900 - ($tempo_atual - $_SESSION['bloqueio_tempo'])) / 60);
     $bloqueado = true;
+    $erro = "Excedeu o limite de 3 tentativas. Bloqueado. Restam " . $tempo_restante . " minuto(s).";
 } else {
     $bloqueado = false;
     // Se o tempo passou, reseta o contador
@@ -21,7 +26,7 @@ if ($_SESSION['tentativas_login'] >= 3 && ($tempo_atual - $_SESSION['bloqueio_te
     }
 }
 
-// Mecanismo de Logout
+// Mecanismo de Logout Seguro
 if (isset($_GET['logout'])) {
     session_unset();
     session_destroy();
@@ -29,10 +34,10 @@ if (isset($_GET['logout'])) {
     exit();
 }
 
-$erro = null;
+$erro = isset($erro) ? $erro : null;
 $sucesso = null;
 
-// PROCESSAMENTO DO LOGIN
+// PROCESSAMENTO DO LOGIN REATIVO SINCRO
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_login']) && !$bloqueado) {
     // Garante que o índice existe antes de fazer o trim
     $pin_acesso = isset($_POST['pin_acesso']) ? trim($_POST['pin_acesso']) : '';
@@ -62,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao_login']) && !$bl
             exit();
         }
 
-        // Se falhar o PIN:
+        // Se falhar o PIN: Incrementa o contador de forma isolada
         $_SESSION['tentativas_login']++;
         
         if ($_SESSION['tentativas_login'] >= 3) {
@@ -111,6 +116,9 @@ if ('serviceWorker' in navigator) {
 <body>
 
 <div class="box">
+
+<a class="btn-hub-lojas" href="Lojas.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 80px;">Voltar</a>
+
     <h3 style="color: #38bdf8; margin-bottom: 10px; text-align: center;">Portal de Parceiros Aurelius</h3>
     
     <p style="font-size: 12px; color: #94a3b8; text-align: center; margin-bottom: 20px; line-height: 1.4;">
