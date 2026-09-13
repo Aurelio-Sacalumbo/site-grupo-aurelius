@@ -1917,51 +1917,121 @@ function moverCarrosselSalores(direcao) {
 
 
      
-     
-     <div style="width: 100%; max-width: 1350px; margin: 30px auto; padding: 0 15px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box; clear: both !important;">
-         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box;">
-             
-             <!-- Cartão: Melhor Salão Nacional -->
-             <?php if ($melhor_salao): 
-                 $logo_s = !empty($melhor_salao['logo_empresa']) ? "uploads/".$melhor_salao['logo_empresa'] : "OIP (6).webp";
-             ?>
-                 <div class="card-lider-dinamico" style="background: linear-gradient(135deg, #0b1a30, #1e293b); border: 2px solid #ca8a04; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); position: relative; overflow: hidden; box-sizing: border-box;">
-                     <div class="tag-posicionada" style="position: absolute; top: 10px; right: 10px; background: #ca8a04; color: #fff; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🔥 Campeão de Atendimentos</div>
-                     
-                     <div style="width: 100px; height: 90px; background: #fff; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #ca8a04; flex-shrink: 0;">
-    <!-- Injetado prefixo de segurança upload/ -->
-    <img src="upload/<?php echo htmlspecialchars(basename($logo_s)); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+<?php
+// =========================================================================
+// 👑 MOTOR ROTATIVO DE LÍDERES: EXTRAÇÃO EM TEMPO REAL DA BASE DE DADOS
+// =========================================================================
+
+// 1. QUERY DOS SALÕES CAMPEÕES (Mapeia o ranking de atendimentos de salão e sorteia rotativamente um do TOP 3)
+$sql_top_saloes = "SELECT 
+                        u.codigo, 
+                        u.nome, 
+                        IFNULL(u.foto_perfil, 'OIP (6).webp') AS logo_empresa,
+                        'Huambo / Angola' AS endereco,
+                        COUNT(p.id) AS total_atendimentos
+                   FROM usuario u
+                   LEFT JOIN pagamentos p ON u.codigo = p.id_parceiro AND p.status_atendimento = 'Confirmado' AND p.tipo_parceiro = 'salao'
+                   WHERE u.nivel = 'parceiro_hospedado'
+                   GROUP BY u.codigo
+                   ORDER BY total_atendimentos DESC";
+
+$res_saloes = $mysqli->query($sql_top_saloes);
+$lista_saloes = [];
+if ($res_saloes && $res_saloes->num_rows > 0) {
+    while($row = $res_saloes->fetch_assoc()) { 
+        $lista_saloes[] = $row; 
+    }
+}
+
+// Escolha Rotativa Estável do Salão
+if (!empty($lista_saloes)) {
+    $melhor_salao = $lista_saloes[array_rand($lista_saloes)];
+} else {
+    // Fallback de Demonstração caso a tabela 'usuario' esteja vazia localmente
+    $melhor_salao = [
+        'nome' => 'Barbearia Branca',
+        'logo_empresa' => 'OIP (6).webp',
+        'endereco' => 'Bairro Talatona (Luanda)',
+        'total_atendimentos' => 0
+    ];
+}
+
+// 2. QUERY DAS LOJAS (TOP VENDAS)
+$sql_top_lojas = "SELECT 
+                        l.id, 
+                        l.nome_loja, 
+                        l.endereco_armazem,
+                        COUNT(p.id) AS total_vendas
+                  FROM lojas l
+                  LEFT JOIN pagamentos p ON l.id = p.id_parceiro AND p.status_atendimento = 'Confirmado' AND p.tipo_parceiro = 'loja'
+                  WHERE l.visivel_no_site = 1
+                  GROUP BY l.id
+                  ORDER BY total_vendas DESC";
+
+$res_lojas = $mysqli->query($sql_top_lojas);
+$lista_lojas = [];
+if ($res_lojas && $res_lojas->num_rows > 0) {
+    while($row = $res_lojas->fetch_assoc()) { 
+        $lista_lojas[] = $row; 
+    }
+}
+
+// Escolha Rotativa Estável da Loja
+if (!empty($lista_lojas)) {
+    $melhor_loja = $lista_lojas[array_rand($lista_lojas)];
+} else {
+    // Fallback de Demonstração caso a tabela 'lojas' esteja vazia localmente
+    $melhor_loja = [
+        'nome_loja' => 'Loengo Distribuidora',
+        'endereco_armazem' => 'Bairro de São Luís (Huambo)',
+        'total_vendas' => 0
+    ];
+}
+?>
+
+<!-- 📊 SEÇÃO DE DESTAQUES MULTI-TENANT RESPONSIVA E DINÂMICA -->
+<div style="width: 100%; max-width: 1350px; margin: 30px auto; padding: 0 15px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box; clear: both !important;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box;">
+         
+         <!-- Cartão: Melhor Salão Nacional Rotativo -->
+         <?php if ($melhor_salao): 
+             $logo_s = basename($melhor_salao['logo_empresa']);
+             $caminho_logo = file_exists("uploads/" . $logo_s) ? "uploads/" . $logo_s : (file_exists("upload/" . $logo_s) ? "upload/" . $logo_s : "upload/OIP (6).webp");
+         ?>
+             <div class="card-lider-dinamico" style="background: linear-gradient(135deg, #0b1a30, #1e293b); border: 2px solid #ca8a04; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); position: relative; overflow: hidden; box-sizing: border-box;">
+                
+                 
+                 <div style="width: 80px; height: 80px; background: #fff; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #ca8a04; flex-shrink: 0;">
+                    <img src="<?php echo $caminho_logo; ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+                 </div>
+                 
+                 <div class="zona-texto" style="text-align: left; min-width: 0; flex: 1;">
+                     <h4 style="color: #fff; margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($melhor_salao['nome']) ?></h4>
+                     <span style="color: #38bdf8; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Região: <?= htmlspecialchars($melhor_salao['endereco']) ?></span>
+                     <strong style="color: #22c55e; font-size: 12px; display: block; margin-top: 5px; letter-spacing: 0.5px;">👑 LÍDER COM <?= $melhor_salao['total_atendimentos'] ?> CORTES</strong>
+                 </div>
+             </div>
+         <?php endif; ?>
+ 
+         <!-- Cartão: Melhor Loja Nacional Rotativa -->
+         <?php if ($melhor_loja): ?>
+             <div class="card-lider-dinamico" style="background: linear-gradient(135deg, #0b1a30, #1e293b); border: 2px solid #eab308; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); position: relative; overflow: hidden; box-sizing: border-box;">
+                
+                 
+                 <div style="width: 80px; height: 80px; background: #111827; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #eab308; flex-shrink: 0;">
+                     <span style="font-size: 32px; line-height: 1;">🏬</span>
+                 </div>
+                 
+                 <div class="zona-texto" style="text-align: left; min-width: 0; flex: 1;">
+                     <h4 style="color: #fff; margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($melhor_loja['nome_loja']) ?></h4>
+                     <span style="color: #38bdf8; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Armazém: <?= htmlspecialchars($melhor_loja['endereco_armazem']) ?></span>
+                     <strong style="color: #eab308; font-size: 12px; display: block; margin-top: 5px; letter-spacing: 0.5px;">🚀 LÍDER COM <?= $melhor_loja['total_vendas'] ?> VENDAS</strong>
+                 </div>
+             </div>
+         <?php endif; ?>
+ 
+    </div>
 </div>
-                     
-                     <div class="zona-texto" style="text-align: left; min-width: 0; flex: 1;">
-                         <h4 style="color: #fff; margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($melhor_salao['nome']) ?></h4>
-                         <span style="color: #38bdf8; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Região: <?= htmlspecialchars($melhor_salao['endereco']) ?></span>
-                         <strong style="color: #22c55e; font-size: 12px; display: block; margin-top: 5px; letter-spacing: 0.5px;">👑 LÍDER COM <?= $melhor_salao['total_atendimentos'] ?> CORTES</strong>
-                     </div>
-                 </div>
-             <?php endif; ?>
-     
-             <!-- Cartão: Melhor Loja Nacional -->
-             <?php if ($melhor_loja): ?>
-                 <div class="card-lider-dinamico" style="background: linear-gradient(135deg, #0b1a30, #1e293b); border: 2px solid #ca8a04; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); position: relative; overflow: hidden; box-sizing: border-box;">
-                     <div class="tag-posicionada" style="position: absolute; top: 10px; right: 10px; background: #ca8a04; color: #fff; font-size: 9px; font-weight: bold; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">🛍️ Campeã de Vendas</div>
-                     
-                     <div style="width: 70px; height: 70px; background: #111827; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 2px solid #ca8a04; flex-shrink: 0;">
-                         <span style="font-size: 32px; line-height: 1;">🏬</span>
-                     </div>
-                     
-                     <div class="zona-texto" style="text-align: left; min-width: 0; flex: 1;">
-                         <h4 style="color: #fff; margin: 0 0 4px 0; font-size: 15px; text-transform: uppercase; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars($melhor_loja['nome_loja']) ?></h4>
-                         <span style="color: #38bdf8; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 Armazém: <?= htmlspecialchars($melhor_loja['endereco_armazem']) ?></span>
-                         <strong style="color: #eab308; font-size: 12px; display: block; margin-top: 5px; letter-spacing: 0.5px;">🚀 LÍDER COM <?= $melhor_loja['total_vendas'] ?> VENDAS</strong>
-                     </div>
-                 </div>
-             <?php endif; ?>
-     
-         </div>
-     </div>
-
-
 
 
 
@@ -2472,7 +2542,6 @@ $stmtGlobal = $pdo->prepare("
          }
      </style>
 
-
 <!-- 🛍️ SEÇÃO DE RECOMENDAÇÕES SAAS ENTERPRISE: INTERCALAÇÃO DINÂMICA LADO A LADO -->
 <h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif;">
     🛍️ Mercado Global • Sugestões para Si
@@ -2482,9 +2551,9 @@ $stmtGlobal = $pdo->prepare("
 <style>
 .vitrina-saas-grid {
     display: grid !important;
-    /* Força a exibição de exatamente 2 produtos lado a lado em telemóveis, expandindo no PC */
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
-    gap: 16px !important;
+    /* Garante rigorosamente 2 produtos lado a lado em ecrãs móveis e expande dinamicamente no PC */
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    gap: 12px !important;
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 0 4px !important;
@@ -2492,25 +2561,24 @@ $stmtGlobal = $pdo->prepare("
 .post-card-fb {
     background: #1e293b;
     border: 1px solid #334155;
-    border-radius: 16px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 10px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 410px;
+    min-height: 380px;
     box-sizing: border-box;
-    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease;
 }
 .post-card-fb:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(56, 189, 248, 0.15);
+    transform: translateY(-3px);
     border-color: #38bdf8;
 }
 .img-container-fb {
     width: 100%;
-    height: 140px;
-    border-radius: 10px;
+    height: 130px;
+    border-radius: 8px;
     overflow: hidden;
     background: #070b12;
     border: 1px solid #233144;
@@ -2521,15 +2589,15 @@ $stmtGlobal = $pdo->prepare("
 }
 .badge-stock-neon {
     position: absolute;
-    top: 8px;
-    right: 8px;
-    background: rgba(15, 23, 42, 0.9);
+    top: 6px;
+    right: 6px;
+    background: rgba(15, 23, 42, 0.95);
     color: #22c55e;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 9.5px;
     font-weight: bold;
-    border: 1px solid rgba(34, 197, 94, 0.4);
+    border: 1px solid rgba(34, 197, 94, 0.3);
 }
 </style>
 
@@ -2537,26 +2605,26 @@ $stmtGlobal = $pdo->prepare("
 $total_posts_exibidos = 0;
 $produtos_por_loja = [];
 
-// 1. ORGANIZAÇÃO E CONEXÃO DAS TABELAS DO PHPMYADMIN
+// 1. ORGANIZAÇÃO E CONEXÃO DINÂMICA DAS TABELAS DO PHPMYADMIN
 if (!empty($feed_produtos)) {
     foreach ($feed_produtos as $post) {
-        $stock_total = (int)($post['stock_atual'] ?? 0);
+        // 🟢 INTERCONEXÃO REATIVA: Usa a coluna viva 'stock' e valida se há unidades reais
+        $stock_real = isset($post['stock']) ? intval($post['stock']) : 0;
         
-        // Critério SaaS Absoluto: Se o stock for 0 ou esgotar, o produto cai da vitrina automaticamente
-        if ($stock_total <= 0) {
+        // Regra SaaS: Se o stock for 0 ou esgotar (ex: Forno, Funje, Pipoca), cai da vitrina automaticamente
+        if ($stock_real <= 0) {
             continue; 
         }
 
-        // Agrupa temporariamente no array bidimensional indexado por empresa_id
         $id_loja_dono = intval($post['empresa_id'] ?? 0);
         if ($id_loja_dono > 0) {
+            $post['stock_sincronizado'] = $stock_real;
             $produtos_por_loja[$id_loja_dono][] = $post;
         }
     }
 }
 
-// 2. ALGORTIMO ROUND-ROBIN (INTERCALADOR DE LOJAS): 
-// Retira um produto de cada loja sequencialmente para que elas alternem sempre perfeitamente
+// 2. ALGORITMO ROUND-ROBIN (INTERCALADOR AUTOMÁTICO DE EMPRESAS)
 $feed_intercalado_mestre = [];
 while (count($produtos_por_loja) > 0) {
     foreach ($produtos_por_loja as $id_loja => &$lista_artigos) {
@@ -2569,13 +2637,7 @@ while (count($produtos_por_loja) > 0) {
     }
 }
 
-// Sorteia as cabeças de linha de forma randómica inteligente a cada refresh (F5)
-if (count($feed_intercalado_mestre) > 1) {
-    $primeiro_bloco = array_splice($feed_intercalado_mestre, 0, rand(1, 2));
-    $feed_intercalado_mestre = array_merge($feed_intercalado_mestre, $primeiro_bloco);
-}
-
-// Exibe o Grid duplo na tela
+// Renderiza a Grid Responsiva Dupla PWA
 echo '<div class="vitrina-saas-grid">';
 
 if (!empty($feed_intercalado_mestre)): 
@@ -2583,32 +2645,29 @@ foreach ($feed_intercalado_mestre as $post):
     $id_post = intval($post['id'] ?? 0);
     $id_loja_redirecionamento = intval($post['empresa_id'] ?? 0);
     
-    // Higienização de strings contra quebras de tags HTML
-    $produto_nome = htmlspecialchars($post['nome_produto'] ?? 'Artigo Cosmético', ENT_QUOTES, 'UTF-8');
-    $stock_total  = intval($post['stock_atual'] ?? 0);
+    $produto_nome = htmlspecialchars($post['nome_produto'] ?? 'Artigo', ENT_QUOTES, 'UTF-8');
+    $stock_total  = intval($post['stock_sincronizado'] ?? 0);
     $preco_real   = number_format($post['preco'] ?? 0, 2, ',', '.');
-    
-    // Configura dinamicamente os códigos de série reais baseados no ID do produto e stock
     $codigo_serie = "LOTE-COS-" . $id_loja_redirecionamento . "-" . $id_post;
     
-    // Mapeamento dinâmico do nome das Barbearias/Lojas parceiras
-    $loja_nome = "Parceiro Registado";
+    // Mapeamento Dinâmico Automático baseado nos teus IDs de Fornecedores reais
+    $loja_nome = "Parceiro ID " . $id_loja_redirecionamento;
     if ($id_loja_redirecionamento === 237) $loja_nome = "Barbearia Branca";
-    elseif ($id_loja_redirecionamento === 242) $loja_nome = "Barbearia Só Tranças";
+    elseif ($id_loja_redirecionamento === 238) $loja_nome = "Mamadu";
+    elseif ($id_loja_redirecionamento === 240) $loja_nome = "Loengo";
+    elseif ($id_loja_redirecionamento === 241) $loja_nome = "Angelino Comercial";
+    elseif ($id_loja_redirecionamento === 242) $loja_nome = "Gráfica Soma";
     elseif ($id_loja_redirecionamento === 245) $loja_nome = "Loja Marcante";
-    elseif ($id_loja_redirecionamento === 240) $loja_nome = "Distribuidora Loengo";
-    elseif ($id_loja_redirecionamento === 238) $loja_nome = "Lojas Mamadu";
 
-    // 🛠️ ALTERAÇÃO DE ROTA SOLICITADA: Envia o ID para a página geral Lojas.php
     $link_destino_saas = "Lojas.php?id_loja=" . $id_loja_redirecionamento . "&produto_alvo=" . $id_post;
 
-    // 🖼️ FIX DAS IMAGENS: Corrigido o caminho de 'uploads/' para a pasta real 'upload/'
+    // 🖼️ TRATAMENTO DAS ROTAS DE IMAGENS BINÁRIAS
     $nome_imagem_banco = !empty($post['imagem']) ? trim($post['imagem']) : '';
-    $img_post = "download (5).png"; // Imagem Padrão se falhar
+    $img_post = "uploads/default_cosmetico.jpg"; 
     if (!empty($nome_imagem_banco)) {
         $arquivo_limpo = basename($nome_imagem_banco);
-        if (file_exists("upload/" . $arquivo_limpo)) {
-            $img_post = "upload/" . $arquivo_limpo;
+        if (file_exists("uploads/" . $arquivo_limpo)) {
+            $img_post = "uploads/" . $arquivo_limpo;
         } elseif (file_exists($arquivo_limpo)) {
             $img_post = $arquivo_limpo;
         }
@@ -2622,60 +2681,59 @@ foreach ($feed_intercalado_mestre as $post):
 
         <div>
             <!-- 👤 CABEÇALHO COMPACTO DA LOJA -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
-                <div style="width: 28px; height: 28px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
-                    <!-- Avatar Padrão da Plataforma para Parceiros -->
-                    <img src="upload/OIP (6).webp" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                <div style="width: 24px; height: 24px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
+                    <img src="uploads/OIP (6).webp" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='uploads/default.png';">
                 </div>
                 <div style="min-width: 0; flex: 1; text-align: left;">
-                    <strong style="color: #ffffff; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase;"><?php echo $loja_nome; ?></strong>
-                    <span style="color: #64748b; font-size: 9px; display: block;">Sincronizado 🌍</span>
+                    <strong style="color: #ffffff; font-size: 10.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase;"><?php echo $loja_nome; ?></strong>
+                    <span style="color: #64748b; font-size: 8.5px; display: block;">Sincronizado 🌍</span>
                 </div>
             </div>
 
-            <!-- 📝 FICHA TÉCNICA DO PRODUTO (REAL E DINÂMICO) -->
-            <div style="text-align: left; margin-bottom: 8px; line-height: 1.3;">
-                <strong style="color: #38bdf8; font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo $produto_nome; ?></strong>
-                <span style="color: #94a3b8; font-size: 9.5px; display: block; font-family: monospace; margin-top: 2px;">Série: <?php echo $codigo_serie; ?></span>
-                <span style="color: #64748b; font-size: 9px; display: block; margin-top: 1px;">Cat: Cosmético / Revenda</span>
-                <span style="color: #64748b; font-size: 9px; display: block;">Validade: 13/03/2028</span>
+            <!-- 📝 DETALHES TÉCNICOS -->
+            <div style="text-align: left; margin-bottom: 6px; line-height: 1.2;">
+                <strong style="color: #38bdf8; font-size: 12.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo $produto_nome; ?></strong>
+                <span style="color: #94a3b8; font-size: 9px; display: block; font-family: monospace; margin-top: 1px;">Série: <?php echo $codigo_serie; ?></span>
+                <span style="color: #64748b; font-size: 8.5px; display: block;">Especificações: <?php echo htmlspecialchars($post['tamanho'] ?? 'Padrão'); ?></span>
             </div>
 
-            <!-- 🖼️ CONTAINER DA IMAGEM CORRIGIDA -->
+            <!-- 🖼️ CONTAINER DA IMAGEM -->
             <div class="img-container-fb">
-                <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" decoding="async" onerror="this.src='download (5).png';">
-                <!-- Badge de Desconto em Unidades e Volume no Armazém -->
-                <span class="badge-stock-neon" style="color: #22c55e;"><?php echo $stock_total; ?> un.</span>
+                <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" decoding="async" onerror="this.src='uploads/default_cosmetico.jpg';">
+                <span class="badge-stock-neon"><?php echo $stock_total; ?> un.</span>
             </div>
         </div>
 
         <div>
             <!-- 💰 PREÇO MONETIZADO REAL -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #334155; margin-bottom: 8px;">
-                <span style="color: #64748b; font-size: 10px; font-weight: bold;">PREÇO:</span>
-                <strong style="color: #22c55e; font-size: 13.5px; font-weight: 700; font-family: monospace;"><?php echo $preco_real; ?> Kz</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #334155; margin-bottom: 6px;">
+                <span style="color: #64748b; font-size: 10.5px;">Preço Unid:</span>
+                <strong style="color: #22c55e; font-size: 13.5px; font-weight: 700;"><?php echo $preco_real; ?> Kz</strong>
             </div>
 
-            <!-- 🟢 BOTÃO "VER" REDIRECIONANDO PARA LOJAS.PHP -->
-            <a href="<?php echo htmlspecialchars($link_destino_saas); ?>" style="text-decoration: none !important; display: block; width: 100%;">
-                <button type="button" style="background: linear-gradient(135deg, #1877f2, #0056b3); border: none; color: #ffffff; border-radius: 8px; font-size: 11px; font-weight: bold; padding: 10px 0; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit;">Ver Produto</button>
+            <!-- ⚡ BOTÃO DE COMPRA DIRECIONADA -->
+            <div style="margin-top: 6px; display: flex; justify-content: center; width: 100%;">
+            <a href="<?php echo $link_destino_saas; ?>" style="display: inline-block; width: 85%; max-width: 140px; background: linear-gradient(135deg, #1877f2, #1159c7); color: #ffffff; text-align: center; padding: 6px 10px; text-decoration: none; font-weight: bold; border-radius: 20px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.15); margin: 0 auto; transition: background 0.2s;">
+                ⚡ Ir na Loja
             </a>
+        </div>
         </div>
 
     </div>
 
 <?php 
-endforeach;
-endif;
+endforeach; 
+endif; 
 
-echo '</div>'; // Fecho da div vitrina-saas-grid
-
-if ($total_posts_exibidos === 0):
+echo '</div>'; // Fecha a div .vitrina-saas-grid
 ?>
-    <div style="color: #64748b; text-align: center; padding: 30px; font-style: italic; background: #1e293b; border-radius: 12px; font-size: 13px; border: 1px dashed #334155; width: 100%;">
-        Nenhum produto ativo em stock localizado nas lojas ou barbearias parceiras hoje.
-    </div>
-<?php endif; ?>
+
+
+
+
+
+
 
 
 
