@@ -1529,77 +1529,84 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
          </div>
      </div>
  
-      <!-- GRADE DE MÍDIAS FILTRADA E LIMPA (FIM DOS CARTÕES VAZIOS) -->
-      <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
-      <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
-          <?php
-          try {
-              $queryFotos = $pdo->query("SELECT * FROM anuncios ORDER BY id_anuncio DESC");
-              $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
-          } catch (PDOException $e) {
-              $listaFotos = [];
-          }
-  
-          $total_midias_validas = 0;
+       <!-- GRADE DE MÍDIAS FILTRADA E ADAPTADA PARA NUVEM (SUPORTE BASE64 + LOCAL) -->
+     <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
+     <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
+         <?php
+         try {
+             $queryFotos = $pdo->query("SELECT * FROM anuncios ORDER BY id_anuncio DESC");
+             $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
+         } catch (PDOException $e) {
+             $listaFotos = [];
+         }
  
-          if (count($listaFotos) > 0): 
-              foreach ($listaFotos as $fotoItem): 
-                  // Extrai o nome limpo do arquivo do banco
-                  $arquivo = trim($fotoItem['image_url'] ?? ($fotoItem['imagem'] ?? ''));
-                  $arquivo_limpo = basename($arquivo);
-                  
-                  // Se o nome no banco estiver vazio, elimina/pula o cartão imediatamente
-                  if (empty($arquivo_limpo)) { continue; }
+         $total_midias_validas = 0;
+
+         if (count($listaFotos) > 0): 
+             foreach ($listaFotos as $fotoItem): 
+                 // Extrai o conteúdo bruto gravado no banco de dados
+                 $arquivo_banco = trim($fotoItem['imagem'] ?? '');
+                 
+                 if (empty($arquivo_banco)) { continue; }
+
+                 // 🟢 DETECTOR INTELIGENTE NUVEM/LOCAL
+                 // 1. Se começar por 'data:', é um arquivo Base64 vindo do Render! Ativa e renderiza diretamente.
+                 if (strpos($arquivo_banco, 'data:') === 0) {
+                     $img_src_render = $arquivo_banco;
+                     
+                     // Deteta se o Base64 é de um vídeo ou de uma foto para montar a tag certa
+                     $is_video = (strpos($arquivo_banco, 'data:video/') === 0);
+                 } 
+                 // 2. Se for um arquivo físico clássico do teu localhost XAMPP
+                 else {
+                     $arquivo_limpo = basename($arquivo_banco);
+                     $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
+                     $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg', 'webm']);
+
+                     if (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
+                         $img_src_render = "upload/" . $arquivo_limpo;
+                     } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
+                         $img_src_render = $arquivo_limpo;
+                     } else {
+                         // Se o arquivo local não existir fisicamente no teu PC Windows, oculta o card
+                         continue; 
+                     }
+                 }
+                 
+                 $total_midias_validas++;
+         ?>
+                 <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box;">
+                     
+                     <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #0f172a; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
+                         <?php if ($is_video): ?>
+                             <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover; opacity: 0.6;"></video>
+                             <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(7,11,18,0.85); color: #ca8a04; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">Animação 📹</span>
+                         <?php else: ?>
+                             <img src="<?php echo $img_src_render; ?>" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='upload/default.png';">
+                         <?php endif; ?>
+                     </div>
  
-                  $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
-                  $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg']);
-                  
-                  // 🛡️ VERIFICAÇÃO FÍSICA E REAL ANTES DE DESENHAR O CARD
-                  if (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
-                      $img_src_render = "upload/" . $arquivo_limpo;
-                  } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
-                      $img_src_render = $arquivo_limpo;
-                  } else {
-                      // ❌ Se o arquivo NÃO existe no teu computador, pula o loop e ELIMINA o cartão vazio da tela
-                      continue; 
-                  }
-                  
-                  // Incrementa apenas se o arquivo real foi localizado no Windows
-                  $total_midias_validas++;
-          ?>
-                  <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box;">
-                      
-                      <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #0f172a; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
-                          <?php if ($is_video): ?>
-                              <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover; opacity: 0.6;"></video>
-                              <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(7,11,18,0.85); color: #ca8a04; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">Animação 📹</span>
-                          <?php else: ?>
-                              <img src="<?php echo $img_src_render; ?>" style="width:100%; height:100%; object-fit:cover;">
-                          <?php endif; ?>
-                      </div>
-  
-                      <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['title'] ?? ($fotoItem['titulo'] ?? 'Trabalho Aurélius')); ?></strong>
-                      
-                      <?php if ($is_video): ?>
-                          <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0); ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
-                      <?php else: ?>
-                          <div style="height: 1px;"></div> 
-                      <?php endif; ?>
-  
-                  </div>
-          <?php 
-              endforeach;
-          endif; 
+                     <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? ($fotoItem['title'] ?? 'Trabalho Aurélius')); ?></strong>
+                     
+                     <?php if ($is_video): ?>
+                         <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0); ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
+                     <?php else: ?>
+                         <div style="height: 1px;"></div> 
+                     <?php endif; ?>
  
-          // Se após filtrar, nenhum arquivo real foi achado no XAMPP, mostra o aviso limpo
-          if ($total_midias_validas === 0):
-          ?>
-              <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
-                  Nenhuma inspiração ou corte com arquivo real localizado no diretório.
-              </div>
-          <?php endif; ?>
-      </div>
- </div> <!-- Fecho secao-photos -->
+                 </div>
+         <?php 
+             endforeach;
+         endif; 
+
+         if ($total_midias_validas === 0):
+         ?>
+             <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
+                 Nenhuma inspiração ou corte ativo localizado no sistema.
+             </div>
+         <?php endif; ?>
+     </div>
+</div>
  
  
  
