@@ -1,4 +1,7 @@
 <?php
+// =========================================================================
+// 🌍 CENTRAL DE COMPRAS & MARKETPLACE MULTI-LOJAS SAAS - GRUPO AURÉLIUS
+// =========================================================================
 if (session_status() === PHP_SESSION_NONE) { 
     session_start(); 
 }
@@ -9,12 +12,16 @@ $db_host = getenv('DB_HOST') ?: "127.0.0.1";
 $db_user = getenv('DB_USER') ?: "root";
 $db_pass = getenv('DB_PASSWORD') ?: "";
 $db_name = getenv('DB_NAME') ?: "aurelius_salao";
+$db_port = getenv('DB_PORT') ?: "3306";
 
-$mysqli = @new mysqli($db_host, $db_user, $db_pass, $db_name);
+$mysqli = mysqli_init();
+if (!@mysqli_real_connect($mysqli, $db_host, $db_user, $db_pass, $db_name, (int)$db_port)) {
+    $mysqli = @mysqli_connect("127.0.0.1", "root", "", "aurelius_salao");
+}
 
-if ($mysqli->connect_error) { 
-    die("<div style='padding:20px; background:#ffdddd; color:#aa0000; font-family:sans-serif;'>
-            <strong>Erro de Infraestrutura:</strong> Ligação ao banco de dados recusada no Render.
+if (!$mysqli || mysqli_connect_errno()) { 
+    die("<div style='padding:20px; background:#0f172a; color:#ef4444; font-family:sans-serif;'>
+            <strong>Erro de Infraestrutura:</strong> Ligação ao banco de dados recusada.
          </div>"); 
 }
 $mysqli->set_charset("utf8mb4");
@@ -22,49 +29,54 @@ $mysqli->set_charset("utf8mb4");
 $mensagem_feedback = "";
 
 // =========================================================================
-// 🚀 PROCESSADOR REATIVO: CADASTRO DO PRODUTO (SINTAXE 100% CORRIGIDA)
+// 🚀 PROCESSADOR REATIVO: CADASTRO DO PRODUTO (SINTAXE GERAL CORRIGIDA)
 // ==========================================================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nome_produto'])) {
-    $empresa_id   = intval($_POST['loja_destino_id']);
+    // 🟢 ALINHAMENTO CRÍTICO: Captura os nomes exatos enviados pelos inputs do formulário HTML
+    $id_empresa   = intval($_POST['loja_destino_id']);
     $nome_produto = $mysqli->real_escape_string(trim($_POST['nome_produto']));
     $preco        = floatval($_POST['preco']);
-    $stock_atual  = intval($_POST['stock_atual']);
+    $quantidade   = intval($_POST['stock_atual']); 
     
-    // Tratamento de Upload de Imagem — Constante corrigida para UPLOAD_ERR_OK
-    $nome_imagem = "default.png";
+    // Nome padrão caso não seja feito o upload de imagem
+    $imagem_nome = "default_cosmetico.jpg"; 
+    
+    // Processamento real do upload do ficheiro binário de imagem
     if (isset($_FILES['foto_produto']) && $_FILES['foto_produto']['error'] === UPLOAD_ERR_OK) {
-        $extensao = pathinfo($_FILES['foto_produto']['name'], PATHINFO_EXTENSION);
-        $nome_imagem = "prod_" . time() . "_" . uniqid() . "." . $extensao;
-        
-        // Garante a existência da pasta upload
-        if (!is_dir("upload")) { mkdir("upload", 0777, true); }
-        move_uploaded_file($_FILES['foto_produto']['tmp_name'], "upload/" . $nome_imagem);
+        $extensao = strtolower(pathinfo($_FILES['foto_produto']['name'], PATHINFO_EXTENSION));
+        if (in_array($extensao, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
+            $imagem_nome = "prod_" . time() . "_" . uniqid() . "." . $extensao;
+            $pasta_destino = __DIR__ . "/uploads/";
+            if (!is_dir($pasta_destino)) {
+                mkdir($pasta_destino, 0777, true);
+            }
+            move_uploaded_file($_FILES['foto_produto']['tmp_name'], $pasta_destino . $imagem_nome);
+        }
     }
-
-    if ($empresa_id > 0 && !empty($nome_produto)) {
-        // Inserção exata alinhada às colunas mapeadas no seu phpMyAdmin
-        $sql_insert = "INSERT INTO produtos_cosmeticos (empresa_id, nome_produto, preco, stock_atual, imagem, data_cadastro) 
-                       VALUES ($empresa_id, '$nome_produto', $preco, $stock_atual, '$nome_imagem', NOW())";
+    
+    if ($id_empresa > 0 && !empty($nome_produto) && $preco > 0) {
+        // 🟢 ENGINE UNIFICADO: Injeta o stock real simultaneamente em 'stock_atual' e em 'stock'
+        $sql_inserir_novo = "INSERT INTO `produtos_cosmeticos` 
+            (`empresa_id`, `nome_produto`, `preco`, `stock_atual`, `stock`, `imagem`, `tamanho`, `cor_branca`, `data_cadastro`) 
+            VALUES 
+            ('$id_empresa', '$nome_produto', '$preco', '$quantidade', '$quantidade', '$imagem_nome', 'Padrão', 'Tem', NOW())";
         
-        if ($mysqli->query($sql_insert)) {
-            echo "<script>
-                    alert('✓ Produto direcionado e publicado com sucesso no stock da empresa!'); 
-                    window.location.href='" . $_SERVER['PHP_SELF'] . "';
-                  </script>";
+        if ($mysqli->query($sql_inserir_novo) || $stmt_baixa->affected_rows > 0) {
+            // 🟢 Injeta um token de tempo único no redirecionamento para quebrar a cache
+            $token_atualizacao = time();
+            echo "<script>alert('✓ Transação processada e stock atualizado no balcão!'); window.location.href='Principal.php?refresh=" . $token_atualizacao . "';</script>";
             exit();
         } else {
-            $mensagem_feedback = "Erro ao registar produto: " . $mysqli->error;
+            $mensagem_feedback = "🚨 Erro ao gravar na base de dados: " . $mysqli->error;
         }
     } else {
-        $mensagem_feedback = "Por favor, preencha todos os campos obrigatórios.";
+        $mensagem_feedback = "🚨 Por favor, preencha todos os campos obrigatórios com valores válidos.";
     }
 }
-
 
 // =========================================================================
 // 🔌 QUERY COESORA: MONTA O SELETOR COMBINANDO AS TABELAS DO SEU SAAS
 // =========================================================================
-// Captura os códigos e nomes das tabelas 'usuario' e 'lojas' para não misturar dados
 $sql_seletor = "
     (SELECT codigo as id, nome as nome_loja FROM usuario WHERE nivel = 'parceiro_hospedado' AND transacao_status = 'Confirmado')
     UNION
@@ -101,7 +113,6 @@ $query_seletor_lojas = $mysqli->query($sql_seletor);
 
     <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" enctype="multipart/form-data">
         
-        <!-- 🟢 SELETOR DE LOJAS DINÂMICO CONECTADO ÀS VARIÁVEIS DO BANCO -->
         <label class="label-premium" style="color: #eab308;">Para qual Empresa deseja enviar este produto?</label>
         <select name="loja_destino_id" class="input-campo" style="border-color: #ca8a04; background: #070b12; cursor: pointer;" required>
             <option value="" style="color: #64748b;">-- Escolha a Empresa de Destino --</option>

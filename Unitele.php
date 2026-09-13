@@ -75,7 +75,6 @@ if (isset($_GET['redefinir_pin_urgente']) && !empty($_GET['tel_ref'])) {
 // 🟢 3. PROCESSAMENTO DE COMPRA E VALIDAÇÃO EXCLUSIVA DE PIN ÚNICO
 $exibir_fatura_final = false;
 $fatura_dados = [];
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'])) {
     $cliente_nome = trim($_POST['nome_cliente']);
     $cliente_telefone = trim($_POST['cliente_telefone']); 
@@ -122,15 +121,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'
     $comissao_aurelius = $valor_final_venda * 0.10;
     $valor_liquido_parceiro = $valor_final_venda - $comissao_aurelius;
 
+    // 📊 Validação segura baseada no stock máximo atualizado do banco
     if ($stock_maximo >= $quantidade_comprada) {
         $stmt_pag = $mysqli->prepare("INSERT INTO `pagamentos` (id_parceiro, tipo_parceiro, cliente, cliente_telefone, profissional, funcionario, data_servico, hora_servico, servico, valor, desconto, valor_liquido, visto_admin, status_atendimento, status_trabalho) VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW(), ?, ?, ?, ?, 0, 'Confirmado', ?)");
         $serv_label = $nome_produto . " [" . strtoupper($modalidade_entrega) . "]";
         $stmt_pag->bind_param("issssssddds", $id_parceiro_real, $tipo_parceiro_final, $cliente_nome, $cliente_telefone, $status_trabalho, $status_trabalho, $serv_label, $valor_final_venda, $desconto_real, $valor_liquido_parceiro, $status_trabalho);
         $stmt_pag->execute();
+        $stmt_pag->close();
 
-        // ⚡ REGRA DO -X: Reduz o stock da base de dados de forma isolada
-        $novo_stock = $stock_maximo - $quantidade_comprada;
-        $mysqli->query("UPDATE `produtos_cosmeticos` SET `stock_atual` = '$novo_stock' WHERE `id` = '$id_produto_get'");
+        // 🟢 CORREÇÃO DA REGRA DO -X: 
+        // 1. Atualiza a coluna real 'stock' E 'stock_atual' ao mesmo tempo.
+        // 2. A trava 'WHERE id = ... AND stock >= ...' impede que o stock caia abaixo de 0.
+        $stmt_baixa_real = $mysqli->prepare("UPDATE `produtos_cosmeticos` 
+                                             SET `stock` = `stock` - ?, `stock_atual` = `stock_atual` - ? 
+                                             WHERE `id` = ? AND `stock` >= ?");
+        $stmt_baixa_real->bind_param("iiii", $quantidade_comprada, $quantidade_comprada, $id_produto_get, $quantidade_comprada);
+        $stmt_baixa_real->execute();
+        $stmt_baixa_real->close();
 
         // Prepara os dados para imprimir a fatura final no ecrã
         $exibir_fatura_final = true;
@@ -149,13 +156,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['executar_venda_final'
             "status" => $status_trabalho,
             "canal" => strtoupper(str_replace('_', ' ', $canal_pagamento))
         ];
+    } else {
+        die("<script>alert('🚨 Operação Cancelada: Quantidade solicitada superior ao stock disponível no armazém!'); window.history.back();</script>");
     }
 }
 
 $label_gateway = ($gateway_atual === 'mcx_xpress') ? 'Multicaixa Express' : 'Unitel Money';
 $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
-?>
-<!DOCTYPE html>
+?><!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">

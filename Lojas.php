@@ -1,13 +1,20 @@
 <?php
-// =========================================================================
-// 🌍 CENTRAL DE COMPRAS & MARKETPLACE MULTI-LOJAS SAAS - GRUPO AURÉLIUS (LOJAS.PHP)
-// =========================================================================
 if (session_status() === PHP_SESSION_NONE) { 
     session_start(); 
 }
 date_default_timezone_set('Africa/Luanda');
 
-// 🟢 Motor Híbrido Unificado para Localhost e Produção Online
+// 🟢 ANTI-CACHE MESTRE: Força o navegador a buscar sempre os dados reais do banco
+header("Cache-Control: no-cache, must-revalidate"); // HTTP 1.1
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT"); // Data no passado
+header("Pragma: no-cache"); // HTTP 1.0
+
+if (session_status() === PHP_SESSION_NONE) { 
+    session_start(); 
+}
+date_default_timezone_set('Africa/Luanda');
+
+// 🟢 MOTOR HÍBRIDO BLINDADO: Configuração de Nuvem e Localhost sem travamentos
 $h_host = getenv('DB_HOST') ?: "altaria.proxy.rlwy.net";
 $h_port = getenv('DB_PORT') ?: "52030";
 $h_name = getenv('DB_NAME') ?: "railway";
@@ -15,48 +22,27 @@ $h_user = getenv('DB_USER') ?: "root";
 $h_pass = getenv('DB_PASSWORD') ?: "tPzDwXGkyczyyYdcyvLmHLSMmfZmnMIZ";
 
 $mysqli = mysqli_init();
-if (!@mysqli_real_connect($mysqli, $h_host, $h_user, $h_pass, $h_name, (int)$h_port)) {
-    // Fallback de contingência automática para o XAMPP local caso os tokens de nuvem falhem
+
+// O segredo está no '@' e no bloco 'if': Se a ligação à nuvem falhar ou o host for desconhecido, 
+// o PHP ignora o erro silenciosamente e ativa imediatamente o teu XAMPP Local.
+if (!isset($_ENV['DB_HOST']) || !@mysqli_real_connect($mysqli, $h_host, $h_user, $h_pass, $h_name, (int)$h_port)) {
+    // 💻 Fallback de contingência mestre para o teu MySQL Local do XAMPP
     $mysqli = @mysqli_connect("127.0.0.1", "root", "", "aurelius_salao");
 }
 
+// Se mesmo no XAMPP local houver falha, exibe a mensagem personalizada do sistema
 if (!$mysqli || mysqli_connect_errno()) { 
     die("<div style='padding:20px; background:#0f172a; color:#ef4444; font-family:sans-serif; border:1px solid #ef4444; border-radius:12px; margin:20px;'>
-            <strong>Erro de Infraestrutura:</strong> O marketplace não conseguiu ligar-se à base de dados centralizada.
+            <strong>Erro de Infraestrutura:</strong> O marketplace não conseguiu ligar-se à base de dados centralizada local ou na nuvem.
          </div>"); 
 }
 
 $mysqli->set_charset("utf8mb4");
 
-// Opcional: Desativa temporariamente o modo estrito para esta sessão como redundância de segurança
+// Desativa o modo estrito para garantir compatibilidade com as queries do marketplace
 $mysqli->query("SET SESSION sql_mode=''");
 
 $id_usuario_comprador = isset($_SESSION['codigo_usuario']) ? intval($_SESSION['codigo_usuario']) : 1;
-
-// 🔒 LISTAGEM EXCLUSIVA DE LOJAS SEM DUPLICADOS:
-// Usamos DISTINCT no id para carregar os registos únicos da tabela lojas.
-// Desta forma, o teu HTML lê a array $lojas_parceiras corretamente e a mensagem de erro desaparece!
-$query_lojas = $mysqli->query("SELECT DISTINCT id AS codigo, nome_loja AS nome, endereco_armazem AS endereco, especificacoes_json 
-                               FROM lojas 
-                               WHERE visivel_no_site = 1 
-                               ORDER BY id DESC");
-
-$lojas_parceiras = [];
-if ($query_lojas) {
-    while ($row = $query_lojas->fetch_assoc()) {
-        $lojas_parceiras[] = $row;
-    }
-}
-
-$query_produtos_feed_real = $mysqli->query("SELECT 
-                                               p.*, 
-                                               l.nome_loja, 
-                                               l.endereco_armazem 
-                                           FROM produtos_cosmeticos p
-                                           INNER JOIN lojas l ON p.empresa_id = l.id
-                                           WHERE p.stock > 0
-                                           GROUP BY p.id
-                                           ORDER BY p.id DESC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -176,109 +162,140 @@ $query_produtos_feed_real = $mysqli->query("SELECT
          }
      }
  </style>
+
+
+
+
+
 <div class="container-hub" style="max-width: 1200px; margin: 0 auto; padding: 15px; font-family: system-ui, -apple-system, sans-serif;">
      
-<div class="barra-topo-lojas" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-    
-    <!-- Bloco de Texto Informativo -->
-    <div class="header-market" style="flex: 1; min-width: 250px;">
-        <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 20px; font-weight: 600;">🌍 Distribuição de Lojas Nacionais</h2>
-        <p style="color: #94a3b8; font-size: 13px; margin: 0;">Lojas de distribuição de compras e Vendas online.</p>
+    <div class="barra-topo-lojas" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        
+        <div class="header-market" style="flex: 1; min-width: 250px;">
+            <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 20px; font-weight: 600;">🌍 Distribuição de Lojas Nacionais</h2>
+            <p style="color: #94a3b8; font-size: 13px; margin: 0;">Lojas de distribuição de compras e Vendas online.</p>
+        </div>
+        
+        <div class="grupo-botoes-hub" style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <a class="btn-hub-lojas" href="Principal.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 80px;">Voltar</a>
+            <a class="btn-hub-lojas" href="Admin_Venda.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 130px;">Consultar Vendas</a>
+            <a class="btn-hub-lojas" href="produto%20Novo.php" style="background: #0284c7; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 160px;">Add produtos na Loja</a>
+        </div>
+
     </div>
-    
-    <!-- Bloco de Ações e Links Dinâmicos Responsivos -->
-    <div class="grupo-botoes-hub" style="display: flex; flex-wrap: wrap; gap: 10px;">
-        <a class="btn-hub-lojas" href="Principal.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 80px;">Voltar</a>
-        <a class="btn-hub-lojas" href="Admin_Venda.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 130px;">Consultar Vendas</a>
-        <a class="btn-hub-lojas" href="produto%20Novo.php" style="background: #0284c7; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 160px;">Add produtos na Loja</a>
-    </div>
 
-</div>
-
-<!-- ABAS SUPERIORES RESPONSIVAS (Scroll horizontal automático no telemóvel) -->
-<div class="wrapper-abas" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 25px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
-   <?php if (empty($lojas_parceiras)): ?>
-       <p style="color: #64748b; font-size: 14px; width: 100%; text-align: center; padding: 20px; background: #0f172a; border-radius: 12px;">Nenhuma loja parceira ativa registada no banco de dados.</p>
-   <?php else: ?>
-       <?php foreach ($lojas_parceiras as $index => $loja): ?>
-           <button class="aba-loja-btn <?php echo $index === 0 ? 'active' : ''; ?>" onclick="alternarAbaLoja(<?php echo $loja['codigo']; ?>, this)" style="white-space: nowrap; flex: 0 0 auto; background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-               🏬 <?php echo htmlspecialchars($loja['nome']); ?>
-           </button>
-       <?php endforeach; ?>
-   <?php endif; ?>
-</div>
-
-<!-- CONTEÚDO DAS VITRINES AUTOMÁTICAS -->
-<div id="contentor_vitrines_SaaS">
-   <?php foreach ($lojas_parceiras as $index => $loja): 
-       $id_fornecedor = $loja['codigo'];
-       $config_loja = json_decode($loja['especificacoes_json'], true);
+    <!-- 🟢 ABAS SUPERIORES RESTAURADAS: Lê a tabela puras de lojas sem esconder o visor global -->
+    <div class="wrapper-abas" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 25px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+       <?php 
+       $lojas_com_produtos = [];
+       // 🔒 Retornamos ao mapeamento estável da tabela lojas para garantir que as abas nunca sumam
+       $query_abas_dinamicas = $mysqli->query("SELECT DISTINCT id AS codigo, nome_loja AS nome, endereco_armazem AS endereco, especificacoes_json 
+                                              FROM lojas 
+                                              WHERE visivel_no_site = 1 
+                                              ORDER BY nome ASC");
        
-       $produtos_declarados = [];
-
-       // 🧠 FILTRO AUTOMÁTICO REATIVO: Apenas produtos com unidades disponíveis (stock > 0)
-       $query_reais = $mysqli->query("SELECT * FROM produtos_cosmeticos WHERE empresa_id = '$id_fornecedor' AND stock > 0 ORDER BY id DESC");
-       if ($query_reais && $query_reais->num_rows > 0) {
-           while ($prod_real = $query_reais->fetch_assoc()) {
-               $produtos_declarados[] = [
-                   'id'       => $prod_real['id'],
-                   'nome'     => $prod_real['nome_produto'],
-                   'serie'    => 'LOTE-COS-' . $id_fornecedor . '-' . $prod_real['id'],
-                   'tipo'     => 'Cosmético Comercial / Revenda',
-                   'cor'      => 'Original Embalado',
-                   'validade' => date('d/m/Y', strtotime('+18 months')),
-                   'stock'    => intval($prod_real['stock']), // Sincronizado com a coluna real 'stock'
-                   'preco'    => floatval($prod_real['preco']),
-                   'imagem'   => $prod_real['imagem']
-               ];
+       if ($query_abas_dinamicas && $query_abas_dinamicas->num_rows > 0) {
+           while ($aba = $query_abas_dinamicas->fetch_assoc()) {
+               $lojas_com_produtos[] = $aba;
            }
        }
-   ?>
-       <!-- Grid Fluida: Adapta-se automaticamente entre 1 a 4 colunas dependendo do ecrã -->
-       <div id="vitrine-loja-<?php echo $id_fornecedor; ?>" class="painel-vitrine <?php echo $index === 0 ? 'active' : ''; ?>" style="display: <?php echo $index === 0 ? 'grid' : 'none'; ?>; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%;">
-           <?php if (!empty($produtos_declarados)): ?>
-               <?php foreach ($produtos_declarados as $prod): ?>
-                 <div class="card-produto" id="card_prod_<?php echo $prod['id']; ?>" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s, box-shadow 0.2s;">
-                       <span class="badge-promo" style="position: absolute; top: 12px; left: 12px; background: #eab308; color: #000; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; z-index: 2;">Desconto +5 Unid.</span>
-                       
-                       <div style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; background: #0f172a; display: flex; align-items: center; justify-content: center;">
-                           <img src="uploads/<?php echo htmlspecialchars($prod['imagem']); ?>" class="img-produto" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">
-                       </div>
-                       
-                       <h3 style="color: #fff; font-size: 16px; margin: 12px 0 4px 0; font-weight: 600;"><?php echo htmlspecialchars($prod['nome']); ?></h3>
-                       <p style="color: #94a3b8; font-size: 12px; margin: 0;">🏬 Origem: <?php echo htmlspecialchars($loja['nome']); ?></p>
-                       <p style="color: #38bdf8; font-size: 12px; margin: 0 0 12px 0;">📍 Distribuição: <?php echo htmlspecialchars($loja['endereco']); ?></p>
 
-                       <div class="ficha-tecnica" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 12px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; border: 1px solid #1e293b;">
-                           <strong>Código Série:</strong> <?php echo $prod['serie']; ?><br>
-                           <strong>Tipo / Categoria:</strong> <?php echo htmlspecialchars($prod['tipo']); ?><br>
-                           <strong>Especificação Cor:</strong> <?php echo htmlspecialchars($prod['cor']); ?><br>
-                           <strong>Fim de Validade:</strong> <span style="color:#f87171; font-weight:600;"><?php echo $prod['validade']; ?></span><br>
-                           <strong>Disponível no Armazém:</strong> <span style="color: #fff; font-weight: 600;"><?php echo $prod['stock']; ?> un.</span>
-                       </div>
+       if (empty($lojas_com_produtos)): 
+       ?>
+           <p style="color: #64748b; font-size: 14px; width: 100%; text-align: center; padding: 20px; background: #0f172a; border-radius: 12px;">Nenhuma loja parceira ativa registada no banco de dados.</p>
+       <?php 
+       else: 
+           foreach ($lojas_com_produtos as $index => $aba_loja): 
+       ?>
+               <button class="aba-loja-btn <?php echo $index === 0 ? 'active' : ''; ?>" onclick="alternarAbaLoja(<?php echo $aba_loja['codigo']; ?>, this)" style="white-space: nowrap; flex: 0 0 auto; background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                   🏬 <?php echo htmlspecialchars($aba_loja['nome']); ?>
+               </button>
+       <?php 
+           endforeach; 
+       endif; 
+       ?>
+    </div>
 
-                       <div style="font-size: 18px; font-weight: 700; color: #22c55e; margin-bottom: 12px; display: flex; align-items: center; gap: 4px;">
-                           Preço: <span><?php echo number_format($prod['preco'], 2, ',', '.'); ?></span> Kz
-                       </div>
+    <!-- CONTEÚDO DAS VITRINES AUTOMÁTICAS -->
+    <div id="contentor_vitrines_SaaS">
+       <?php 
+       foreach ($lojas_com_produtos as $index => $aba_loja): 
+           $id_fornecedor = $aba_loja['codigo'];
+           $end_real = !empty($aba_loja['endereco']) ? $aba_loja['endereco'] : "Huambo - Angola";
 
-                       <div class="form-pedido" style="margin-top: auto;">
-                           <a href="Unitele.php?id_produto_comprado=<?php echo $prod['id']; ?>&gateway=mcx_xpress" 
-                           style="display: block; background: #22c55e; color: #000; text-align: center; padding: 12px; text-decoration: none; font-weight: 700; border-radius: 8px; transition: background 0.2s; font-size: 14px;">
-                           ⚡ Comprar Agora
-                        </a>
-                       </div>
+           $produtos_declarados = [];
+
+          // 🧠 LEITURA DIRETA E REATIVA DO BANCO DE DADOS (Dentro do Lojas.php)
+// O filtro 'stock > 0' garante que se o produto zerar no Unitele.php, ele DESAPARECE da tela
+$query_reais = $mysqli->query("SELECT * FROM produtos_cosmeticos 
+WHERE empresa_id = '$id_fornecedor' 
+AND stock > 0 
+GROUP BY id 
+ORDER BY id DESC");
+
+if ($query_reais && $query_reais->num_rows > 0) {
+while ($prod_real = $query_reais->fetch_assoc()) {
+// Dentro do loop while ($prod_real = $query_reais->fetch_assoc()) no Lojas.php:
+    $produtos_declarados[] = [
+        'id'       => $prod_real['id'],
+        'nome'     => $prod_real['nome_produto'],
+        'serie'    => 'LOTE-COS-' . $id_fornecedor . '-' . $prod_real['id'],
+        'tipo'     => (!empty($prod_real['tamanho']) && strpos($prod_real['tamanho'], 'Tam:') !== false) ? $prod_real['tamanho'] : 'Cosmético Comercial / Revenda',
+        
+        // 🟢 CORREÇÃO DA LINHA 268: Se a coluna 'cor_branca' ou 'cor' estiver vazia no banco, define um padrão
+        'cor'      => !empty($prod_real['cor_branca']) ? $prod_real['cor_branca'] : 'Original Embalado',
+        
+        'validade' => date('d/m/Y', strtotime('+18 months')),
+        'stock'    => intval($prod_real['stock']) > 0 ? intval($prod_real['stock']) : intval($prod_real['stock_atual']), 
+        'preco'    => floatval($prod_real['preco']),
+        'imagem'   => $prod_real['imagem']
+    ];
+}
+}
+       ?>
+           <div id="vitrine-loja-<?php echo $id_fornecedor; ?>" class="painel-vitrine <?php echo $index === 0 ? 'active' : ''; ?>" style="display: <?php echo $index === 0 ? 'grid' : 'none'; ?>; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%;">
+               <?php if (!empty($produtos_declarados)): ?>
+                   <?php foreach ($produtos_declarados as $prod): ?>
+                     <div class="card-produto" id="card_prod_<?php echo $prod['id']; ?>" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                           <span class="badge-promo" style="position: absolute; top: 12px; left: 12px; background: #eab308; color: #000; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; z-index: 2;">Desconto +5 Unid.</span>
+                           
+                           <div style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; background: #0f172a; display: flex; align-items: center; justify-content: center;">
+                               <img src="uploads/<?php echo htmlspecialchars($prod['imagem']); ?>" class="img-produto" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">
+                           </div>
+                           
+                           <h3 style="color: #fff; font-size: 16px; margin: 12px 0 4px 0; font-weight: 600;"><?php echo htmlspecialchars($prod['nome']); ?></h3>
+                           <p style="color: #94a3b8; font-size: 12px; margin: 0;">🏬 Origem: <?php echo htmlspecialchars($aba_loja['nome']); ?></p>
+                           <p style="color: #38bdf8; font-size: 12px; margin: 0 0 12px 0;">📍 Distribuição: <?php echo htmlspecialchars($end_real); ?></p>
+
+                           <div class="ficha-tecnica" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 12px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; border: 1px solid #1e293b;">
+                               <strong>Código Série:</strong> <?php echo $prod['serie']; ?><br>
+                               <strong>Especificações:</strong> <?php echo htmlspecialchars($prod['tipo']); ?><br>
+                               <strong>Especificação Cor:</strong> <?php echo htmlspecialchars($prod['cor']); ?><br>
+                               <strong>Fim de Validade:</strong> <span style="color:#f87171; font-weight:600;"><?php echo $prod['validade']; ?></span><br>
+                               <strong>Disponível no Armazém:</strong> <span style="font-weight: 600; color: #fff;"><?php echo $prod['stock']; ?> un.</span>
+                           </div>
+
+                           <div style="font-size: 18px; font-weight: 700; color: #22c55e; margin-bottom: 12px;">
+                               Preço: <span><?php echo number_format($prod['preco'], 2, ',', '.'); ?></span> Kz
+                           </div>
+
+                           <div class="form-pedido" style="margin-top: auto;">
+                               <a href="Unitele.php?id_produto_comprado=<?php echo $prod['id']; ?>&gateway=mcx_xpress" 
+                                  style="display: block; background: #22c55e; color: #000; text-align: center; padding: 12px; text-decoration: none; font-weight: 700; border-radius: 8px; font-size: 14px;">
+                                   ⚡ Comprar Agora
+                               </a>
+                           </div>
+                     </div>
+                   <?php endforeach; ?>
+               <?php else: ?>
+                   <div style="color: #64748b; font-size: 14px; grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #0f172a; border-radius: 12px; border: 1px dashed #334155; width: 100%;">
+                       <span style="font-size: 32px; display: block; margin-bottom: 10px;">📦</span>
+                       Esta loja parceira registou-se com sucesso, mas ainda não adicionou cosméticos ou equipamentos ao catálogo.
                    </div>
-               <?php endforeach; ?>
-           <?php else: ?>
-               <!-- Bloco de Aviso Automático e Fluido quando a Loja não tem produtos ativos -->
-               <div style="color: #64748b; font-size: 14px; grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #0f172a; border-radius: 12px; border: 1px dashed #334155; width: 100%; box-sizing: border-radius;">
-                   <span style="font-size: 32px; display: block; margin-bottom: 10px;">📦</span>
-                   Esta loja parceira registou-se com sucesso, mas ainda não adicionou cosméticos ou equipamentos ao catálogo.
-               </div>
-           <?php endif; ?>
-       </div>
-   <?php endforeach; ?>
-</div>
+               <?php endif; ?>
+           </div>
+       <?php endforeach; ?>
+    </div>
 </div>
 
 
@@ -289,36 +306,32 @@ $query_produtos_feed_real = $mysqli->query("SELECT
 
 
 
-
+<!-- 🟢 BLOCO JAVASCRIPT OTIMIZADO E SEM DUPLICAÇÕES OMITIDAS -->
 <script>
 function alternarAbaLoja(idLoja, botaoClicado) {
     document.querySelectorAll('.aba-loja-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.painel-vitrine').forEach(painel => { painel.classList.remove('active'); painel.style.display = 'none'; });
+    document.querySelectorAll('.painel-vitrine').forEach(painel => { 
+        painel.classList.remove('active'); 
+        painel.style.display = 'none'; 
+    });  document.querySelectorAll('.painel-vitrine').forEach(painel => { 
+        painel.classList.remove('active'); 
+        painel.style.display = 'none'; 
+    });
     botaoClicado.classList.add('active');
     var vitrineAlvo = document.getElementById('vitrine-loja-' + idLoja);
-    if(vitrineAlvo) { vitrineAlvo.classList.add('active'); vitrineAlvo.style.display = 'grid'; }
+    if(vitrineAlvo) { 
+        vitrineAlvo.classList.add('active'); 
+        vitrineAlvo.style.display = 'grid'; 
+    }
 }
 
 function ativarPainelCalculo(idProd, precoBase) {
-    // Localiza e exibe o bloco de checkout correspondente ao produto clicado
     var painelCheckout = document.getElementById('checkout_box_' + idProd);
-    if (painelCheckout) { 
-        painelCheckout.style.display = 'block'; 
-    }
-    
-    // Oculta o botão azul para evitar cliques duplos
     var btnRever = document.getElementById('btn_ativar_checkout_' + idProd);
-    if (btnRever) { 
-        btnRever.style.display = 'none'; 
-    }
     
-    // Dispara a árvore de cálculo em tempo real
-    recalcularPrecoCheckout(idProd, precoBase);
-}
-
-function activarPainelCalculo(idProd, precoBase) {
-    document.getElementById('checkout_box_' + idProd).style.display = 'block';
-    document.getElementById('btn_ativar_checkout_' + idProd).style.display = 'none';
+    if (painelCheckout) painelCheckout.style.display = 'block'; 
+    if (btnRever) btnRever.style.display = 'none'; 
+    
     recalcularPrecoCheckout(idProd, precoBase);
 }
 
@@ -331,30 +344,44 @@ function recalcularPrecoCheckout(idProd, precoBase) {
     var rota = card.querySelector('.provincia-destino').value;
     var plano = card.querySelector('.plano-cliente').value;
 
-    document.getElementById('hid_qtd_' + idProd).value = qtd;
-    document.getElementById('hid_prov_' + idProd).value = rota;
+    var hidQtd = document.getElementById('hid_qtd_' + idProd);
+    var hidProv = document.getElementById('hid_prov_' + idProd);
+    if(hidQtd) hidQtd.value = qtd;
+    if(hidProv) hidProv.value = rota;
 
     var subtotal = precoBase * qtd;
     var descontoVolume = qtd >= 5 ? subtotal * 0.10 : 0;
     
+    var rowDescVol = card.querySelector('#view_desc_vol_row_' + idProd);
+    var txtDescVol = card.querySelector('#view_desc_vol_' + idProd);
     if (descontoVolume > 0) {
-        card.querySelector('#view_desc_vol_row_' + idProd).style.display = 'flex';
-        card.querySelector('#view_desc_vol_' + idProd).innerText = "- " + descontoVolume.toLocaleString('pt-PT') + ",00 Kz";
-    } else { card.querySelector('#view_desc_vol_row_' + idProd).style.display = 'none'; }
+        if(rowDescVol) rowDescVol.style.display = 'flex';
+        if(txtDescVol) txtDescVol.innerText = "- " + descontoVolume.toLocaleString('pt-PT') + ",00 Kz";
+    } else { 
+        if(rowDescVol) rowDescVol.style.display = 'none'; 
+    }
 
     var valorFreteBruto = rota === 'distante' ? 5500 : 1500;
     var descontoPremium = plano === 'Premium' ? valorFreteBruto * 0.50 : 0;
 
+    var rowDescPrem = card.querySelector('#view_desc_prem_row_' + idProd);
+    var txtDescPrem = card.querySelector('#view_desc_prem_' + idProd);
     if (descontoPremium > 0) {
-        card.querySelector('#view_desc_prem_row_' + idProd).style.display = 'flex';
-        card.querySelector('#view_desc_prem_' + idProd).innerText = "- " + descontoPremium.toLocaleString('pt-PT') + ",00 Kz";
-    } else { card.querySelector('#view_desc_prem_row_' + idProd).style.display = 'none'; }
+        if(rowDescPrem) rowDescPrem.style.display = 'flex';
+        if(txtDescPrem) txtDescPrem.innerText = "- " + descontoPremium.toLocaleString('pt-PT') + ",00 Kz";
+    } else { 
+        if(rowDescPrem) rowDescPrem.style.display = 'none'; 
+    }
 
     var totalGeralLiquido = (subtotal - descontoVolume) + (valorFreteBruto - descontoPremium);
 
-    card.querySelector('#view_sub_' + idProd).innerText = subtotal.toLocaleString('pt-PT') + ",00 Kz";
-    card.querySelector('#view_frete_' + idProd).innerText = valorFreteBruto.toLocaleString('pt-PT') + ",00 Kz";
-    card.querySelector('#view_total_' + idProd).innerText = totalGeralLiquido.toLocaleString('pt-PT') + ",00 Kz";
+    var viewSub = card.querySelector('#view_sub_' + idProd);
+    var viewFrete = card.querySelector('#view_frete_' + idProd);
+    var viewTotal = card.querySelector('#view_total_' + idProd);
+    
+    if(viewSub) viewSub.innerText = subtotal.toLocaleString('pt-PT') + ",00 Kz";
+    if(viewFrete) viewFrete.innerText = valorFreteBruto.toLocaleString('pt-PT') + ",00 Kz";
+    if(viewTotal) viewTotal.innerText = totalGeralLiquido.toLocaleString('pt-PT') + ",00 Kz";
 }
 </script>
 </body>
