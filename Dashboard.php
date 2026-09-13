@@ -1546,26 +1546,15 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
                  // Extrai o conteúdo bruto gravado na coluna 'imagem' do phpMyAdmin
                  $arquivo_banco = trim($fotoItem['imagem'] ?? '');
                  $arquivo_limpo = basename($arquivo_banco);
+                 $is_video = (isset($fotoItem['tipo_media']) ? $fotoItem['tipo_media'] === 'video' : in_array(strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION)), ['mp4', 'mov', 'avi']));
                  
-                 if (empty($arquivo_limpo)) { continue; }
-
-                 // Define dinamicamente o tipo de mídia baseado na coluna do teu banco ou extensão
-                 $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
-                 $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg', 'webm']) || ($fotoItem['tipo_media'] ?? '') === 'video';
-
-                 // 🟢 MOTOR DE ROTAS TRIPLO SAAS (RENDER ONLINE / XAMPP LOCAL)
-                 if (file_exists("/tmp/" . $arquivo_limpo) && !is_dir("/tmp/" . $arquivo_limpo)) {
-                     // 1º: Se rodar no Render online, consome da diretoria livre do Linux
-                     $img_src_render = "/tmp/" . $arquivo_limpo;
-                 } elseif (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
-                     // 2º: Se rodar no teu XAMPP local, consome da pasta upload/ no Windows
+                 // 🟢 CAMINHO DIRETO E LIMPO PARA EXIBIÇÃO EM QUALQUER SERVIDOR
+                 if (file_exists("upload/" . $arquivo_limpo)) {
                      $img_src_render = "upload/" . $arquivo_limpo;
-                 } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
-                     // 3º: Se for uma das fotos antigas soltas na raiz do teu projeto
+                 } elseif (file_exists($arquivo_limpo)) {
                      $img_src_render = $arquivo_limpo;
                  } else {
-                     // ❌ Se o ficheiro físico não existir em nenhuma das rotas locais ou de nuvem, ignora e remove o card fantasma
-                     continue; 
+                     $img_src_render = "upload/default.png"; // Fallback se não achar
                  }
                  
                  $total_midias_validas++;

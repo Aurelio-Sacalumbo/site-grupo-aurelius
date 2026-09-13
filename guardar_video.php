@@ -1,12 +1,6 @@
 <?php
-// =========================================================================
-// 📹 MOTOR HÍBRIDO SaaS: COMPATÍVEL COM WINDOWS (XAMPP) & LINUX (RENDER)
-// =========================================================================
-if (session_status() === PHP_SESSION_NONE) { 
-    session_start(); 
-}
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
 date_default_timezone_set('Africa/Luanda');
-
 require_once "config/Banco.php";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
@@ -18,41 +12,33 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
     $extensao = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
 
     if (!in_array($extensao, $extensoesPermitidas)) {
-        die("<script>alert('Erro: Apenas formatos de vídeo (MP4, MOV, WEBM) são aceites.'); window.location.href='Dashboard.php#photos';</script>");
+        die("<script>alert('Erro: Formato inválido.'); window.location.href='Dashboard.php#photos';</script>");
     }
 
     $nomeUnico = "vid_" . time() . "_" . uniqid() . "." . $extensao;
-
-    // 🟢 DETECTOR DE INFRAESTRUTURA: Identifica se está no Windows (XAMPP) ou Linux (Render)
-    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-        // Se for Windows local, usa a pasta upload/ que criaste
-        $diretorio_base = __DIR__ . "/upload";
-        if (!is_dir($diretorio_base)) { @mkdir($diretorio_base, 0777, true); }
-        $pastaDestino = $diretorio_base . "/" . $nomeUnico;
-    } else {
-        // Se for Linux online (Render), usa a pasta livre /tmp/
-        $pastaDestino = "/tmp/" . $nomeUnico;
+    
+    // 🟢 FORÇA A PASTA UPLOAD EM AMBOS OS AMBIENTES
+    $diretorio_base = __DIR__ . "/upload";
+    if (!is_dir($diretorio_base)) { 
+        @mkdir($diretorio_base, 0777, true); 
     }
+    @chmod($diretorio_base, 0777); // 🔑 LINHA MESTRE: Obriga o Render a dar permissão de escrita!
+
+    $pastaDestino = $diretorio_base . "/" . $nomeUnico;
 
     if (move_uploaded_file($arquivo['tmp_name'], $pastaDestino)) {
+        @chmod($pastaDestino, 0755);
         try {
             $sql = "INSERT INTO anuncios (id_barbearia, titulo, imagem, ativo, likes_adoro, likes_ncurto, data_publicacao, tipo_media) 
                     VALUES (:id_barbearia, :titulo, :imagem, 1, 0, 0, NOW(), 'video')";
-            
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':id_barbearia' => $id_barbearia,
-                ':titulo'       => $titulo,
-                ':imagem'       => $nomeUnico
-            ]);
+            $stmt->execute([':id_barbearia' => $id_barbearia, ':titulo' => $titulo, ':imagem' => $nomeUnico]);
 
-            echo "<script>alert('🎉 Vídeo guardado com sucesso no ecossistema!'); window.location.href='Dashboard.php#photos';</script>";
+            echo "<script>alert('🎉 Vídeo guardado com sucesso!'); window.location.href='Dashboard.php#photos';</script>";
             exit();
-        } catch (PDOException $e) {
-            die("Erro ao registrar no MySQL: " . $e->getMessage());
-        }
+        } catch (PDOException $e) { die("Erro SQL: " . $e->getMessage()); }
     } else {
-        die("Erro fatal: Não foi possível mover o vídeo. Verifica as permissões de gravação da pasta local.");
+        die("Erro ao mover o vídeo. O Render barrou as permissões.");
     }
 }
 ?>
