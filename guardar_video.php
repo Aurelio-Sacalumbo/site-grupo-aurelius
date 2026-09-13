@@ -24,12 +24,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
 
     $nomeUnico = "vid_" . time() . "_" . uniqid() . "." . $extensao;
     
-    if (!is_dir("upload")) { mkdir("upload", 0777, true); }
-    $pastaDestino = "upload/" . $nomeUnico;
+    // 🟢 CORREÇÃO MESTRE RENDER: Define o caminho absoluto usando a raiz do servidor Linux
+    $diretorio_base = $_SERVER['DOCUMENT_ROOT'] . "/upload";
+    $pastaDestino = $diretorio_base . "/" . $nomeUnico;
 
-    if (move_uploaded_file($arquivo['tmp_name'], $pastaDestino)) {
+    // 🟢 CORREÇÃO: Valida e força escrita total no Render
+    if (!is_dir($diretorio_base)) { 
+        @mkdir($diretorio_base, 0777, true); 
+        @chmod($diretorio_base, 0777); 
+    }
+
+    // 3. Move o arquivo temporário do PHP para a pasta física real
+    if (@move_uploaded_file($arquivo['tmp_name'], $pastaDestino)) {
         try {
-            // 🟢 SINCRONIZADO COM O TEU PHPMYADMIN: Usa data_publicacao e tipo_media = 'video'
             $sql = "INSERT INTO anuncios (id_barbearia, titulo, imagem, ativo, likes_adoro, likes_ncurto, data_publicacao, tipo_media) 
                     VALUES (:id_barbearia, :titulo, :imagem, 1, 0, 0, NOW(), 'video')";
             

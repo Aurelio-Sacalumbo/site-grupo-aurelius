@@ -1,277 +1,223 @@
 <?php
 // =========================================================================
-// 💼 PORTAL DE EMPREGO — PROCESSADOR ULTRA-BLINDADO ANTI-ERRO DE COLUNA
+// 💼 PORTAL UNIFICADO DE EMPREGO SaaS — ECOSSISTEMA GRUPO AURÉLIUS
 // =========================================================================
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+if (session_status() === PHP_SESSION_NONE) { 
+    session_start(); 
 }
+date_default_timezone_set('Africa/Luanda');
 
 include_once("Conexao.php");
 
+// Garante a ligação ativa com a Aiven ou XAMPP
 $conexao_link = $conexao_aurelius ?? $conexao ?? $link ?? $conn ?? $pdo ?? null;
 if (!$conexao_link || !($conexao_link instanceof mysqli)) {
     $conexao_link = @mysqli_connect("127.0.0.1", "root", "", "aurelius_salao");
 }
 
-$mensagemCandidatura = "";
-
-// 🟢 1. TRATAMENTO DO FORMULÁRIO COM SELEÇÃO DINÂMICA DE COLUNAS DE CONTINGÊNCIA
-if ($conexao_link && isset($_POST['confirmar_envio_curriculo'])) {
-    $vaga_id = (int)$_POST['vaga_id_alvo'];
-    $id_barbearia_alvo = (int)$_POST['barbearia_id_alvo']; 
-    $nome_prof = mysqli_real_escape_string($conexao_link, trim($_POST['nome_prof']));
-    $tel_prof = mysqli_real_escape_string($conexao_link, trim($_POST['tel_prof']));
-    
-    // 🔍 Tenta descobrir o nome do estabelecimento publicante para a mensagem na tela
-    $busca_loja = mysqli_query($conexao_link, "SELECT nome_loja FROM lojas WHERE id = $id_barbearia_alvo LIMIT 1");
-    $dados_loja = mysqli_fetch_assoc($busca_loja);
-    $nome_destino = !empty($dados_loja['nome_loja']) ? $dados_loja['nome_loja'] : "Estabelecimento Aurelius";
-
-    // 🛡️ ALGORITMO ANTIFALHA TRIPLO: Testa as variações mais comuns de colunas para nunca dar Fatal Error
-    $query_pedido = "INSERT INTO `pedidos_emprego` (`nome_candidato`, `telefone`) VALUES ('$nome_prof', '$tel_prof')";
-    
-    if (!@mysqli_query($conexao_link, $query_pedido)) {
-        $query_pedido = "INSERT INTO `pedidos_emprego` (`nome`, `telefone`) VALUES ('$nome_prof', '$tel_prof')";
-        
-        if (!@mysqli_query($conexao_link, $query_pedido)) {
-            // Se até as tabelas normais falharem, cria a linha de contingência pura
-            $query_pedido = "INSERT INTO `pedidos_emprego` (`telefone`) VALUES ('$tel_prof')";
-            @mysqli_query($conexao_link, $query_pedido);
-        }
-    }
-
-    // Registra cookies locais para travar cliques abusivos
-    setcookie("vaga_oculta_" . $vaga_id, "1", time() + 3600, "/"); 
-    @mysqli_query($conexao_link, "UPDATE `vagas_trabalho` SET `cliques` = `cliques` + 1 WHERE `id` = $vaga_id");
-
-    // 🚀 REDIRECIONAMENTO DINÂMICO IMEDIATO PARA ADMIN_VENDA.PHP
-    $url_redirecionamento = "Admin_Venda.php?vaga_processada=" . $vaga_id . "&origem_id=" . $id_barbearia_alvo . "&candidato=" . urlencode($nome_prof);
-    
-    echo "<script>
-            alert('👑 Candidatura Submetida!\\n\\nO seu perfil foi associado ao balcão técnico de: $nome_destino.\\nO sistema do Grupo Aurelius vai agora transferi-lo automaticamente para Admin_Venda.php.');
-            window.location.href = '$url_redirecionamento';
-          </script>";
-    exit();
+if (!$conexao_link || mysqli_connect_errno()) { 
+    die("<div style='padding:20px; background:#0f172a; color:#ef4444; font-family:sans-serif;'>Erro de conexão com a base de dados central.</div>"); 
 }
+$conexao_link->set_charset("utf8mb4");
 
-// 2. ENGINE DE EXIBIÇÃO EM TEMPO REAL DO PORTAL
-$vagasAtivasdaRede = [];
+// 🟢 1. REQUISIÇÃO: CAPTURA AS VAGAS FILTRADAS POR AUDITORIA (Atendendo à regra de 30 dias)
+// Mostra apenas vagas aprovadas (Confirmado) ou criadas nos últimos 30 dias
+$sql_vagas = "
+    SELECT v.*, u.nome AS nome_salao, u.logo_empresa 
+    FROM vagas_trabalho v 
+    LEFT JOIN usuario u ON v.id_barbearia = u.codigo 
+    WHERE v.status_auditoria = 'Confirmado' 
+    AND v.data_criacao >= NOW() - INTERVAL 30 DAY
+    ORDER BY v.id DESC
+";
+$vagas_ativas = mysqli_query($conexao_link, $sql_vagas);
 
-if ($conexao_link) {
-    mysqli_set_charset($conexao_link, "utf8mb4");
-    
-    $query_vagas = "
-        SELECT 
-            v.id, v.id_barbearia, v.cargo, v.salario, v.requisitos, v.data_criacao, v.cliques,
-            u.nome AS empresa_nome, u.logo_empresa, u.endereco AS empresa_local,
-            l.nome_loja, l.endereco_armazem
-        FROM vagas_trabalho v
-        LEFT JOIN usuario u ON v.id_barbearia = u.codigo
-        LEFT JOIN lojas l ON v.id_barbearia = l.id
-        ORDER BY v.id DESC 
-        LIMIT 15
-    ";
-    
-    $resultado_vagas = mysqli_query($conexao_link, $query_vagas);
-    if ($resultado_vagas) {
-        while ($vaga = mysqli_fetch_assoc($resultado_vagas)) {
-            $id_vaga = (int)$vaga['id'];
-            
-            if (isset($_COOKIE["vaga_oculta_" . $id_vaga])) { continue; }
-            if ((int)($vaga['cliques'] ?? 0) >= 10) { continue; }
+// Pega a lista de salões para o seletor
+$barbearias_lista = mysqli_query($conexao_link, "SELECT codigo, nome FROM usuario WHERE transacao_status = 'Confirmado' ORDER BY nome ASC");
 
-            if (!empty($vaga['nome_loja'])) {
-                $nome_f = $vaga['nome_loja'];
-                $local_f = $vaga['endereco_armazem'];
-            } else {
-                $nome_f = !empty($vaga['empresa_nome']) ? $vaga['empresa_nome'] : "Loja Parceira";
-                $local_f = !empty($vaga['empresa_local']) ? $vaga['empresa_local'] : "Huambo";
-            }
-            
-            $logo_banco = trim($vaga['logo_empresa'] ?? '');
-            $logo_f = (!empty($logo_banco) && $logo_banco !== "OIP (6).webp") ? "uploads/" . $logo_banco : "OIP (6).webp";
-
-            $vagasAtivasdaRede[] = [
-                "id" => $id_vaga,
-                "id_barbearia" => $vaga['id_barbearia'],
-                "empresa" => $nome_f,
-                "localidade" => $local_f,
-                "logo" => $logo_f,
-                "cargo" => $vaga['cargo'],
-                "salario" => $vaga['salario'],
-                "requisitos" => $vaga['requisitos']
-            ];
-        }
-    }
-}
+// Configuração do Botão Voltar Inteligente
+$id_retorno = $_SESSION['loja_contexto'] ?? $_SESSION['empresa_codigo'] ?? 0;
+$url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal.php";
 ?>
-
-
-
-
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bolsa de Vagas — Grupo Aurelius</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Portal de Oportunidades — Grupo Aurélius</title>
     <style>
-        body { font-family: sans-serif; background-color: #0f172a; margin: 0; padding: 20px; color: #ffffff; }
-        .grid-oportunidades { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px; }
-        .card-vaga-aurelius { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .modal-candidatura { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box; }
-        .form-modal-conteudo { background: #111827; border: 2px solid #ca8a04; border-radius: 16px; padding: 25px; width: 100%; max-width: 480px; position: relative; box-sizing: border-box; }
+        body { background-color: #070b12; color: #f8fafc; font-family: 'Segoe UI', system-ui, sans-serif; padding: 15px 12px; margin: 0; }
+        .container-saas { max-width: 750px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        
+        .btn-voltar-premium { display: inline-flex; align-items: center; gap: 8px; background: rgba(30, 41, 59, 0.6); color: #94a3b8; padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; font-size: 11px; border: 1px solid #1e293b; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .header-portal { text-align: left; margin-bottom: 25px; background: linear-gradient(135deg, #0f172a, #070b12); padding: 25px 20px; border-radius: 16px; border: 1px solid #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.5); position: relative; }
+        .header-portal::after { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(to bottom, #38bdf8, #0284c7); }
+        
+        .tabs-control { display: flex; gap: 8px; margin-bottom: 25px; background: #0f172a; padding: 6px; border-radius: 12px; border: 1px solid #1e293b; }
+        .tab-btn { flex: 1; background: transparent; border: none; color: #64748b; padding: 12px 6px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: all 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tab-btn.active { background: linear-gradient(135deg, #1e3a8a, #0284c7); color: #fff; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+        
+        .painel-conteudo { display: none; }
+        .painel-conteudo.active { display: block; }
+        
+        .card-oportunidade { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); box-sizing: border-box; transition: transform 0.2s; }
+        .card-oportunidade:hover { border-color: #38bdf8; transform: translateY(-2px); }
+        
+        .label-premium { font-size: 11px; color: #38bdf8; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 5px; text-align: left; }
+        .form-control { width: 100%; background: #070b12; border: 1px solid #1e293b; border-radius: 8px; padding: 12px 14px; color: white; box-sizing: border-box; margin-bottom: 18px; font-size: 14px; outline: none; font-family: inherit; }
+        .form-control:focus { border-color: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.2); }
+        
+        .btn-submeter { background: linear-gradient(135deg, #38bdf8, #0284c7); color: #fff !important; font-weight: bold; border: none; padding: 14px; border-radius: 8px; cursor: pointer; width: 100%; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); font-family: inherit; outline: none; }
+        .btn-submeter:hover { background: linear-gradient(135deg, #4fcbff, #0294e0); }
+        
+        .vaga-ocultando { opacity: 0; max-height: 0; padding: 0; margin: 0; overflow: hidden; transition: all 0.3s ease; }
     </style>
 </head>
 <body>
 
-<div style="max-width: 1350px; margin: 0 auto;">
-    <h2 style="color: #38bdf8; text-transform: uppercase; border-left: 4px solid #ca8a04; padding-left: 12px; font-size: 20px;">💼 Oportunidades Clínicas e Técnicas Disponíveis no País</h2>
+<div class="container-saas">
+    
+    <a href="<?php echo htmlspecialchars($url_voltar); ?>" class="btn-voltar-premium">✕ Voltar</a>
 
-    <?php if(!empty($mensagemCandidatura)): ?>
-        <div style="background: #064e3b; border: 1px solid #059669; color: #34d399; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; text-align: center;"><?= $mensagemCandidatura ?></div>
-    <?php endif; ?>
+    <div class="header-portal">
+        <h2 style="color: #fff; margin: 0 0 6px 0; font-size: 19px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">💼 Bolsa de Oportunidades Coesora</h2>
+        <p style="color: #64748b; font-size: 12.5px; margin: 0; line-height: 1.4;">Espaço aberto e dinâmico para publicar e preencher vagas técnicas e operacionais no Huambo.</p>
+    </div>
 
-    <div class="grid-oportunidades">
-        <?php if (!empty($vagasAtivasdaRede)): ?>
-            <?php foreach ($vagasAtivasdaRede as $vaga_card): 
-                $salario_f = is_numeric($vaga_card['salario']) ? number_format($vaga_card['salario'], 2, ',', '.') . " Kz" : $vaga_card['salario'];
-            ?>
-                <div class="card-vaga-aurelius">
-                    <div>
-                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid #1f2937; padding-bottom: 12px;">
-                            <div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; border: 2px solid #ca8a04; background: #fff; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-                                <img src="<?= $vaga_card['logo'] ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='OIP (6).webp';">
-                            </div>
-                            <div style="min-width: 0; flex: 1; text-align: left;">
-                                <strong style="color: #fff; font-size: 14px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;"><?= htmlspecialchars($vaga_card['empresa']) ?></strong>
-                                <span style="color: #64748b; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 <?= htmlspecialchars($vaga_card['localidade']) ?></span>
-                            </div>
+    <!-- Abas de Navegação SaaS -->
+    <div class="tabs-control">
+        <button id="btn-ver" class="tab-btn active" onclick="mudarAba('ver')">📢 Ver Vagas</button>
+        <button id="btn-candidatar" class="tab-btn" onclick="mudarAba('candidatar')">✍️ Candidatar-me</button>
+        <button id="btn-publicar" class="tab-btn" onclick="mudarAba('publicar')">➕ Publicar Vaga</button>
+    </div>
+
+    <!-- ABA 1: VER VAGAS ATIVAS -->
+    <div id="aba-ver" class="painel-conteudo active">
+        <?php 
+        $count = 0;
+        if ($vagas_ativas && mysqli_num_rows($vagas_ativas) > 0): 
+            while($vaga = mysqli_fetch_assoc($vagas_ativas)): 
+                $count++;
+                $logo_f = !empty($vaga['logo_empresa']) ? "upload/" . $vaga['logo_empresa'] : "upload/default.png";
+        ?>
+                <div class="card-oportunidade" data-vaga-id="<?= $vaga['id']; ?>">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px; border-bottom: 1px solid #1e293b; padding-bottom: 12px;">
+                        <div style="width: 40px; height: 44px; border-radius: 50%; overflow: hidden; border: 2px solid #ca8a04; background: #fff; display: flex; align-items: center; justify-content: center;">
+                            <img src="<?= htmlspecialchars($logo_f) ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
                         </div>
-
-                        <div style="text-align: left; font-size: 13px; color: #94a3b8; line-height: 1.5;">
-                            <h4 style="color: #38bdf8; margin: 0 0 10px 0; font-size: 15px; text-transform: capitalize; font-weight: bold;"><?= htmlspecialchars($vaga_card['cargo']) ?></h4>
-                            <p style="margin: 4px 0;">💰 <b>Remuneração Proposta:</b> <span style="color: #22c55e; font-weight: bold;"><?= htmlspecialchars($salario_f) ?></span></p>
-                            <p style="margin: 10px 0 0 0;">📋 <b>Requisitos Exigidos:</b><br><span style="color: #cbd5e1;"><?= nl2br(htmlspecialchars($vaga_card['requisitos'])) ?></span></p>
+                        <div style="text-align: left;">
+                            <strong style="color: #fff; font-size: 14px; display: block; text-transform: uppercase;"><?= htmlspecialchars($vaga['nome_salao'] ?? 'Anunciante Geral'); ?></strong>
+                            <span style="color: #64748b; font-size: 11px; display: block;">📍 Local: <?= htmlspecialchars($vaga['endereco'] ?? 'Huambo'); ?></span>
                         </div>
                     </div>
-
-                    <button type="button" onclick="abrirFormulárioCandidato(<?= $vaga_card['id'] ?>, <?= $vaga_card['id_barbearia'] ?>, '<?= htmlspecialchars($vaga_card['cargo']) ?>')" style="width: 100%; margin-top: 20px; background: linear-gradient(135deg, #ca8a04, #854d0e); color: #0f172a; border: none; padding: 11px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">
-                        Candidatar-me à Vaga
-                    </button>
+                    <div style="text-align: left; background: #070b12; padding: 14px; border-radius: 8px; border: 1px solid #1e293b; margin-bottom: 12px;">
+                        <h3 style="color: #38bdf8; margin: 0 0 6px 0; font-size: 15px; text-transform: uppercase; font-weight: bold;"><?= htmlspecialchars($vaga['cargo']); ?></h3>
+                        <p style="font-size: 12.5px; margin: 0 0 4px 0; color: #cbd5e1;">💰 <b>Remuneração:</b> <?= htmlspecialchars($vaga['salario']); ?></p>
+                        <p style="font-size: 12.5px; margin: 0; color: #94a3b8; line-height: 1.4; word-break: break-word;">📝 <b>Requisitos:</b> <?= nl2br(htmlspecialchars($vaga['requisitos'])); ?></p>
+                    </div>
+                    <button class="btn-submeter" style="padding: 10px; font-size: 11px;" onclick="iniciarCandidatura(<?= $vaga['id_barbearia']; ?>, <?= $vaga['id']; ?>)">Preencher Ficha de Candidatura</button>
                 </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #111827; border-radius: 12px; border: 1px dashed #1f2937; width: 100%;">
-                <p style="color: #64748b; font-size: 14px; margin: 0;">Nenhuma oportunidade localizada neste momento.</p>
-            </div>
+            <?php endwhile; ?>
         <?php endif; ?>
-    </div>
-</div>
-
-<!-- =========================================================================
-     🧱 POPUP MODAL: FORMULÁRIO DE RECOLHA DE DADOS DO CANDIDATO
-     ========================================================================= -->
-<div id="modal_candidatura_central" class="modal-candidatura">
-    <div class="form-modal-conteudo">
-        <span onclick="document.getElementById('modal_candidatura_central').style.display='none'" style="position: absolute; top: 12px; right: 15px; color: #ef4444; font-size: 22px; font-weight: bold; cursor: pointer;">&times;</span>
         
-        <div style="margin-bottom: 20px; border-bottom: 1px solid #1f2937; padding-bottom: 8px; text-align: left;">
-            <strong style="color: #ca8a04; font-size: 11px; text-transform: uppercase; display: block;">Formulário de Candidatura</strong>
-            <span style="color: #fff; font-size: 14px; font-weight: bold;" id="txt_modal_cargo">Cargo</span>
+        <div id="aviso_vazio" style="display: <?= ($count === 0) ? 'block' : 'none'; ?>; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #1e293b;">
+            Nenhuma oportunidade validada em aberto nesta rota. Publique uma no botão acima!
         </div>
-
-        <form method="POST" action="" style="display: flex; flex-direction: column; gap: 15px; margin: 0;">
-            <input type="hidden" name="confirmar_envio_curriculo" value="1">
-            <input type="hidden" name="vaga_id_alvo" id="modal_vaga_id">
-            <input type="hidden" name="barbearia_id_alvo" id="modal_barbearia_id">
-
-            <!-- Campo 1: Nome do Candidato -->
-            <div style="text-align: left;">
-                <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Seu Nome Completo:</label>
-                <input type="text" name="nome_prof" required placeholder="Ex: Hossi Silva" style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box;">
-            </div>
-
-            <!-- GRELHA RESPONSIVA DE DUAS COLUNAS: Telefone e Data de Nascimento -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width: 100%; box-sizing: border-box;">
-                <div style="text-align: left;">
-                    <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Contacto (WhatsApp):</label>
-                    <input type="tel" name="tel_prof" required placeholder="Ex: 9XXXXXXXX" style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box;">
-                </div>
-                <div style="text-align: left;">
-                    <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Data de Nascimento:</label>
-                    <input type="date" name="data_nasc_prof" required style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box; color-scheme: dark;">
-                </div>
-            </div>
-
-            <!-- GRELHA RESPONSIVA DE DUAS COLUNAS: Província e Bairro -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width: 100%; box-sizing: border-box;">
-                <div style="text-align: left;">
-                    <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Província de Residência:</label>
-                    <select name="provincia_prof" required style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box; cursor: pointer;">
-                        <option value="" disabled selected>Escolha...</option>
-                        <option value="Bengo">Bengo</option>
-                        <option value="Benguela">Benguela</option>
-                        <option value="Bié">Bié</option>
-                        <option value="Cabinda">Cabinda</option>
-                        <option value="Cuando-Cubango">Cuando-Cubango</option>
-                        <option value="Cuanza-Norte">Cuanza-Norte</option>
-                        <option value="Cuanza-Sul">Cuanza-Sul</option>
-                        <option value="Cunene">Cunene</option>
-                        <option value="Huambo">Huambo</option>
-                        <option value="Huíla">Huíla</option>
-                        <option value="Luanda">Luanda</option>
-                        <option value="Lunda-Norte">Lunda-Norte</option>
-                        <option value="Lunda-Sul">Lunda-Sul</option>
-                        <option value="Malanje">Malanje</option>
-                        <option value="Moxico">Moxico</option>
-                        <option value="Namibe">Namibe</option>
-                        <option value="Uíge">Uíge</option>
-                        <option value="Zaire">Zaire</option>
-                    </select>
-                </div>
-                <div style="text-align: left;">
-                    <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Bairro / Zona:</label>
-                    <input type="text" name="bairro_prof" required placeholder="Ex: São Luís" style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box;">
-                </div>
-            </div>
-
-            <!-- Campo: Resumo Profissional -->
-            <div style="text-align: left;">
-                <label style="color: #cbd5e1; font-size: 12px; font-weight: bold; display: block; margin-bottom: 5px; font-family: sans-serif;">Resumo Profissional / Portefólio:</label>
-                <textarea name="perfil_prof" required rows="3" placeholder="Ex: Experiência em cortes modernos e colorimetria..." style="width: 100%; padding: 11px 14px; background: #070b12; border: 1px solid #374151; border-radius: 8px; color: #fff; font-size: 13px; outline: none; box-sizing: border-box; font-family: sans-serif; resize: none;"></textarea>
-            </div>
-
-            <button type="submit" style="width: 100%; background: linear-gradient(135deg, #ca8a04, #854d0e); color: #0f172a; border: none; padding: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.2); outline: none;">
-                Submeter Inscrição à Empresa
-            </button>
-        </form>
     </div>
-</div>
 
-<!-- =========================================================================
- 
- 
- 
-     🟩 CONTROLADOR JAVASCRIPT: GESTÃO DO POPUP E REQUISIÇÕES
-     ========================================================================= -->
+    <!-- ABA 2: FORMULÁRIO DE CANDIDATURA (DESPACHA PARA ADMINI.PHP) -->
+    <div id="aba-candidatar" class="painel-conteudo">
+        <div class="card-oportunidade" style="box-shadow: none;">
+            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #38bdf8; padding-left: 8px;">✍️ Enviar Ficha ao Painel de Auditoria</h3>
+            <form action="Admini.php" method="POST">
+                <input type="hidden" name="requisicao_tipo" value="nova_candidatura_SaaS">
+                <input type="hidden" name="vaga_id_referencia" id="vaga_id_referencia" value="0">
+                
+                <label class="label-premium">Escolha o Salão/Destino:</label>
+                <select name="barbearia_codigo_alvo" id="barbearia_codigo_alvo" class="form-control" required style="color:#fff; background:#070b12;">
+                    <option value="">Selecione o estabelecimento...</option>
+                    <?php if($barbearias_lista): mysqli_data_seek($barbearias_lista, 0); while($b = mysqli_fetch_assoc($barbearias_lista)): ?>
+                        <option value="<?= $b['codigo']; ?>"><?= htmlspecialchars($b['nome']); ?></option>
+                    <?php endwhile; endif; ?>
+                </select>
+                
+                <label class="label-premium">Teu Nome Completo:</label>
+                <input type="text" name="candidato_nome" class="form-control" placeholder="Ex: Aurélio Jamba" required autocomplete="name">
+                
+                <label class="label-premium">Telemóvel (WhatsApp):</label>
+                <input type="tel" name="candidato_telefone" class="form-control" placeholder="Ex: 915658574" required autocomplete="tel">
+                
+                <label class="label-premium">Resumo das Suas Competências:</label>
+                <textarea name="candidato_experiencia" class="form-control" rows="4" placeholder="Quais os cortes, tranças ou químicas que dominas? Deixa aqui o teu mini-portfólio..." required style="resize: none; background: #070b12; color: #fff;"></textarea>
+                
+                <button type="submit" name="enviar_para_admini_candidatura" class="btn-submeter">Submeter ao Balcão Administrativo</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ABA 3: FORMULÁRIO DE PUBLICAÇÃO DE VAGAS -->
+    <div id="aba-publicar" class="painel-conteudo">
+        <div class="card-oportunidade" style="box-shadow: none;">
+            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #ca8a04; padding-left: 8px;">➕ Propor Nova Publicação de Vaga</h3>
+            <form action="Admini.php" method="POST">
+                <input type="hidden" name="requisicao_tipo" value="nova_vaga_proposta">
+                
+                <label class="label-premium">O Teu Código ou Código do Salão (Se tiver):</label>
+                <input type="number" name="editor_loja_id" class="form-control" placeholder="Ex: 237 (Deixe vazio caso seja Cliente Geral)">
+                
+                <label class="label-premium">Cargo / Título do Trabalho:</label>
+                <input type="text" name="vaga_cargo" class="form-control" placeholder="Ex: Barbeiro Profissional, Manicure Esteticista" required>
+                
+                <label class="label-premium">Remuneração Proposta (Kz ou Percentagem):</label>
+                <input type="text" name="vaga_salario" class="form-control" placeholder="Ex: 50.000,00 Kz + 10% ou À Percentagem" required>
+                
+                <label class="label-premium">Requisitos Detalhados:</label>
+                <textarea name="vaga_requisitos" class="form-control" rows="5" placeholder="Quais as condições, horários e portfólio que exiges do profissional?" required style="resize: none; background: #070b12; color: #fff;"></textarea>
+                
+                <button type="submit" name="enviar_para_admini_vaga" class="btn-submeter" style="background: linear-gradient(135deg, #ca8a04, #eab308);">Disparar Proposta ao Administrador</button>
+            </form>
+        </div>
+    </div>
+
+</div> <!-- Fecha container-saas -->
+
 <script>
-function abrirFormulárioCandidato(idVaga, idBarbearia, nomeCargo) {
-    const modal = document.getElementById('modal_candidatura_central');
-    if (!modal) return;
+// 🤖 MOTOR REATIVO: GERENCIA O HISTÓRICO DE REFRESH/ATUALIZAÇÃO DE PÁGINA EM LOCALSTORAGE
+document.addEventListener("DOMContentLoaded", function() {
+    let visualizadas = JSON.parse(localStorage.getItem('vagas_refresh_aurelius') || '[]');
+    let visiveis_agora = 0;
+
+    document.querySelectorAll('.card-oportunidade[data-vaga-id]').forEach(card => {
+        let id = parseInt(card.getAttribute('data-vaga-id'));
+        if (visualizadas.includes(id)) {
+            card.classList.add('vaga-ocultando');
+            setTimeout(() => { card.style.display = 'none'; }, 300);
+        } else {
+            visiveis_agora++;
+            visualizadas.push(id); // Agenda para ocultar apenas no PRÓXIMO refresh
+        }
+    });
+
+    localStorage.setItem('vagas_refresh_aurelius', JSON.stringify(visualizadas));
+    if (visiveis_agora === 0) {
+        document.getElementById('aviso_vazio').style.display = 'block';
+    }
+});
+
+function mudarAba(aba) {
+    document.querySelectorAll('.painel-conteudo').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     
-    document.getElementById('modal_vaga_id').value = idVaga;
-    document.getElementById('modal_barbearia_id').value = idBarbearia;
-    document.getElementById('txt_modal_cargo').innerText = "Vaga para: " + nomeCargo;
-    
-    modal.style.display = 'flex';
+    document.getElementById('aba-' + aba).classList.add('active');
+    document.getElementById('btn-' + aba).classList.add('active');
 }
 
-window.onclick = function(event) {
-    const modal = document.getElementById('modal_candidatura_central');
-    if (event.target == modal) { 
-        modal.style.display = "none"; 
-    }
+function iniciarCandidatura(idLoja, idVaga) {
+    const select = document.getElementById('barbearia_codigo_alvo');
+    if (select) { select.value = idLoja; }
+    document.getElementById('vaga_id_referencia').value = idVaga;
+    mudarAba('candidatar');
+    document.getElementById('barbearia_codigo_alvo').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 </script>
 </body>
