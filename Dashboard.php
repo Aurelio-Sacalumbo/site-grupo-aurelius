@@ -1518,7 +1518,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
 <!-- 📹 FORMULÁRIO B: CARREGAR VÍDEOS -->
 <!-- 🟢 CORREÇÃO: Direcionado estritamente para guardar-videos.php -->
-<form action="guardar-videos.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
+<form action="guardar_video.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Vídeo:</label>
 <input type="text" name="titulo_foto" placeholder="nome do Vídeo" required style="padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Vídeo (MP4/MOV):</label>

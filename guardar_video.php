@@ -1,6 +1,6 @@
 <?php
 // =========================================================================
-// 📹 MOTOR CENTRAL SaaS — APENAS PARA VÍDEOS / REELS (GUARDAR-VIDEOS.PHP)
+// 📹 MOTOR HÍBRIDO SaaS: COMPATÍVEL COM WINDOWS (XAMPP) & LINUX (RENDER)
 // =========================================================================
 if (session_status() === PHP_SESSION_NONE) { 
     session_start(); 
@@ -17,13 +17,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
     $extensoesPermitidas = ['mp4', 'mov', 'avi', 'mpeg', 'webm'];
     $extensao = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
 
-    // 🛡️ TRAVA DE SEGURANÇA: Se não for vídeo, rejeita imediatamente
     if (!in_array($extensao, $extensoesPermitidas)) {
-        die("<script>alert('Erro: Apenas formatos de vídeo (MP4, MOV, WEBM) são aceites neste painel.'); window.location.href='Dashboard.php#photos';</script>");
+        die("<script>alert('Erro: Apenas formatos de vídeo (MP4, MOV, WEBM) são aceites.'); window.location.href='Dashboard.php#photos';</script>");
     }
 
     $nomeUnico = "vid_" . time() . "_" . uniqid() . "." . $extensao;
-    $pastaDestino = "/tmp/" . $nomeUnico; // Gravação livre e leve no Linux do Render
+
+    // 🟢 DETECTOR DE INFRAESTRUTURA: Identifica se está no Windows (XAMPP) ou Linux (Render)
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        // Se for Windows local, usa a pasta upload/ que criaste
+        $diretorio_base = __DIR__ . "/upload";
+        if (!is_dir($diretorio_base)) { @mkdir($diretorio_base, 0777, true); }
+        $pastaDestino = $diretorio_base . "/" . $nomeUnico;
+    } else {
+        // Se for Linux online (Render), usa a pasta livre /tmp/
+        $pastaDestino = "/tmp/" . $nomeUnico;
+    }
 
     if (move_uploaded_file($arquivo['tmp_name'], $pastaDestino)) {
         try {
@@ -37,11 +46,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
                 ':imagem'       => $nomeUnico
             ]);
 
-            echo "<script>alert('🎉 Vídeo guardado e ativo no feed de Reels!'); window.location.href='Dashboard.php#photos';</script>";
+            echo "<script>alert('🎉 Vídeo guardado com sucesso no ecossistema!'); window.location.href='Dashboard.php#photos';</script>";
             exit();
         } catch (PDOException $e) {
             die("Erro ao registrar no MySQL: " . $e->getMessage());
         }
+    } else {
+        die("Erro fatal: Não foi possível mover o vídeo. Verifica as permissões de gravação da pasta local.");
     }
 }
 ?>
