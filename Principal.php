@@ -265,6 +265,11 @@ require_once __DIR__ . "/config/Banco.php";
 
 
 
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -1600,8 +1605,10 @@ if (!empty($arquivo_logo) && file_exists(__DIR__ . "/uploads/" . $arquivo_logo))
 
 
 
-                              <a href="Dashboard.php?id=<?php echo htmlspecialchars($row['codigo'] ?? '0'); ?>" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
-                              <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 6px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 8px rgba(211,47,47,0.2) !important; outline: none;">ENTRAR</button>
+                              <a href="Admini.php?loja=<?php echo htmlspecialchars($row['slug'] ?? 'BarbeariaBranca'); ?>&id=<?php echo htmlspecialchars($row['codigo'] ?? '0'); ?>" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
+                              <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7.5px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 8px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 12px rgba(211,47,47,0.3) !important; border: none !important; outline: none !important; transition: all 0.2s ease; display: flex !important; align-items: center !important; justify-content: center !important;">
+                                  ENTRAR
+                              </button>
                           </a>
                                <!-- Seletor Azul de Informações do Balcão -->
                                <select style="width: 100% !important; background: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; padding: 4px; font-size: 11px; border-radius: 4px; outline: none; cursor: pointer; margin-top: 5px;">
@@ -2464,119 +2471,161 @@ $stmtGlobal = $pdo->prepare("
              }
          }
      </style>
-     
-     <h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px;">
-     🛍️ Podes também comprar a partir daqui • Sugestões para Si
- </h4>
- 
- <?php if (!empty($feed_produtos)): ?>
-     <?php foreach ($feed_produtos as $post): 
-         $id_post = intval($post['id']);
-         
-         $data_registo_bruta = isset($post['data_cadastro']) ? $post['data_cadastro'] : ''; 
-         $tempo_exibicao = "Publicado Recentemente";
- 
-         if (!empty($data_registo_bruta) && $data_registo_bruta !== '0000-00-00 00:00:00') {
-            $timestamp_post = strtotime($data_registo_bruta);
-            $timestamp_atual = time();
-            $diferenca_segundos = $timestamp_atual - $timestamp_post;
-        
-            if ($diferenca_segundos < 60) { $tempo_exibicao = "Agora mesmo"; }
-            elseif ($diferenca_segundos < 3600) { $minutos = floor($diferenca_segundos / 60); $tempo_exibicao = "Há " . $minutos . " min"; }
-            elseif ($diferenca_segundos < 86400) { $horas = floor($diferenca_segundos / 3600); $tempo_exibicao = "Há " . $horas . " h"; }
-            elseif ($diferenca_segundos < 604800) { $dias = floor($diferenca_segundos / 86400); $tempo_exibicao = "Há " . $dias . " d"; }
-            elseif ($diferenca_segundos < 1209600) { $semanas = floor($diferenca_segundos / 604800); $tempo_exibicao = "Há " . $semanas . " sem"; }
-         }
- 
-         // 📊 CONTADORES DINÂMICOS GERADOS POR PRODUTO (NUNCA ZERADOS)
-         $likes_iniciais = ($id_post * 13) % 120 + 24;
-         $comentarios_totais = ($id_post * 4) % 18 + 3;
-         $partilhas_totais = ($id_post * 3) % 11 + 2;
- 
-         // Captura segura com fallbacks dos campos do seu PHPMyAdmin
-         $loja_nome    = htmlspecialchars(!empty($post['nome_loja']) ? $post['nome_loja'] : 'Barbearia Branca');
-         $produto_nome = htmlspecialchars(!empty($post['nome_produto']) ? $post['nome_produto'] : (!empty($post['nome']) ? $post['nome'] : 'Artigo Comercial Premium'));
-         $stock_total  = (int)(!empty($post['stock_atual']) ? $post['stock_atual'] : (!empty($post['stock']) ? $post['stock'] : rand(3, 12)));
-         $preco_real   = number_format(!empty($post['preco']) ? $post['preco'] : (!empty($post['preco_venda']) ? $post['preco_venda'] : rand(5000, 45000)), 2, ',', '.');
-         $link_compra  = 'unitel.php?id_pagamento=' . $id_post;
- 
-         // 🟢 CORREÇÃO MESTRE DA IMAGEM
-         $nome_imagem_banco = !empty($post['imagem']) ? trim($post['imagem']) : (!empty($post['logo_empresa']) ? trim($post['logo_empresa']) : '');
-         if (!empty($nome_imagem_banco) && file_exists("uploads/" . $nome_imagem_banco)) {
-             $img_post = "uploads/" . $nome_imagem_banco;
-         } elseif (!empty($nome_imagem_banco) && file_exists($nome_imagem_banco)) {
-             $img_post = $nome_imagem_banco;
-         } else {
-             $img_post = 'OIP (6).webp'; // Fallback padrão caso não encontre nenhuma
-         }
- 
-         // 🟢 FOTO DE PERFIL DINÂMICA DA BARBEARIA/LOJA
-         $foto_perfil_loja = "OIP (6).webp";
-         if (!empty($post['logo_empresa']) && file_exists("uploads/" . $post['logo_empresa'])) {
-             $foto_perfil_loja = "uploads/" . $post['logo_empresa'];
-         }
-         ?>
- 
-         <!-- 🟦 CAIXA PRINCIPAL DO CARD (ESTILO REDE SOCIAL CORRIGIDO) -->
-         <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); margin-bottom: 24px; font-family: 'Segoe UI', -apple-system, sans-serif; width: 100%; box-sizing: border-box;">
- 
-             <!-- 👤 CABEÇALHO DA LOJA DINÂMICO -->
-             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-    <div style="width: 36px; height: 36px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
-        <!-- Injetado prefixo de segurança upload/ -->
-        <img src="upload/<?php echo htmlspecialchars(basename($foto_perfil_loja)); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+
+
+
+<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: sans-serif;">
+🛍️ Podes também comprar a partir daqui • Sugestões para Si
+</h4>
+
+<!-- 📱 ESTILO DE OCULTAÇÃO REATIVA -->
+<style>
+.post-card-fb { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; max-height: 800px; }
+.post-fb-ocultando { opacity: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; overflow: hidden !important; }
+</style>
+
+<?php 
+$total_posts_exibidos = 0;
+if (!empty($feed_produtos)): 
+foreach ($feed_produtos as $post): 
+    $id_post = intval($post['id']);
+    
+    // 🕒 REGRA DE EXPIRAÇÃO AUTOMÁTICA (MÁXIMO 7 DIAS)
+    $data_registo_bruta = isset($post['data_cadastro']) ? $post['data_cadastro'] : (isset($post['data']) ? $post['data'] : ''); 
+    $timestamp_post = !empty($data_registo_bruta) ? strtotime($data_registo_bruta) : time();
+    $tempo_vida_dias = floor((time() - $timestamp_post) / 86400);
+
+    // Se o post tiver mais de 7 dias, pula e elimina automaticamente da vitrine
+    if ($tempo_vida_dias > 7) { continue; }
+    
+    $total_posts_exibidos++;
+    $tempo_exibicao = ($tempo_vida_dias === 0) ? "Hoje mesmo" : "Há " . $tempo_vida_dias . " dias";
+
+    // Contadores Dinâmicos de Engajamento
+    $likes_iniciais = ($id_post * 13) % 120 + 24;
+    $comentarios_totais = ($id_post * 4) % 18 + 3;
+    $partilhas_totais = ($id_post * 3) % 11 + 2;
+
+    // Captura de Dados do Banco usuario ou lojas
+    $loja_nome    = htmlspecialchars(!empty($post['nome']) ? $post['nome'] : (!empty($post['nome_loja']) ? $post['nome_loja'] : 'Barbearia Branca'), ENT_QUOTES, 'UTF-8');
+    $produto_nome = htmlspecialchars(!empty($post['nome_produto']) ? $post['nome_produto'] : (!empty($post['nome']) ? $post['nome'] : 'Artigo Premium'), ENT_QUOTES, 'UTF-8');
+    $stock_total  = (int)(!empty($post['stock_atual']) ? $post['stock_atual'] : (!empty($post['stock']) ? $post['stock'] : rand(3, 12)));
+    $preco_real   = number_format(!empty($post['preco']) ? $post['preco'] : rand(5000, 45000), 2, ',', '.');
+    
+    // Roteador Dinâmico baseado em quem publicou (tabela usuario ou tabela lojas)
+    $id_origem_publicante = !empty($post['codigo']) ? $post['codigo'] : ($post['id_barbearia'] ?? $post['id_loja'] ?? $id_post);
+    $link_destino_saas = "Dashboard.php?id=" . intval($id_origem_publicante);
+
+    // 🖼️ Tratamento de Imagem Principal
+    $nome_imagem_banco = !empty($post['imagem']) ? trim($post['imagem']) : (!empty($post['logo_empresa']) ? trim($post['logo_empresa']) : '');
+    $img_post = "upload/default.png";
+    if (!empty($nome_imagem_banco)) {
+        $img_post = "upload/" . basename($nome_imagem_banco);
+    }
+
+    // 👤 Tratamento de Foto de Perfil
+    $logo_perfil_banco = !empty($post['logo_empresa']) ? trim($post['logo_empresa']) : $nome_imagem_banco;
+    $foto_perfil_loja = "upload/default.png";
+    if (!empty($logo_perfil_banco)) {
+        $foto_perfil_loja = "upload/" . basename($logo_perfil_banco);
+    }
+?>
+
+    <!-- 🟦 CAIXA PRINCIPAL DO CARD (ESTILO REDE SOCIAL CORRIGIDO) -->
+    <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb" data-post-id="<?php echo $id_post; ?>" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); margin-bottom: 24px; font-family: 'Segoe UI', -apple-system, sans-serif; width: 100%; box-sizing: border-box;">
+
+        <!-- 👤 CABEÇALHO DA LOJA DINÂMICO -->
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div style="width: 36px; height: 36px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
+                <img src="<?php echo $foto_perfil_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+            </div>
+            <div style="min-width: 0; flex: 1; text-align: left;">
+                <strong style="color: #ffffff; font-size: 13.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;"><?php echo $loja_nome; ?></strong>
+                <span style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                    <?php echo $tempo_exibicao; ?> • 🌍 Angola • 💈 Parceiro Sincronizado
+                </span>
+            </div>
+        </div>
+
+        <!-- 📝 TEXTO DO POST -->
+        <p style="color: #e2e8f0; font-size: 13px; line-height: 1.5; margin: 0 0 12px 0; text-align: left;">
+            ⚡ <b>Grande Oportunidade!</b> Adquira já o artigo <b style="color: #38bdf8; font-weight: 600;"><?php echo $produto_nome; ?></b> diretamente no nosso balcão. Stock limitado de apenas <b style="color: #f87171; font-weight: 600;"><?php echo $stock_total; ?></b> unidades!
+        </p>
+
+        <!-- 🖼️ CONTAINER DE IMAGEM DO FEED PREMIUM -->
+        <div class="img-container-fb" style="width: 100%; height: 250px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #233144; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+            <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+        </div>
+
+        <!-- 💰 EMBALAGEM DE PREÇO -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #334155; margin-bottom: 8px;">
+            <span style="color: #94a3b8; font-size: 12px;">Preço Balcão:</span>
+            <strong style="color: #22c55e; font-size: 16px; font-weight: 700; font-family: monospace;"><?php echo $preco_real; ?> Kz</strong>
+        </div>
+
+        <!-- 📊 INDICADORES SOCIAIS -->
+        <div style="display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 11px; padding: 2px 4px 6px 4px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <span style="background: #1877f2; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; color: white;">👍</span>
+                <span style="font-weight: 500;"><?php echo $likes_iniciais; ?></span>
+            </div>
+            <div style="font-weight: 500;">
+                <span><?php echo $comentarios_totais; ?> coment.</span> • <span><?php echo $partilhas_totais; ?> part.</span>
+            </div>
+        </div>
+
+        <!-- 🟢 BOTÕES DE AÇÃO INTERATIVOS ADAPTADOS (BOTÃO VER / IR) -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #334155; padding-top: 8px; gap: 6px;">
+            <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer; font-family: inherit;">👍 Gostar</button>
+            <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer; font-family: inherit;">💬 Comentar</button>
+            
+            <!-- 🚀 BOTÃO VER / IR DINÂMICO E RESPONSIVO -->
+            <a href="<?php echo htmlspecialchars($link_destino_saas); ?>" style="text-decoration: none !important; display: block; width: 100%;">
+                <button type="button" style="background: linear-gradient(135deg, #1877f2, #0056b3); border: none; color: #ffffff; border-radius: 6px; font-size: 11px; font-weight: bold; padding: 8px 0; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit;">
+                    ➡️ Ver / Ir
+                </button>
+            </a>
+        </div>
     </div>
+<?php 
+endforeach;
+endif; 
 
-                 <div style="min-width: 0; flex: 1;">
-                     <strong style="color: #ffffff; font-size: 13.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;"><?php echo $loja_nome; ?></strong>
-                     <span style="color: #94a3b8; font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
-                         <?php echo $tempo_exibicao; ?> • 🌍 Angola • 👤 Gestor
-                     </span>
-                 </div>
-             </div>
- 
-             <!-- 📝 TEXTO DO POST -->
-             <p style="color: #e2e8f0; font-size: 13px; line-height: 1.5; margin: 0 0 12px 0; text-align: left;">
-                 ⚡ Grande Oportunidade! Adquira já o produto <b style="color: #38bdf8; font-weight: 600;"><?php echo $produto_nome; ?></b> diretamente no nosso balcão. Stock limitado de apenas <b style="color: #f87171; font-weight: 600;"><?php echo $stock_total; ?></b> unidades!
-             </p>
- 
-             <!-- 🖼️ CONTAINER DE IMAGEM DO FEED PREMIUM (PROTEÇÃO CONTRA DISTORÇÕES) -->
-             <div class="img-container-fb" style="width: 100%; height: 250px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #233144; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                 <img src="<?php echo $img_post; ?>" 
-                      alt="<?php echo $produto_nome; ?>" 
-                      style="width: 100%; height: 100%; object-fit: contain; padding: 5px; box-sizing: border-box;"
-                      onerror="this.src='OIP (6).webp';">
-             </div>
- 
-             <!-- 💰 EMBALAGEM DE PREÇO -->
-             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #334155; margin-bottom: 8px;">
-                 <span style="color: #94a3b8; font-size: 12px;">Preço Comercial:</span>
-                 <strong style="color: #22c55e; font-size: 16px; font-weight: 700; font-family: monospace;"><?php echo $preco_real; ?> Kz</strong>
-             </div>
- 
-             <!-- 📊 INDICADORES SOCIAIS -->
-             <div style="display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 11px; padding: 2px 4px 6px 4px;">
-                 <div style="display: flex; align-items: center; gap: 4px;">
-                     <span style="background: #1877f2; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; color: white;">👍</span>
-                     <span id="likes_count_<?php echo $id_post; ?>" style="font-weight: 500;"><?php echo $likes_iniciais; ?></span>
-                 </div>
-                 <div style="font-weight: 500;">
-                     <span id="txt_coment_count_<?php echo $id_post; ?>"><?php echo $comentarios_totais; ?> com.</span> • 
-                     <span id="txt_partilha_count_<?php echo $id_post; ?>"><?php echo $partilhas_totais; ?> part.</span>
-                 </div>
-             </div>
- 
-             <!-- 🟢 BOTÕES DE AÇÃO INTERATIVOS ADAPTADOS PARA MÓVEL -->
-             <div style="display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #334155; padding-top: 6px; gap: 4px;">
-                 <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer;">👍 Gostar</button>
-                 <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer;">💬 Com.</button>
-                 <a href="<?php echo $link_compra; ?>" style="background: linear-gradient(135deg, #1877f2, #0a58ca); color: white; border: none; font-size: 11px; font-weight: bold; padding: 8px 0; border-radius: 6px; text-decoration: none; display: flex; align-items: center; justify-content: center; text-transform: uppercase; box-shadow: 0 4px 10px rgba(24,119,242,0.2);">🛒 Comprar</a>
-             </div>
-         </div>
- 
-     <?php endforeach; ?>
- <?php endif; ?>
+if ($total_posts_exibidos === 0):
+?>
+<div id="feed_vazio_aviso" style="color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #111827; border-radius: 12px; font-size: 13px; border: 1px dashed #334155;">
+    Nenhuma sugestão ou produto ativo publicado nos últimos 7 dias.
+</div>
+<?php endif; ?>
 
+<!-- 🤖 MOTOR JAVASCRIPT: FAZ OS CARTÕES SUMIREM A CADA REFRESH/ATUALIZAÇÃO DE PÁGINA -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+let postsVisualizados = JSON.parse(localStorage.getItem('posts_refresh_aurelius') || '[]');
+let visiveis_neste_refresh = 0;
+
+document.querySelectorAll('.post-card-fb[data-post-id]').forEach(card => {
+    let idPost = parseInt(card.getAttribute('data-post-id'));
+    
+    if (postsVisualizados.includes(idPost)) {
+        // Se o post já constava no histórico do refresh anterior, esconde-o imediatamente
+        card.classList.add('post-fb-ocultando');
+        setTimeout(() => { card.style.display = 'none'; }, 300);
+    } else {
+        visiveis_neste_refresh++;
+        // Agenda a ocultação deste cartão para o PRÓXIMO clique de atualização de página
+        postsVisualizados.push(idPost);
+    }
+});
+
+localStorage.setItem('posts_refresh_aurelius', JSON.stringify(postsVisualizados));
+
+if (visiveis_neste_refresh === 0) {
+    const aviso = document.getElementById('feed_vazio_aviso');
+    if (aviso) { aviso.style.display = 'block'; }
+}
+});
+</script>
 
 
 
@@ -2861,46 +2910,48 @@ document.querySelectorAll('.grid-inputs, div[id^="cartao-global-"]').forEach(car
 
 
 
-
 <?php
 // =========================================================================
 // 🚀 ENGINE AEROESPACIAL DE GEOLOCALIZAÇÃO 3D/4D — PRINCIPAL.PHP (CORE)
 // =========================================================================
 $pontos_mapa_3d = [];
+$res_3d = [];
 
-if (isset($pdo)) {
+if (isset($pdo) && $pdo !== null) {
     try {
-        // Query Coesora: Captura dinamicamente todas as Barbearias e Lojas ativas e confirmadas do ecossistema
+        // Query Coesora: Captura estritamente apenas as lojas e barbearias ativas E confirmadas pela auditoria
         $sql_3d = "
             (SELECT id as id_p, nome_loja as nome, endereco_armazem as endereco, 'loja' as tipo FROM lojas WHERE visivel_no_site = 1 AND transacao_status = 'Confirmado')
             UNION
-            (SELECT codigo as id_p, nome as nome, endereco as endereco, 'barbearia' as tipo FROM usuario WHERE visivel_no_site = 1 AND transacao_status = 'Confirmado')
+            (SELECT codigo as id_p, nome as nome, endereco as endereco, 'barbearia' as tipo FROM usuario WHERE nivel = 'parceiro_hospedado' AND visivel_no_site = 1 AND transacao_status = 'Confirmado')
         ";
         $stmt_3d = $pdo->query($sql_3d);
-        $res_3d = $stmt_3d->fetchAll(PDO::FETCH_ASSOC);
-
-        // Coordenadas Centrais Georreferenciadas do Huambo, Angola
-        $lat_huambo_centro = -12.7711;
-        $lng_huambo_centro = 15.7392;
-
-        if (!empty($res_3d)) {
-            foreach ($res_3d as $index => $unidade) {
-                // Algoritmo de dispersão geo-computada para distribuir pins reais pelas ruas do Huambo em testes locais
-                $dispersao_lat = $lat_huambo_centro + (sin($index * 5) / 380) + (rand(-4, 4) / 10000);
-                $dispersao_lng = $lng_huambo_centro + (cos($index * 5) / 380) + (rand(-4, 4) / 10000);
-
-                $pontos_mapa_3d[] = [
-                    "id"       => intval($unidade['id_p']),
-                    "nome"     => htmlspecialchars($unidade['nome'], ENT_QUOTES, 'UTF-8'),
-                    "endereco" => htmlspecialchars($unidade['endereco'], ENT_QUOTES, 'UTF-8'),
-                    "tipo"     => $unidade['tipo'],
-                    "lat"      => $dispersao_lat,
-                    "lng"      => $dispersao_lng
-                ];
-            }
+        if ($stmt_3d) {
+            $res_3d = $stmt_3d->fetchAll(PDO::FETCH_ASSOC);
         }
     } catch (PDOException $e) {
-        // Contingência silenciosa anti-quebra
+        error_log("Erro no alinhamento do ecossistema 3D: " . $e->getMessage());
+    }
+}
+
+// Coordenadas Centrais Georreferenciadas do Huambo, Angola
+$lat_huambo_centro = -12.7711;
+$lng_huambo_centro = 15.7392;
+
+if (!empty($res_3d)) {
+    foreach ($res_3d as $index => $unidade) {
+        // Algoritmo de dispersão geo-computada para distribuir pins reais pelas ruas do Huambo em testes locais
+        $dispersao_lat = $lat_huambo_centro + (sin($index * 5) / 380) + (rand(-4, 4) / 10000);
+        $dispersao_lng = $lng_huambo_centro + (cos($index * 5) / 380) + (rand(-4, 4) / 10000);
+
+        $pontos_mapa_3d[] = [
+            "id"       => intval($unidade['id_p']),
+            "nome"     => htmlspecialchars($unidade['nome'] ?? 'Sem Nome', ENT_QUOTES, 'UTF-8'),
+            "endereco" => htmlspecialchars($unidade['endereco'] ?? 'Não informado', ENT_QUOTES, 'UTF-8'),
+            "tipo"     => $unidade['tipo'],
+            "lat"      => $dispersao_lat,
+            "lng"      => $dispersao_lng
+        ];
     }
 }
 ?>
@@ -2980,79 +3031,98 @@ if (isset($pdo)) {
     .leaflet-container { outline: 0; }
 </style>
 
-<!-- =========================================================================
-     ⚙️ ESTRUTURA VISUAL E CONSOLA DE OPERAÇÃO GEOGRÁFICA
-     ========================================================================= -->
-<div class="seccao-macro-geolocalizacao">
-    <div class="viewport-canvas-leaflet" id="mapa_radar_aurelius">
-        
-        <!-- Consola de Controlo Reativa -->
-        <div class="consola-controlo-mapa">
-            <div style="text-align: left;">
-                <span style="color: #38bdf8; font-size: 9px; font-weight: bold; text-transform: uppercase; display: block; letter-spacing: 0.5px; margin-bottom: 2px;">⚡ Sistema Operacional Ativo</span>
-                <strong style="color: #eab308; font-size: 13px; text-transform: uppercase; display: block; margin-bottom: 4px;">Visualização Vetorial</strong>
-                <p style="color: #94a3b8; font-size: 11px; margin: 0; line-height: 1.4;">Encontre as barbearias, salões e estoques distribuídos pela província em tempo real.</p>
-            </div>
-            <button onclick="recentrarCameraHuambo()" style="background: linear-gradient(135deg, #1877f2, #0a58ca); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; box-shadow: 0 4px 10px rgba(24,119,242,0.2); transition: 0.2s; white-space: nowrap;">
-                RECENTRAR CÂMARA
-            </button>
-        </div>
+<?php
+// =========================================================================
+// 🗺️ MOTOR INTEGRADO: MAPA REGIONAL DE ATENDIMENTO (TABELA: USUARIO)
+// =========================================================================
 
+$pontos_mapa = [];
+
+// Faz a leitura dinâmica dos parceiros ativos direto da tabela do phpMyAdmin
+if (isset($mysqli) && $mysqli) {
+    $sql_pontos = "SELECT codigo, nome, endereco, preco FROM usuario WHERE nivel = 'parceiro_hospedado'";
+    $res_pontos = mysqli_query($mysqli, $sql_pontos);
+    
+    // Coordenadas padrão da cidade do Huambo (Sede)
+    $lat_padrao = -12.7711;
+    $lng_padrao = 15.7392;
+
+    if ($res_pontos) {
+        while ($ponto = mysqli_fetch_assoc($res_pontos)) {
+            // Distribui os pinos dinamicamente pelos bairros do Huambo
+            $lat_pino = $lat_padrao + (rand(-99, 99) / 7000);
+            $lng_pino = $lng_padrao + (rand(-99, 99) / 7000);
+
+            $pontos_mapa[] = [
+                "nome" => htmlspecialchars($ponto['nome']),
+                "endereco" => htmlspecialchars($ponto['endereco']),
+                "lat" => $lat_pino,
+                "lng" => $lng_pino
+            ];
+        }
+    }
+}
+?>
+
+<!-- 🗺️ COMPONENTE VISUAL PREMIUM DO MAPA (Sem escuridão) -->
+<div class="painel-mapa" style="max-width: 1100px; margin: 40px auto; padding: 0 20px; box-sizing: border-box;">
+    <div style="text-align: left; margin-bottom: 20px;">
+        <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">🌍 LOGÍSTICA DE GEOLOCALIZAÇÃO</span>
+        <h2 style="color: #fff; font-size: 22px; font-weight: bold; margin-top: 4px; font-family: sans-serif;">Nossos Pontos de Atendimento</h2>
     </div>
+
+    <!-- O Contentor do Mapa Leaflet -->
+    <div id="mapa_aurelius_SaaS" style="width: 100%; height: 450px; border-radius: 20px; border: 2px solid #1e293b; box-shadow: 0 15px 35px rgba(0,0,0,0.6); background: #070b12; overflow: hidden;"></div>
 </div>
 
-<!-- =========================================================================
-     🟩 ENGINE JAVASCRIPT: INSTANCIAÇÃO DINÂMICA DO MAPA ESCURO DE SATÉLITE
-     ========================================================================= -->
+<!-- 🟢 CDNS OFICIAIS E CORRIGIDOS DO LEAFLET (Estáveis) -->
+<link rel="stylesheet" href="https://unpkg.com" />
+<script src="https://unpkg.com"></script>
+
 <script>
-// Transforma com segurança o array tridimensional do PHP para leitura nativa do Navegador
-const geoPontosUnidades = <?= json_encode($pontos_mapa_3d) ?>;
-let mainLeafletMap;
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Inicializa o motor Leaflet focado no Huambo
+    const mapa = L.map('mapa_aurelius_SaaS').setView([-12.7711, 15.7392], 13);
 
-function inicializarMapeamentoSaaS() {
-    // 1. Instancia a câmara inicial focada na Província do Huambo, Angola
-    mainLeafletMap = L.map('mapa_radar_aurelius', { zoomControl: false }).setView([-12.7711, 15.7392], 14);
-
-    // 2. Injeta o Mapa Vetorial Temático em Modo Escuro Corporativo (CartoDB DarkMatter)
+    // 2. Aplica as imagens corretas do Tileset estilo Dark/Premium da CARTO
     L.tileLayer('https://{s}://{z}/{x}/{y}{r}.png', {
-        maxZoom: 20,
-        attribution: '&copy; OpenStreetMap'
-    }).addTo(mainLeafletMap);
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    }).addTo(mapa);
 
-    // Reaplica o posicionamento do botão de zoom padrão no canto inferior direito por ergonomia móvel
-    L.control.zoom({ position: 'bottomright' }).addTo(mainLeafletMap);
+    // 3. Puxa os dados reais em formato JSON do motor PHP acima
+    const pontosRegistados = <?= json_encode($pontos_mapa) ?>;
 
-    // 3. MAPEAMENTO E VARREDURA AUTOMÁTICA DOS PINS REALIZADA EM LOTE
-    if (geoPontosUnidades && geoPontosUnidades.length > 0) {
-        geoPontosUnidades.forEach(ponto => {
-            // Define ícones de coloração condicional baseado no tipo de negócio do parceiro
-            const iconeEmoji = ponto.tipo === 'loja' ? '🛍️' : '💈';
-            
-            const HTMLPopup = `
-                <div style="text-align: left; font-family: sans-serif;">
-                    <b style="color: #eab308; font-size: 13px; text-transform: uppercase; display: block; margin-bottom: 4px;">${iconeEmoji} ${ponto.nome}</b>
-                    <span style="color: #cbd5e1; font-size: 11px; display: block; margin-bottom: 6px;">📍 ${ponto.endereco}</span>
-                    <span style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Unidade ${ponto.tipo}</span>
-                </div>
-            `;
+    pontosRegistados.forEach(function(ponto) {
+        // Cria um marcador comum estável
+        const pinoMestre = L.marker([ponto.lat, ponto.lng]).addTo(mapa);
+        
+        // Balão informativo estilizado Dark
+        const conteudoPopup = `
+            <div style="font-family: sans-serif; text-align: left; color:#fff; min-width:160px;">
+                <b style="color: #38bdf8; font-size: 13px; display: block; margin-bottom: 4px;">💈 ${ponto.nome}</b>
+                <p style="color: #cbd5e1; font-size: 11px; margin: 4px 0;">📍 ${ponto.endereco}</p>
+                <span style="display:inline-block; background:#22c55e; color:#fff; font-size:9px; padding:2px 6px; font-weight:bold; border-radius:4px; text-transform:uppercase;">● Ativo</span>
+            </div>
+        `;
+        
+        // Estilização customizada das bolhas via CSS injetado
+        pinoMestre.bindPopup(conteudoPopup);
+    });
 
-            // Adiciona o marcador geográfico na tela de projeção vetorial
-            L.marker([ponto.lat, ponto.lng]).addTo(mainLeafletMap)
-                .bindPopup(HTMLPopup);
-        });
-    }
-}
-
-function recentrarCameraHuambo() {
-    if (mainLeafletMap) {
-        mainLeafletMap.setView([-12.7711, 15.7392], 14);
-    }
-}
-
-// Inicialização segura ativada após a montagem total do DOM da árvore do PWA
-document.addEventListener("DOMContentLoaded", inicializarMapeamentoSaaS);
+    // 4. Corrige falhas ou bugs de renderização cinzenta no carregamento
+    setTimeout(() => {
+        mapa.invalidateSize();
+    }, 400);
+});
 </script>
 
+<style>
+    /* Injeta regras CSS globais para pintar o Pop-up interno do Leaflet de Dark Premium */
+    .leaflet-popup-content-wrapper { background: #111827 !important; color: #fff !important; border: 1px solid #1e293b !important; border-radius: 12px !important; }
+    .leaflet-popup-tip { background: #111827 !important; }
+</style>
 
 
 
@@ -3243,19 +3313,18 @@ function validarFormulario(event) {
 </script>
 
 
-
 <!-- =========================================================================
-     🤖 COMPONENTE FLUTUANTE: ALANA IA ASSISTENTE COMERCIAL (ESTILO MESSENGER)
+     🤖 COMPONENTE FLUTUANTE: ALANA IA ASSISTENTE COMERCIAL PREMIUM RESPONSIVA
      ========================================================================= -->
-     <div id="caixa_master_alana_ia" style="position: fixed; bottom: 25px; right: 25px; z-index: 999999; font-family: 'Segoe UI', sans-serif;">
+<div id="caixa_master_alana_ia" style="position: fixed; bottom: 20px; right: 20px; z-index: 999999; font-family: 'Segoe UI', -apple-system, sans-serif; display: flex; flex-direction: column; align-items: flex-end;">
     
     <!-- Botão de Ativação Circular Radiante -->
-    <button onclick="alternarJanelaChatbotAlana()" id="gatilho_ia_btn" style="background: linear-gradient(135deg, #0088cc, #00c4ff); border: none; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 20px rgba(0,136,204,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: transform 0.3s ease;">
-      🎌
+    <button onclick="alternarJanelaChatbotAlana()" id="gatilho_ia_btn" style="background: linear-gradient(135deg, #0088cc, #00c4ff); border: none; width: 60px; height: 60px; border-radius: 50%; box-shadow: 0 4px 20px rgba(0,136,204,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 26px; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); outline: none;">
+      🤖
     </button>
 
-    <!-- Contentor do Chat Retrativo -->
-    <div id="janela_alana_corpo" style="display: none; width: 350px; height: 480px; background: #0b0f19; border: 2px solid #0088cc; border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); flex-direction: column; overflow: hidden; position: absolute; bottom: 75px; right: 0;">
+    <!-- Contentor do Chat Retrativo (Adaptável a Telemóveis e PCs) -->
+    <div id="janela_alana_corpo" style="display: none; width: 350px; height: 500px; max-height: 80vh; background: #0b0f19; border: 2px solid #0088cc; border-radius: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); flex-direction: column; overflow: hidden; position: absolute; bottom: 75px; right: 0; transition: all 0.3s ease;">
         
         <!-- Cabeçalho Premium -->
         <div style="background: #111827; padding: 15px; border-bottom: 1px solid #1f2937; display: flex; justify-content: space-between; align-items: center;">
@@ -3263,26 +3332,43 @@ function validarFormulario(event) {
                 <div style="width: 10px; height: 10px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e;"></div>
                 <div>
                     <strong style="color: #fff; font-size: 13px; display: block; text-transform: uppercase; letter-spacing: 0.5px;">Aurelius IA Bot</strong>
-                    <span style="color: #64748b; font-size: 10px;">Assistente Comercial da Rede</span>
+                    <span style="color: #64748b; font-size: 10px;">Assistente Comercial Reativa</span>
                 </div>
             </div>
-            <span onclick="alternarJanelaChatbotAlana()" style="cursor: pointer; color: #ef4444; font-weight: bold; font-size: 22px; line-height: 1;">&times;</span>
+            <span onclick="alternarJanelaChatbotAlana()" style="cursor: pointer; color: #ef4444; font-weight: bold; font-size: 24px; padding: 0 5px; line-height: 1;">&times;</span>
         </div>
 
         <!-- Área de Rolagem das Mensagens -->
         <div id="historico_mensagens_alana" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #070b12; font-size: 13px; line-height: 1.5;">
             <div style="background: #1f2937; color: #f3f4f6; padding: 12px; border-radius: 14px 14px 14px 0; align-self: flex-start; max-width: 85%; border: 1px solid #374151;">
-                Olá! Sou o <b>Aurelius IA</b> Estou aqui para te ajudar! Pergunte-me sobre o que quizeres, sobre <b>Planos Freemium</b>,  <b> sobre como fazer parceria e como render muito </b>  ou ainda consulte se o teu número de telefone possui desconto VIP ativo!
+                Olá! Sou o <b>Aurelius IA</b>. Estou aqui para te ajudar! Pergunte-me sobre os nossos <b>Planos Freemium</b>, <b>como fazer parceria para render muito</b> ou consulte o seu desconto VIP! 🇦🇴
             </div>
         </div>
 
         <!-- Formulário Inferior de Envio -->
-        <div style="padding: 12px; background: #111827; border-top: 1px solid #1f2937; display: flex; gap: 8px;">
+        <div style="padding: 12px; background: #111827; border-top: 1px solid #1f2937; display: flex; gap: 8px; align-items: center;">
             <input type="text" id="campo_texto_pergunta" placeholder="Escreva a sua mensagem..." style="flex: 1; padding: 11px 16px; background: #070b12; border: 1px solid #374151; border-radius: 20px; color: #fff; font-size: 13px; outline: none;" onkeydown="if(event.key==='Enter') processarEnvioMensagemAlana('principal')">
-            <button onclick="processarEnvioMensagemAlana('principal')" style="background: #0088cc; color: #fff; border: none; padding: 0 18px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; text-transform: uppercase;">Enviar</button>
+            <button onclick="processarEnvioMensagemAlana('principal')" style="background: #0088cc; color: #fff; border: none; height: 38px; padding: 0 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;">Enviar</button>
         </div>
     </div>
 </div>
+
+<!-- 📱 ESTILOS CSS ADAPTÁVEIS DE ALTA RESPONSIVIDADE -->
+<style>
+@media (max-width: 480px) {
+    #janela_alana_corpo {
+        width: calc(100vw - 30px) !important;
+        height: 75vh !important;
+        max-height: 500px !important;
+        right: -5px !important;
+        bottom: 70px !important;
+    }
+    #caixa_master_alana_ia {
+        bottom: 15px !important;
+        right: 15px !important;
+    }
+}
+</style>
 
 <script>
 function alternarJanelaChatbotAlana() {
@@ -3290,65 +3376,111 @@ function alternarJanelaChatbotAlana() {
     const btn = document.getElementById('gatilho_ia_btn');
     if (caixa.style.display === 'none' || caixa.style.display === '') {
         caixa.style.display = 'flex';
-        btn.style.transform = 'scale(0.95) rotate(90deg)';
+        btn.style.transform = 'scale(0.9) rotate(90deg)';
+        btn.innerHTML = '✕';
         btn.style.background = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+        setTimeout(() => { document.getElementById('campo_texto_pergunta').focus(); }, 100);
     } else {
         caixa.style.display = 'none';
         btn.style.transform = 'scale(1) rotate(0deg)';
+        btn.innerHTML = '🤖';
         btn.style.background = 'linear-gradient(135deg, #0088cc, #00c4ff)';
     }
 }
 
+// 🧠 DICIONÁRIO DE INTELIGÊNCIA LOCAL REATIVA (GÍRIAS DE ANGOLA & RESPOSTAS RÁPIDAS)
+function processarRespostaLocalInteligente(msg) {
+    const texto = msg.toLowerCase().trim();
+
+    // Mapeamento de Expressões e Saudações Locais
+    const saudacoes = ['wi', 'wei', 'como estais', 'olá', 'boa tarde', 'bom dia', 'oi', 'diz aí', 'estás fixe'];
+    const confirmacoes = ['ya', 'yah', 'yes', 'ok', 'valeu', 'gostei', 'tá numa', 'está numa', 'bater na rocha'];
+    const elogios = ['malaike', 'to malaique', 'tá malaike', 'top', 'muito bom', 'bruto'];
+    const agradecimentos = ['obrigado', 'obrigada', 'obas', 'agradecido', 'tamo junto'];
+    const despedidas = ['chau', 'tchau', 'ate mais', 'fui', 'adeus', 'até já'];
+    const duvidas = ['explica mais', 'afinal', 'como funciona', 'me conta', 'saber mais', 'porque'];
+
+    if (saudacoes.some(s => texto.includes(s))) {
+        return "Olá, meu <b>wi</b>! Tudo em ordem?<br><br>Estou focado para te ajudar a gerir ou crescer no ecossistema Aurélius. O que vais querer ver hoje?";
+    }
+    if (elogios.some(e => texto.includes(e))) {
+        return "🔥 <b>Malaike puro!</b><br><br>O nosso objetivo é manter o sistema sempre no topo e a render o máximo para todos os parceiros. Tamo junto!";
+    }
+    if (confirmacoes.some(c => texto.includes(c))) {
+        return "Firme! 🤜🤛<br><br>O que precisares, manda só a mensagem que eu trato de ir buscar ao motor de dados.";
+    }
+    if (agradecimentos.some(a => texto.includes(a))) {
+        return "De nada, estamos juntos!<br><br>Se precisares de ver mais alguma coisa sobre as faturas ou comissões, avisa só.";
+    }
+    if (despedidas.some(d => texto.includes(d))) {
+        return "Até já, mano!<br><br>Fica bem e boa gestão nos negócios! Até à próxima. 👋";
+    }
+    if (duvidas.some(dv => texto.includes(dv))) {
+        return "O ecossistema <b>Grupo Aurélius</b> funciona de forma 100% integrada!<br><hr style='border: 0; border-top: 1px solid #1f2937; margin: 8px 0;'>Conectamos salões à nuvem, geramos faturas instantâneas com QR Code e permitimos que os gerentes controlem o faturamento em tempo real no dashboard.<br><br>🎁 O plano básico é totalmente grátis!";
+    }
+    
+    return null; // Caso não corresponda a gírias locais, envia para o backend php
+}
+
+function exibirMensagemNoChat(texto, alinhamento) {
+    const historico = document.getElementById('historico_mensagens_alana');
+    const bolha = document.createElement('div');
+    
+    if (alinhamento === 'user') {
+        bolha.style.background = '#0088cc';
+        bolha.style.color = '#fff';
+        bolha.style.borderRadius = '14px 14px 0 14px';
+        bolha.style.alignSelf = 'flex-end';
+    } else {
+        bolha.style.background = '#111827';
+        bolha.style.color = '#e5e7eb';
+        bolha.style.borderRadius = '14px 14px 14px 0';
+        bolha.style.alignSelf = 'flex-start';
+        bolha.style.border = '1px solid #1f2937';
+    }
+    
+    bolha.style.padding = '11px 14px';
+    bolha.style.maxWidth = '85%';
+    
+    // 🔒 AS DUAS LINHAS MÁGICAS QUE IMPEDEM O TEXTO DE SAIR DO ECRÃ:
+    bolha.style.wordBreak = 'break-word';
+    bolha.style.overflowWrap = 'break-word';
+    
+    bolha.innerHTML = texto;
+    
+    historico.appendChild(bolha);
+    historico.scrollTop = historico.scrollHeight;
+}
+
 function processarEnvioMensagemAlana(origemTela) {
     const input = document.getElementById('campo_texto_pergunta');
-    const historico = document.getElementById('historico_mensagens_alana');
     const msgUsuario = input.value.trim();
 
     if (msgUsuario === '') return;
 
-    // Desenha a mensagem do utilizador no ecrã
-    const bolhaUser = document.createElement('div');
-    bolhaUser.style.background = '#0088cc';
-    bolhaUser.style.color = '#fff';
-    bolhaUser.style.padding = '10px 14px';
-    bolhaUser.style.borderRadius = '14px 14px 0 14px';
-    bolhaUser.style.alignSelf = 'flex-end';
-    bolhaUser.style.maxWidth = '85%';
-    bolhaUser.innerText = msgUsuario;
-    
-    historico.appendChild(bolhaUser);
-    historico.scrollTop = historico.scrollHeight;
+    // 1. Renderiza a bolha do cliente
+    exibirMensagemNoChat(msgUsuario, 'user');
     input.value = '';
 
-    // AJAX assíncrono conectado ao processador de comissões e tabelas SQL
+    // 2. Processa inteligência artificial local de gírias angolanas
+    const respostaLocal = processarRespostaLocalInteligente(msgUsuario);
+    if (respostaLocal !== null) {
+        // Exibe resposta imediata economizando requisições no Apache
+        setTimeout(() => { exibirMensagemNoChat(respostaLocal, 'ia'); }, 400);
+        return;
+    }
+
+    // 3. Caso não seja gíria, faz a requisição AJAX normal para o backend PHP
     fetch('processar_ia_alana.php?origem=' + origemTela + '&mensagem=' + encodeURIComponent(msgUsuario))
     .then(response => response.json())
     .then(data => {
-        const bolhaIA = document.createElement('div');
-        bolhaIA.style.background = '#111827';
-        bolhaIA.style.color = '#e5e7eb';
-        bolhaIA.style.padding = '11px 14px';
-        bolhaIA.style.borderRadius = '14px 14px 14px 0';
-        bolhaIA.style.alignSelf = 'flex-start';
-        bolhaIA.style.maxWidth = '85%';
-        bolhaIA.style.border = '1px solid #1f2937';
-        bolhaIA.innerHTML = data.resposta;
-        
-        historico.appendChild(bolhaIA);
-        historico.scrollTop = historico.scrollHeight;
+        exibirMensagemNoChat(data.resposta, 'ia');
     })
     .catch(() => {
-        const bolhaErro = document.createElement('div');
-        bolhaErro.style.background = '#7f1d1d';
-        bolhaErro.style.color = '#fff';
-        bolhaErro.style.padding = '10px';
-        bolhaErro.style.borderRadius = '14px';
-        bolhaErro.innerText = '⚠️ Erro local: Servidor Apache ocupado ou falha de conexão com a base de dados.';
-        historico.appendChild(bolhaErro);
+        exibirMensagemNoChat('⚠️ Nota: O assistente está a sincronizar os dados com o motor do XAMPP local. Digite algo como <b>"explica mais"</b> ou envie novamente.', 'error');
     });
 }
 </script>
-
 
 
 
@@ -4054,35 +4186,37 @@ function abrirAbaRodape(nomeAba) {
             }
         }
     </style>
-    <!-- 📱 RODAPÉ DE REDES SOCIAIS ADAPTADO PARA TELEMÓVEL (ESTILO PROFISSIONAL) -->
+
+
+    <!-- 📱 RODAPÉ DE REDES SOCIAIS EM CÍRCULOS COMPACTOS (100% HORIZONTAL SEM QUEBRAS) -->
 <footer class="div3 footer-aurelius" style="width: 100%; max-width: 440px; margin: 20px auto; padding: 0 10px; box-sizing: border-box;">
-    <ul class="lista-nav-footer" style="list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 12px; margin: 0; background: #0f1423; border: 1px solid #1e293b; border-radius: 12px; box-sizing: border-box; animation: pulsarRodapeFrame 3s infinite alternate;"> 
+    <ul class="lista-nav-footer" style="list-style: none; display: flex; justify-content: center; align-items: center; gap: 5px; padding: 10px; margin: 0; background: #0f1423; border: 1px solid #1e293b; border-radius: 50px; box-sizing: border-box;"> 
         
-        <!-- Canal Instagram -->
-        <li style="width: 100%;">
-            <a href="https://instagram.com" target="_blank" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; padding: 8px; border-radius: 8px; color: #f8fafc; font-size: 11px; font-weight: 600; font-family: sans-serif; box-sizing: border-box; transition: background 0.2s;"> 
-                <img src="uploads/OIP (6).webp" alt="Instagram" class="img-social-footer" style="width: 16px; height: 16px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://flaticon.com';"> Instagram
+        <!-- Canal Instagram (Roteado via contacto) -->
+        <li>
+            <a href="https://instagram.com" target="_blank" title="Instagram" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: background 0.2s;"> 
+                📸
             </a>
         </li>
         
-        <!-- Canal Telegram -->
-        <li style="width: 100%;">
-            <a href="https://t.me" target="_blank" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; padding: 8px; border-radius: 8px; color: #f8fafc; font-size: 11px; font-weight: 600; font-family: sans-serif; box-sizing: border-box; transition: background 0.2s;"> 
-                <img src="uploads/OIP (6).webp" alt="Telegram" class="img-social-footer" style="width: 16px; height: 16px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://flaticon.com';"> Telegram
+        <!-- Canal Telegram (Mensagem Direta para o Número) -->
+        <li>
+            <a href="https://t.me" target="_blank" title="Telegram" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: background 0.2s;"> 
+                ✈️
             </a>
         </li>
         
-        <!-- Canal Facebook -->
-        <li style="width: 100%;">
-            <a href="https://facebook.com" target="_blank" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; padding: 8px; border-radius: 8px; color: #f8fafc; font-size: 11px; font-weight: 600; font-family: sans-serif; box-sizing: border-box; transition: background 0.2s;"> 
-                <img src="uploads/OIP (6).webp" alt="Facebook" class="img-social-footer" style="width: 16px; height: 16px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://flaticon.com';"> Facebook
+        <!-- Canal Facebook (Procura Contextual pelo Número) -->
+        <li>
+            <a href="https://facebook.com" target="_blank" title="Facebook" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255, 255, 255, 0.03); border: 1px solid #1e293b; border-radius: 50%; color: #f8fafc; font-size: 16px; box-sizing: border-box; transition: background 0.2s;"> 
+                🔵
             </a>
         </li>
         
-        <!-- Canal WhatsApp -->
-        <li style="width: 100%;">
-            <a href="https://wa.me" target="_blank" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); padding: 8px; border-radius: 8px; color: #22c55e; font-size: 11px; font-weight: 600; font-family: sans-serif; box-sizing: border-box; transition: background 0.2s;"> 
-                <img src="OIP (1).webp" alt="WhatsApp" class="img-social-footer" style="width: 16px; height: 16px; object-fit: cover; border-radius: 4px;" onerror="this.src='https://flaticon.com';"> WhatsApp
+        <!-- Canal WhatsApp (Link de API Oficial com mensagem predefinida) -->
+        <li>
+            <a href="https://wa.me." target="_blank" title="WhatsApp" class="link-social-footer" style="text-decoration: none; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15); border-radius: 50%; color: #22c55e; font-size: 16px; box-sizing: border-box; transition: background 0.2s;"> 
+                💬
             </a>
         </li>
         

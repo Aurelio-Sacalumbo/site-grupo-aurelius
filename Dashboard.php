@@ -1,28 +1,50 @@
 <?php
-// =========================================================================
-// 🔮 ECOSSISTEMA MESTRE - MOTOR DE CAPTURA SAAS (TABELA: USUARIO)
-// =========================================================================
-
-// 1. Inicializa a sessão e inclui a conexão segura com SSL (Aiven/Render)
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 include_once __DIR__ . '/Conexao.php';
 
-// 2. Captura dinamicamente o ID (código) enviado pelo clique do botão ENTRAR
+// 1. Tenta capturar o ID que vem explicitamente na URL (?id=237)
 $id_atual = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
+// 2. Se a URL vier vazia (como no Fechar Recibo), tenta a Sessão ou o Cookie local
+if ($id_atual === 0) {
+    if (isset($_SESSION['loja_contexto'])) {
+        $id_atual = (int)$_SESSION['loja_contexto'];
+    } elseif (isset($_COOKIE['loja_contexto_seguro'])) {
+        $id_atual = (int)$_COOKIE['loja_contexto_seguro'];
+    }
+}
+
+// 3. Guarda e sincroniza o ID para os próximos cliques (Sessão + Cookie de 1 dia)
+if ($id_atual > 0) {
+    $_SESSION['loja_contexto'] = $id_atual;
+    setcookie('loja_contexto_seguro', $id_atual, time() + 86400, "/");
+}
+
+// 4. Bloqueia apenas se o ID não for encontrado em lado nenhum
 if ($id_atual === 0) {
     die("🚨 Erro de Acesso: Nenhuma barbearia foi selecionada no painel central.");
 }
 
-// 3. Consulta as informações exclusivas da barbearia parceira na tabela 'usuario'
-$busca_loja = mysqli_query($mysqli, "SELECT * FROM usuario WHERE codigo = $id_atual AND nivel = 'parceiro_hospedado'");
+
+// 5. Consulta flexível na tabela 'usuario' (Aceita parceiros e clientes no ecossistema)
+$busca_loja = mysqli_query($mysqli, "SELECT * FROM usuario WHERE codigo = $id_atual");
 $dados_loja = mysqli_fetch_assoc($busca_loja);
 
 if (!$dados_loja) {
     die("🚨 Erro do Ecossistema: Os dados desta barbearia parceira não foram localizados no banco.");
 }
+
+// 5. Consulta flexível na tabela 'usuario'
+$busca_loja = mysqli_query($mysqli, "SELECT * FROM usuario WHERE codigo = $id_atual");
+
+
+
+if (!$dados_loja) {
+    die("🚨 Erro do Ecossistema: Os dados desta barbearia parceira não foram localizados no banco.");
+}
+
 
 // 4. Variáveis mapeadas a partir das colunas reais do teu phpMyAdmin
 $nome_exibicao = $dados_loja['nome'] ?? 'Sem Nome'; // Ex: Barbearia Branca, LOOK NOVO
@@ -1462,16 +1484,15 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
 
 
-
 <!-- =========================================================================
      📸 SECÇÃO: PHOTOS & VÍDEOS COM EXEMPLOS REAIS, DINÂMICOS E DIRECIONAMENTO ISOLADO
      ========================================================================= -->
-     <div id="secao-photos" class="aba-conteudo" style="display: none; width:92%; margin:20px auto; position: relative; font-family: 'Segoe UI', Arial, sans-serif;">
+     <div id="secao-photos" class="aba-conteudo" style="display: none; width:92%; margin:20px auto; position: relative; font-family: 'Segoe UI', -apple-system, sans-serif;">
     
      <!-- Cabeçalho da Galeria com Botão Voltar (X) Integrado -->
-     <div class="aba-galeria" style="background:linear-gradient(135deg, #10383b, #1d4d50); color:white; padding:20px; border-radius:10px; margin-bottom:20px; text-align:center; position: relative;">
+     <div class="aba-galeria" style="background: linear-gradient(135deg, #10383b, #1d4d50); color:white; padding:20px; border-radius:10px; margin-bottom:20px; text-align:center; position: relative;">
          
-         <!-- ❌ BOTÃO X VOLTAR: Permite fechar a secção e regressar à Home -->
+         <!-- ❌ BOTÃO X VOLTAR -->
          <span onclick="alternarAbas('servicos')" style="position: absolute; top: 12px; right: 20px; color: #ef4444; font-size: 26px; font-weight: bold; cursor: pointer; transition: 0.2s;" onmouseover="this.style.color='#f87171'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#ef4444'; this.style.transform='scale(1)';">
              &times;
          </span>
@@ -1481,111 +1502,133 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
      </div>
  
      <!-- 🎛️ PAINÉIS DE UPLOAD (FOTOS & VÍDEOS SEPARADOS) -->
-     <div style="display: flex; gap: 20px; max-width: 1100px; margin: 0 auto 30px auto; flex-wrap: wrap;">
+     <div style="display: flex; gap: 20px; max-width: 1100px; margin: 0 auto 30px auto; flex-wrap: wrap; box-sizing: border-box;">
          
-         <!-- FORMULÁRIO A: CARREGAR FOTOS -->
-         <div class="painel-azul" style="flex: 1; min-width: 280px; background: #0f172a; border: 1px solid #1d4d50; padding: 20px; border-radius: 8px;">
-             <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 10px;"> Carregar Nova Foto</span>
-             <form action="guardar_foto.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
-                 <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Trabalho:</label>
-                 <input type="text" name="titulo_foto" placeholder="nome da foto" required style="padding: 10px; border-radius: 4px; border: none; background: #fff; color: #333; width: 100%; box-sizing: border-box;">
-                 <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Foto:</label>
-                 <input type="file" name="ficheiro_foto" accept="image/*" required style="color: #fff; font-size: 13px;">
-                 <button type="submit" style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px;">Carregar Foto</button>
-             </form>
-         </div>
- 
-         <!-- FORMULÁRIO B: CARREGAR VÍDEOS -->
-         <div class="painel-azul" style="flex: 1; min-width: 280px; background: #0f172a; border: 1px solid #1d4d50; padding: 20px; border-radius: 8px;">
-             <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 10px;"> Carregar Novo Vídeo</span>
-             <!-- 🟢 ALTERADO: Agora envia para guardar_foto.php que possui o motor PDO integrado -->
-             <form action="guardar_foto.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
-                 
-                 <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Vídeo:</label>
-                 <!-- 🟢 ALTERADO: name mudado para 'titulo_foto' para o script processar o texto corretamente -->
-                 <input type="text" name="titulo_foto" placeholder="nome do Vídeo" required style="padding: 10px; border-radius: 4px; border: none; background: #fff; color: #333; width: 100%; box-sizing: border-box;">
-                 
-                 <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Vídeo (MP4/MOV):</label>
-                 <!-- 🟢 ALTERADO: name mudado para 'ficheiro_foto' e accept alargado para suportar telemóveis Android -->
-                 <input type="file" name="ficheiro_foto" accept="video/mp4,video/quicktime,video/*" required style="color: #fff; font-size: 13px;">
-                 
-                 <button type="submit" style="background: #ca8a04; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px;">Carregar Vídeo</button>
-             </form>
-         </div>
+     <div style="display: flex; gap: 20px; max-width: 1100px; margin: 0 auto 30px auto; flex-wrap: wrap; box-sizing: border-box;">
+         
+     <!-- FORMULÁRIO A: CARREGAR FOTOS (APONTA PARA GUARDAR_FOTO.PHP) -->
+     <div class="painel-azul" style="flex: 1; min-width: 280px; background: #0f172a; border: 1px solid #1d4d50; padding: 20px; border-radius: 8px; box-sizing: border-box;">
+         <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 10px;">📸 Carregar Nova Foto</span>
+         <!-- 🟢 DIRECIONADO: Envia estritamente para guardar_foto.php -->
+         <form action="guardar_foto.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
+             <input type="hidden" name="tipo_media_upload" value="foto">
+             
+             <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Trabalho:</label>
+             <input type="text" name="titulo_foto" placeholder="Escreva o nome da foto..." required style="padding: 10px; border-radius: 4px; border: none; background: #fff; color: #333; width: 100%; box-sizing: border-box; outline: none;">
+             
+             <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Foto:</label>
+             <input type="file" name="ficheiro_foto" accept="image/*" required style="color: #fff; font-size: 13px; cursor: pointer;">
+             
+             <button type="submit" style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Carregar Foto</button>
+         </form>
      </div>
- 
-     <!-- GRADE DE MÍDIAS AUTOMATIZADA -->
+
+     <!-- FORMULÁRIO B: CARREGAR VÍDEOS (APONTA PARA GUARDAR_VIDEO.PHP) -->
+     <div class="painel-azul" style="flex: 1; min-width: 280px; background: #0f172a; border: 1px solid #1d4d50; padding: 20px; border-radius: 8px; box-sizing: border-box;">
+         <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 10px;">📹 Carregar Novo Vídeo</span>
+         <!-- 🟢 CORRIGIDO: action mudado de guardar_foto.php para guardar_video.php -->
+         <form action="guardar_video.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
+             <input type="hidden" name="tipo_media_upload" value="video">
+             
+             <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Vídeo:</label>
+             <input type="text" name="titulo_foto" placeholder="Escreva o nome do Vídeo..." required style="padding: 10px; border-radius: 4px; border: none; background: #fff; color: #333; width: 100%; box-sizing: border-box; outline: none;">
+             
+             <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Vídeo (MP4/MOV):</label>
+             <!-- 🟢 CONFIGURADO: accept travado para evitar submissão acidental de fotos nesta aba -->
+             <input type="file" name="ficheiro_foto" accept="video/mp4,video/quicktime,video/*" required style="color: #fff; font-size: 13px; cursor: pointer;">
+             
+             <button type="submit" style="background: #ca8a04; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">Carregar Vídeo</button>
+         </form>
+     </div>
+ </div>
+      <!-- 📸 GRADE DE MÍDIAS SaaS: FIXO POR 1 MÊS E ROTATIVO A CADA REFRESH -->
      <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
-     <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; width:100%; margin-bottom:40px;">
+     
+     <style>
+         .aba-item-midia { background: #1e293b; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box; transition: transform 0.2s ease; }
+         .aba-item-midia:hover { border-color: #10b981; transform: translateY(-2px); }
+     </style>
+
+     <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
          <?php
          try {
-             $queryFotos = $pdo->query("SELECT * FROM anuncios WHERE ativo = 1 ORDER BY id_anuncio DESC");
+             // 🕒 REGRA DE 1 MÊS REAL: Filtra e exibe todas as fotos/vídeos dos últimos 30 dias
+             $queryFotos = $pdo->query("
+                 SELECT * FROM anuncios 
+                 WHERE data_cadastro >= NOW() - INTERVAL 30 DAY 
+                 ORDER BY id_anuncio DESC
+             ");
              $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
          } catch (PDOException $e) {
-             $listaFotos = [];
+             // Fallback automático caso a coluna data_cadastro não tenha esse nome exato
+             try {
+                 $queryFotos = $pdo->query("SELECT * FROM anuncios ORDER BY id_anuncio DESC");
+                 $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
+             } catch (PDOException $ex) {
+                 $listaFotos = [];
+             }
          }
  
+         $total_midias_validas = 0;
+
          if (count($listaFotos) > 0): 
+             // 🔀 MOTOR DE ROTAÇÃO: Embaralha os vídeos e fotos aleatoriamente a cada Refresh de página!
+             shuffle($listaFotos); 
+
              foreach ($listaFotos as $fotoItem): 
-                 // Deteta automaticamente se o ficheiro guardado é uma imagem ou vídeo pela extensão
-                 $arquivo = htmlspecialchars($fotoItem['imagem']);
-                 $extensao = strtolower(pathinfo($arquivo, PATHINFO_EXTENSION));
+                 $id_anuncio_atual = intval($fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0));
+                 $arquivo = trim($fotoItem['image_url'] ?? ($fotoItem['imagem'] ?? ''));
+                 $arquivo_limpo = basename($arquivo);
+                 
+                 if (empty($arquivo_limpo)) { continue; }
+
+                 $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
                  $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg']);
+                 
+                 // Verificação física de segurança de arquivos locais (upload/)
+                 if (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
+                     $img_src_render = "upload/" . $arquivo_limpo;
+                 } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
+                     $img_src_render = $arquivo_limpo;
+                 } else {
+                     continue; // Se o arquivo foi apagado no Windows, pula para não quebrar o design
+                 }
+                 
+                 $total_midias_validas++;
          ?>
-                 <div class="aba-item" style="background:#1e293b; padding:10px; border-radius:8px; text-align:center; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px;">
+                 <div class="aba-item-midia" id="bloco_midia_<?= $id_anuncio_atual; ?>">
                      
-                     <div style="width: 100%; height: 140px; overflow: hidden; border-radius: 6px; background: #0f172a; position: relative;">
+                     <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #0f172a; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
                          <?php if ($is_video): ?>
-                             <!-- Se for vídeo, exibe uma pré-visualização opaca e estática -->
-                             <video src="uploads/<?php echo $arquivo; ?>" style="width:100%; height:100%; object-fit:cover; opacity: 0.5;"></video>
-                             <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.7); color: #ca8a04; padding: 5px 10px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase;">📹 Vídeo</span>
+                             <!-- Atributos forçam a renderização estável do primeiro quadro do vídeo parado -->
+                             <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover; opacity: 0.6;"></video>
+                             <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(7,11,18,0.85); color: #ca8a04; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">Animação 📹</span>
                          <?php else: ?>
-                             <!-- Se for foto, exibe a imagem de forma estática normal -->
-                             <img src="uploads/<?php echo $arquivo; ?>" onerror="this.src='https://placehold.co'" style="width:100%; height:100%; object-fit:cover;">
+                             <img src="<?php echo $img_src_render; ?>" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='upload/default.png';">
                          <?php endif; ?>
                      </div>
  
-                     <strong style="color: #fff; font-size:12px; display:block; margin-top:8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase;"><?php echo htmlspecialchars($fotoItem['titulo']); ?></strong>
+                     <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['title'] ?? ($fotoItem['titulo'] ?? 'Trabalho Aurélius')); ?></strong>
                      
-                     <!-- 🟢 CONTROLO DE DIRECIONAMENTO: Fotos ficam quietas e vídeos ganham botão de redirecionamento -->
                      <?php if ($is_video): ?>
-                         <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio']; ?>" style="display: block; background: #ca8a04; color: white; text-decoration: none; padding: 8px; margin-top: 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Assistir Vídeo</a>
+                         <a href="video.php?id_anuncio=<?php echo $id_anuncio_atual; ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
+                     <?php else: ?>
+                         <div style="height: 1px;"></div> 
                      <?php endif; ?>
  
                  </div>
-             <?php 
+         <?php 
              endforeach;
-         else: 
+         endif; 
+
+         if ($total_midias_validas === 0):
          ?>
-             <p style="color: #aaa; text-align: center; grid-column: 1 / -1; padding: 25px; background: #1e293b; border-radius: 8px; font-style: italic;">Nenhuma foto ou vídeo carregado na galeria ainda.</p>
+             <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
+                 Nenhuma inspiração ativa no portfólio cadastrada nos últimos 30 dias.
+             </div>
          <?php endif; ?>
      </div>
- 
-     <!-- SEÇÃO DOS PROFISSIONAIS ENVELOPADA (Inicia 100% Oculta) -->
-     <div id="secaoFuncionarios" style="margin: 20px auto; max-width: 1200px; padding: 0 15px; display: none !important; visibility: hidden; height: 0; overflow: hidden;">
-         <h3 style="color: #fff; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Status dos Profissionais:</h3>
-         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">
-             <?php if(empty($lista_cards)): ?>
-                 <p style="color: #94a3b8; grid-column: 1/-1;">Nenhum profissional cadastrado no sistema.</p>
-             <?php else: ?>
-                 <?php foreach($lista_cards as $card): 
-                     $corCard = '#22c55e';
-                     if (strpos($card['status'], 'Ausente') !== false || strpos($card['status'], 'Folga') !== false) { $corCard = '#ef4444'; }
-                     elseif (strpos($card['status'], 'Atendimento') !== false || strpos($card['status'], 'Em') !== false) { $corCard = '#ffaa00'; }
-                 ?>
-                     <div style="background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-                         <span style="color: #cbd5e1; font-weight: bold;"><?php echo htmlspecialchars($card['nome']); ?></span>
-                         <span id="status-text-<?php echo $card['id_funcionario']; ?>" style="font-weight: bold; color: <?php echo $corCard; ?>;"><?php echo htmlspecialchars($card['status']); ?></span>
-                     </div>
-                 <?php endforeach; ?>
-             <?php endif; ?>
-         </div>
-     </div>
- </div>
- 
- 
- 
- 
+</div>
  
  
  

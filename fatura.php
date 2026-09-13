@@ -1,16 +1,13 @@
 <?php
-// =========================================================================
-// 🖨️ EMISSOR DE FATURAS REATIVO SaaS - GRUPO AURÉLIUS (PRODUÇÃO RENDER)
-// =========================================================================
 if (session_status() === PHP_SESSION_NONE) { 
     session_start(); 
 }
 date_default_timezone_set('Africa/Luanda');
 
-// Importação segura da infraestrutura híbrida centralizada do Banco
+// Importação segura da infraestrutura do Banco
 require_once __DIR__ . "/config/Banco.php";
 
-// 1. Captura o ID da URL se alguém clicou em "Reimprimir" (ex: fatura.php?id=125)
+// Captura o ID da fatura vindo da URL (ex: fatura.php?id=237)
 $id_pagamento = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 // 2. Se nenhum ID veio na URL (novo atendimento feito na App), força a busca do ÚLTIMO registado
@@ -29,6 +26,7 @@ if ($id_pagamento === 0 && isset($pdo) && $pdo !== null) {
         error_log("Falha ao detetar o último ID: " . $e->getMessage()); 
     }
 }
+
 
 // Fallback de segurança para o template não quebrar caso o banco esteja limpo
 if ($id_pagamento === 0) { $id_pagamento = 1; }
@@ -319,9 +317,14 @@ $url_qrcode = "https://qrserver.com" . urlencode($link_autenticacao);
 
 <body>
 
-    <div class="topo-acoes-fatura">
-        <a href="Dashboard.php" class="btn-fechar-recibo">✕ Fechar Recibo</a>
-    </div>
+<div class="topo-acoes-fatura">
+    <!-- Captura o ID da URL atual ou usa o código extraído do pagamento -->
+    <?php 
+        // Se a fatura foi aberta passando o id da loja na URL (ex: fatura.php?id=125&loja=237)
+        $id_retorno = isset($_GET['loja']) ? (int)$_GET['loja'] : ($pagamento['codigo'] ?? '0'); 
+    ?>
+   <a href="Dashboard.php" class="btn-fechar-recibo">✕ Fechar Recibo</a>
+</div>
 
     <div class="conteudo-fatura" style="max-width: 420px; margin: 0 auto; box-sizing: border-box; width: 100%;">
         <div class="topo-centro">
