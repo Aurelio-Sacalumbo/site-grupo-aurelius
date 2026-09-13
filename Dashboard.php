@@ -1508,7 +1508,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
          <div class="painel-azul" style="flex: 1; min-width: 280px; background: #0f172a; border: 1px solid #1d4d50; padding: 20px; border-radius: 8px; box-sizing: border-box;">
              <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 10px;">📸 Carregar Nova Foto</span>
              <!-- 📸 FORMULÁRIO A: CARREGAR FOTOS -->
-             <form action="./guardar_foto.php" method="POST" enctype="multipart/form-data">
+             <form action="guardar_foto.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Trabalho:</label>
 <input type="text" name="titulo_foto" placeholder="nome da foto" inherit required style="padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Foto:</label>
@@ -1518,7 +1518,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
 <!-- 📹 FORMULÁRIO B: CARREGAR VÍDEOS -->
 <!-- 🟢 CORREÇÃO: Direcionado estritamente para guardar-videos.php -->
-<form action="./guardar_video.php" method="POST" enctype="multipart/form-data">
+<form action="guardar_video.php" method="POST" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:12px; text-align:left;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Título do Vídeo:</label>
 <input type="text" name="titulo_foto" placeholder="nome do Vídeo" required style="padding: 10px; border-radius: 4px; width: 100%; box-sizing: border-box;">
 <label style="color: #fff; font-size: 13px; font-weight: bold;">Escolher Vídeo (MP4/MOV):</label>

@@ -273,7 +273,7 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
                    <span style="color: #64748b; font-size: 10.5px; display: block;">📍 Balcão: <?= $endereco_loja ?></span>
                    
                    <div style="margin-top: 12px;">
-                       <a href="Principal.php?id_parceiro=<?= $id_barb_real ?>#nivel1" style="display: block; width: 100%; background: linear-gradient(135deg, #15803d, #22c55e); color: #000; text-align: center; padding: 8px 0; border-radius: 6px; font-weight: bold; font-size: 11px; text-transform: uppercase; text-decoration: none; letter-spacing: 0.5px;">Aceder Balcão</a>
+                   <a href="Video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? 0; ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
                    </div>
                </div>
            </div>
