@@ -1529,7 +1529,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
          </div>
      </div>
  
-       <!-- GRADE DE MÍDIAS FILTRADA E ADAPTADA PARA NUVEM (SUPORTE BASE64 + LOCAL) -->
+         <!-- 🟢 GRADE DE MÍDIAS ATUALIZADA: DETETOR TRIPLO SAAS (FIM DO BASE64 / SEM TELA ESCURA) -->
      <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
      <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
          <?php
@@ -1544,60 +1544,56 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
          if (count($listaFotos) > 0): 
              foreach ($listaFotos as $fotoItem): 
-                 // Extrai o conteúdo bruto gravado no banco de dados
+                 // Extrai o conteúdo bruto gravado na coluna 'imagem' do phpMyAdmin
                  $arquivo_banco = trim($fotoItem['imagem'] ?? '');
+                 $arquivo_limpo = basename($arquivo_banco);
                  
-                 if (empty($arquivo_banco)) { continue; }
+                 if (empty($arquivo_limpo)) { continue; }
 
-                 // 🟢 DETECTOR INTELIGENTE NUVEM/LOCAL
-                 // 1. Se começar por 'data:', é um arquivo Base64 vindo do Render! Ativa e renderiza diretamente.
-                 if (strpos($arquivo_banco, 'data:') === 0) {
-                     $img_src_render = $arquivo_banco;
-                     
-                     // Deteta se o Base64 é de um vídeo ou de uma foto para montar a tag certa
-                     $is_video = (strpos($arquivo_banco, 'data:video/') === 0);
-                 } 
-                 // 2. Se for um arquivo físico clássico do teu localhost XAMPP
-                 else {
-                     $arquivo_limpo = basename($arquivo_banco);
-                     $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
-                     $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg', 'webm']);
+                 // Define dinamicamente o tipo de mídia baseado na coluna do teu banco ou extensão
+                 $extensao = strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION));
+                 $is_video = in_array($extensao, ['mp4', 'mov', 'avi', 'mpeg', 'webm']) || ($fotoItem['tipo_media'] ?? '') === 'video';
 
-                     if (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
-                         $img_src_render = "upload/" . $arquivo_limpo;
-                     } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
-                         $img_src_render = $arquivo_limpo;
-                     } else {
-                         // Se o arquivo local não existir fisicamente no teu PC Windows, oculta o card
-                         continue; 
-                     }
+                 // 🟢 MOTOR DE ROTAS TRIPLO SAAS (RENDER ONLINE / XAMPP LOCAL)
+                 if (file_exists("/tmp/" . $arquivo_limpo) && !is_dir("/tmp/" . $arquivo_limpo)) {
+                     // 1º: Se rodar no Render online, consome da diretoria livre do Linux
+                     $img_src_render = "/tmp/" . $arquivo_limpo;
+                 } elseif (file_exists("upload/" . $arquivo_limpo) && !is_dir("upload/" . $arquivo_limpo)) {
+                     // 2º: Se rodar no teu XAMPP local, consome da pasta upload/ no Windows
+                     $img_src_render = "upload/" . $arquivo_limpo;
+                 } elseif (file_exists($arquivo_limpo) && !is_dir($arquivo_limpo)) {
+                     // 3º: Se for uma das fotos antigas soltas na raiz do teu projeto
+                     $img_src_render = $arquivo_limpo;
+                 } else {
+                     // ❌ Se o ficheiro físico não existir em nenhuma das rotas locais ou de nuvem, ignora e remove o card fantasma
+                     continue; 
                  }
                  
                  $total_midias_validas++;
          ?>
+                 <!-- 🎴 ACENDIMENTO AUTOMÁTICO DO CARD DE INFRAESTRUTURA -->
                  <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box;">
                      
-                 <!-- Container de Mídia Blindado contra Telas Escuras -->
-                 <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #070b12; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
+                     <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #070b12; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
+                         <?php if ($is_video): ?>
+                             <!-- Player reativo e leve para miniaturas de Reels -->
+                             <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted autoplay loop style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;"></video>
+                             <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(7,11,18,0.85); color: #ca8a04; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">📹 REEL</span>
+                         <?php else: ?>
+                             <!-- Renderização fluida e brilhante de fotos normais -->
+                             <img src="<?php echo $img_src_render; ?>" decoding="async" style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;" onerror="this.src='upload/default.png';">
+                         <?php endif; ?>
+                     </div>
+ 
+                     <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? 'Trabalho Aurélius'); ?></strong>
+                     
                      <?php if ($is_video): ?>
-                         <!-- 🟢 CORREÇÃO MESTRE VÍDEOS: Atributos preload, playsinline e muted forçam o navegador a desenhar o frame do vídeo Base64 online -->
-                         <video src="<?php echo $img_src_render; ?>" preload="auto" playsinline muted loop autoplay style="width:100%; height:100%; object-fit:cover; opacity: 1 !important; display: block;"></video>
-                         <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(7,11,18,0.85); color: #ca8a04; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">📹 REEL</span>
+                         <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? 0; ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
                      <?php else: ?>
-                         <!-- 🟢 CORREÇÃO MESTRE IMAGENS: Atributos decoding e crossOrigin forçam a renderização instantânea da string de texto Base64 sem deixar o quadrado escuro -->
-                         <img src="<?php echo $img_src_render; ?>" decoding="async" crossOrigin="anonymous" style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;" onerror="this.src='upload/default.png';">
+                         <div style="height: 1px;"></div> 
                      <?php endif; ?>
+ 
                  </div>
-
-                 <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? ($fotoItem['title'] ?? 'Trabalho Aurélius')); ?></strong>
-                 
-                 <?php if ($is_video): ?>
-                     <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0); ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
-                 <?php else: ?>
-                     <div style="height: 1px;"></div> 
-                 <?php endif; ?>
-
-             </div>
          <?php 
              endforeach;
          endif; 
@@ -1609,7 +1605,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
              </div>
          <?php endif; ?>
      </div>
-</div>
+</div> <!-- Fecho da pauta de mídias -->
  
  
  
