@@ -1,7 +1,6 @@
 # =========================================================================
 # 🟢 EXPANSÃO MESTRE DE MEMÓRIA PARA REELS E FOTOS PREMIUM (GRUPO AURÉLIUS)
 # =========================================================================
-# Aumenta o limite para suportar vídeos pesados de até 256MB sem travar
 php_value upload_max_filesize 256M
 php_value post_max_size 256M
 php_value memory_limit 512M
@@ -15,12 +14,12 @@ DirectoryIndex Principal.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /
-
-    # Se o utilizador tentar aceder ao index.html ou à raiz, reencaminha para o Principal.php
+    
+    # Se tentar aceder à raiz ou index.html, força o carregamento do Principal.php
+    RewriteRule ^$ Principal.php [L]
     RewriteRule ^index\.html$ Principal.php [NC,R=301,L]
 
-    # 🟢 PROTEÇÃO ANTI-404: Permite chamar "guardar_video" no HTML e o Render executa "guardar_video.php"
+    # 🟢 PROTEÇÃO ANTI-404: Remove a necessidade de digitar .php na URL
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^([^\.]+)$ $1.php [NC,L]
