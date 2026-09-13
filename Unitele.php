@@ -326,12 +326,13 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
                 <button type="submit" name="executar_venda_final" onclick="return validarPinUnitelAntesDeSubmeter()" class="btn-pagar">⚡ Confirmar e Finalizar Transação com Sucesso</button>
             </form>
         </div>
-
         <script>
         const precoUnitario = <?= floatval($preco_tabela) ?>;
         let clienteE_Vip = false;
 
         function verificarEstatutoVip(telefone) {
+            if (!telefone) return;
+            // Valida os prefixos VIP de Angola (925 ou 935)
             if (telefone.startsWith('925') || telefone.startsWith('935')) {
                 clienteE_Vip = true;
                 if(document.getElementById('linha_desc_vip')) document.getElementById('linha_desc_vip').style.display = 'flex';
@@ -343,54 +344,81 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
         }
 
         function atualizarFaturaReal() {
-            const qtd = parseInt(document.getElementById('qtd_select').value) || 1;
-            const freteOpcao = document.getElementById('frete_select').value;
-            const pagamentoOpcao = document.getElementById('pagamento_select').value;
-            const canalPagamento = document.getElementById('canal_select').value;
+            // Mapeamento e Captura Segura dos Inputs (Evita ler elementos nulos)
+            const e_qtd       = document.getElementById('quantidade_selecionada') || document.getElementById('qtd_select');
+            const e_frete     = document.getElementById('modalidade_entrega') || document.getElementById('frete_select');
+            const e_pagamento = document.getElementById('tipo_pagamento') || document.getElementById('pagamento_select');
+            const e_canal     = document.getElementById('canal_pagamento') || document.getElementById('canal_select');
+
+            const qtd              = e_qtd ? (parseInt(e_qtd.value) || 1) : 1;
+            const freteOpcao       = e_frete ? e_frete.value : 'buscar';
+            const pagamentoOpcao   = e_pagamento ? e_pagamento.value : 'total';
+            const canalPagamento   = e_canal ? e_canal.value : 'unitel_money';
             
             const subtotalProdutos = precoUnitario * qtd;
-            const custoFrete = (freteOpcao === 'levar') ? 1500 : 0;
+            const custoFrete       = (freteOpcao === 'levar') ? 1500 : 0;
             
-            const desconto = clienteE_Vip ? (subtotalProdutos * 0.20) : 0;
-            const totalGeral = (subtotalProdutos + custoFrete) - desconto;
-            const taxaPlataforma = totalGeral * 0.10;
+            const desconto         = clienteE_Vip ? (subtotalProdutos * 0.20) : 0;
+            const totalGeral       = (subtotalProdutos + custoFrete) - desconto;
+            const taxaPlataforma   = totalGeral * 0.10;
 
-            document.getElementById('txt_bruto').innerText = subtotalProdutos.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
-            document.getElementById('txt_frete_val').innerText = '+ ' + custoFrete.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
-            if(document.getElementById('txt_desc_vip')) document.getElementById('txt_desc_vip').innerText = '-' + desconto.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
-            document.getElementById('txt_taxa').innerText = '-' + taxaPlataforma.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
-            document.getElementById('txt_total').innerText = totalGeral.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            // Atualização dos elementos na Interface com verificação de existência
+            if(document.getElementById('txt_bruto')) {
+                document.getElementById('txt_bruto').innerText = subtotalProdutos.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            }
+            if(document.getElementById('txt_frete_val')) {
+                document.getElementById('txt_frete_val').innerText = '+ ' + custoFrete.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            }
+            if(document.getElementById('txt_desc_vip')) {
+                document.getElementById('txt_desc_vip').innerText = '-' + desconto.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            }
+            if(document.getElementById('txt_taxa')) {
+                document.getElementById('txt_taxa').innerText = '-' + taxaPlataforma.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            }
+            if(document.getElementById('txt_total')) {
+                document.getElementById('txt_total').innerText = totalGeral.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+            }
 
-            const blocoPin = document.getElementById('bloco_pin_unitel_money');
-            const pinInput = document.getElementById('pin_input');
-            const blocoRef = document.getElementById('bloco_referencia_bancaria');
+            // Gestão Dinâmica dos Blocos de Gateways (Unitel Money PIN vs Referência)
+            const blocoPin = document.getElementById('bloco_pin_unitel_money') || document.getElementById('unitel-passo2');
+            const pinInput = document.getElementById('pin_input') || document.getElementById('pinUnitel');
+            const blocoRef = document.getElementById('bloco_referencia_bancaria') || document.getElementById('pay-ref');
 
             if (canalPagamento === 'unitel_money') {
-                if(blocoPin) blocoPin.style.display = 'block';
+                if(blocoPin) blocoPin.style.setProperty('display', 'block', 'important');
                 if(pinInput) pinInput.required = true;
                 if(blocoRef) blocoRef.style.display = 'none';
-            } else if (canalPagamento === 'referencia_bancaria') {
-                if(blocoPin) blocoPin.style.display = 'none';
+            } else if (canalPagamento === 'referencia_bancaria' || canalPagamento === 'ref') {
+                if(blocoPin) blocoPin.style.setProperty('display', 'none', 'important');
                 if(pinInput) pinInput.required = false;
                 if(blocoRef) blocoRef.style.display = 'block';
             } else {
-                if(blocoPin) blocoPin.style.display = 'none';
+                if(blocoPin) blocoPin.style.setProperty('display', 'none', 'important');
                 if(pinInput) pinInput.required = false;
                 if(blocoRef) blocoRef.style.display = 'none';
             }
 
-            if (pagamentoOpcao === 'adiantado') {
-                const adiantadoSinal = totalGeral * 0.50;
-                document.getElementById('linha_adiantado').style.display = 'flex';
-                document.getElementById('txt_adiantado_val').innerText = adiantadoSinal.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
-            } else {
-                document.getElementById('linha_adiantado').style.display = 'none';
+            // Tratamento da linha de adiantamento parcial (50%)
+            const linhaAdiantado = document.getElementById('linha_adiantado');
+            if (linhaAdiantado) {
+                if (pagamentoOpcao === 'adiantado') {
+                    const adiantadoSinal = totalGeral * 0.50;
+                    linhaAdiantado.style.display = 'flex';
+                    if(document.getElementById('txt_adiantado_val')) {
+                        document.getElementById('txt_adiantado_val').innerText = adiantadoSinal.toLocaleString('pt-PT', {minimumFractionDigits: 2}) + ' Kz';
+                    }
+                } else {
+                    linhaAdiantado.style.display = 'none';
+                }
             }
         }
 
         function validarPinUnitelAntesDeSubmeter() {
-            const canal = document.getElementById('canal_select').value;
-            const pin = document.getElementById('pin_input').value.trim();
+            const e_canal = document.getElementById('canal_pagamento') || document.getElementById('canal_select');
+            const e_pin   = document.getElementById('pin_input') || document.getElementById('pinUnitel');
+            
+            const canal = e_canal ? e_canal.value : '';
+            const pin   = e_pin ? e_pin.value.trim() : '';
             
             if (canal === 'unitel_money') {
                 if (pin.length < 4) {
@@ -401,9 +429,27 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
             return true;
         }
 
+        // Inicialização protegida contra elementos nulos
         document.addEventListener("DOMContentLoaded", function() {
-            verificarEstatutoVip(document.getElementById('telefone_input').value);
-            atualizarFaturaReal();
+            const inputTel = document.getElementById('cliente_telefone') || document.getElementById('telefone_input') || document.getElementById('telUnitel');
+            
+            if (inputTel) {
+                // Escuta alterações em tempo real no telefone para ativar o VIP dinamicamente
+                inputTel.addEventListener('input', function() {
+                    verificarEstatutoVip(this.value.trim());
+                });
+                // Executa a primeira verificação com o valor inicial
+                verificarEstatutoVip(inputTel.value.trim());
+            } else {
+                atualizarFaturaReal();
+            }
+
+            // Vincula ouvintes de alteração nos selects para recalcular tudo de imediato
+            const seletores = ['quantidade_selecionada', 'qtd_select', 'modalidade_entrega', 'frete_select', 'tipo_pagamento', 'pagamento_select', 'canal_pagamento', 'canal_select'];
+            seletores.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('change', atualizarFaturaReal);
+            });
         });
         </script>
     <?php endif; ?>

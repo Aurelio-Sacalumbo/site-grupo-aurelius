@@ -1295,6 +1295,10 @@ try {
                 </tr>
             </thead>
             <tbody>
+
+
+
+            
                 <?php 
                 // Garante que o loop só roda se existirem registos extraídos do banco de dados
                 if (!empty($lista_pedidos) && is_array($lista_pedidos)):
@@ -1528,73 +1532,89 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
          </div>
      </div>
  
-         <!-- 🟢 GRADE DE MÍDIAS ATUALIZADA: DETETOR TRIPLO SAAS (FIM DO BASE64 / SEM TELA ESCURA) -->
-     <span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
-     <div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
-         <?php
-         try {
-             $queryFotos = $pdo->query("SELECT * FROM anuncios ORDER BY id_anuncio DESC");
-             $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
-         } catch (PDOException $e) {
-             $listaFotos = [];
-         }
- 
-         $total_midias_validas = 0;
+       <!-- 🟢 GRADE DE MÍDIAS INTELIGENTE: ROTAÇÃO ALEATÓRIA, FILTRO DE 20 DIAS & SELEÇÃO DINÂMICA -->
+<span class="painel-titulo" style="font-size: 14px; font-weight: bold; color: #fff; display: block; margin-bottom: 15px; border-left: 3px solid #10b981; padding-left: 8px; text-align: left;"> Inspirações de Cortes e Trabalhos</span>
+<div class="grid-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; width:100%; margin-bottom:40px; box-sizing: border-box;">
+    <?php
+    try {
+        // 🔄 ALEATORIEDADE E AGRUPAMENTO: Muda a posição das fotos a cada atualização e evita duplicados
+        $queryFotos = $pdo->query("SELECT * FROM anuncios WHERE tipo_media != 'video' OR tipo_media IS NULL GROUP BY imagem ORDER BY RAND()");
+        $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        try {
+            $queryFotos = $pdo->query("SELECT * FROM anuncios WHERE id_anuncio IN (SELECT MAX(id_anuncio) FROM anuncios GROUP BY imagem) ORDER BY RAND()");
+            $listaFotos = $queryFotos->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $ex) {
+            $listaFotos = [];
+        }
+    }
 
-         if (count($listaFotos) > 0): 
-             foreach ($listaFotos as $fotoItem): 
-                 // Extrai o conteúdo bruto gravado na coluna 'imagem' do phpMyAdmin
-                 $arquivo_banco = trim($fotoItem['imagem'] ?? '');
-                 $arquivo_limpo = basename($arquivo_banco);
-                 $is_video = (isset($fotoItem['tipo_media']) ? $fotoItem['tipo_media'] === 'video' : in_array(strtolower(pathinfo($arquivo_limpo, PATHINFO_EXTENSION)), ['mp4', 'mov', 'avi']));
-                 
-                 // 🟢 CAMINHO DIRETO E LIMPO PARA EXIBIÇÃO EM QUALQUER SERVIDOR
-                 if (file_exists("upload/" . $arquivo_limpo)) {
-                     $img_src_render = "upload/" . $arquivo_limpo;
-                 } elseif (file_exists($arquivo_limpo)) {
-                     $img_src_render = $arquivo_limpo;
-                 } else {
-                     $img_src_render = "upload/default.png"; // Fallback se não achar
-                 }
-                 
-                 $total_midias_validas++;
-         ?>
-                 <!-- 🎴 ACENDIMENTO AUTOMÁTICO DO CARD DE INFRAESTRUTURA -->
-                 <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box;">
-                     
-                     <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #070b12; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
-                         <?php if ($is_video): ?>
-                             <!-- Player reativo e leve para miniaturas de Reels -->
-                             <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted autoplay loop style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;"></video>
-                             <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(7,11,18,0.85); color: #ca8a04; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">📹 REEL</span>
-                         <?php else: ?>
-                             <!-- Renderização fluida e brilhante de fotos normais -->
-                             <img src="<?php echo $img_src_render; ?>" decoding="async" style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;" onerror="this.src='upload/default.png';">
-                         <?php endif; ?>
-                     </div>
- 
-                     <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? 'Trabalho Aurélius'); ?></strong>
-                     
-                     <?php if ($is_video): ?>
-                         <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? 0; ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
-                     <?php else: ?>
-                         <div style="height: 1px;"></div> 
-                     <?php endif; ?>
- 
-                 </div>
-         <?php 
-             endforeach;
-         endif; 
+    $total_midias_validas = 0;
+    $dia_da_semana = (int)date('w'); // 0 (domingo) a 6 (sábado) para alternância temporária
 
-         if ($total_midias_validas === 0):
-         ?>
-             <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
-                 Nenhuma inspiração ou corte ativo localizado no sistema.
-             </div>
-         <?php endif; ?>
-     </div>
-</div> <!-- Fecho da pauta de mídias -->
- 
+    if (count($listaFotos) > 0): 
+        foreach ($listaFotos as $fotoItem): 
+            // ⏰ 1. FILTRO DE EXPIRAÇÃO DE 20 DIAS
+            $data_alvo = !empty($fotoItem['data_publicacao']) ? $fotoItem['data_publicacao'] : (!empty($fotoItem['data_criacao']) ? $fotoItem['data_criacao'] : null);
+            if ($data_alvo) {
+                $data_anuncio = new DateTime($data_alvo);
+                $data_atual = new DateTime();
+                $intervalo = $data_anuncio->diff($data_atual);
+                
+                // Se a foto tiver 20 ou mais dias, desaparece por definitivo da plataforma
+                if ($intervalo->days >= 20) {
+                    continue; 
+                }
+
+                // 🔄 2. DESAPARECIMENTO TEMPORÁRIO (ALTERNANÇA VISUAL)
+                // Oculta dinamicamente certas imagens em dias pares/ímpares se já tiverem mais de 5 dias
+                if ($intervalo->days > 5 && ($fotoItem['id_anuncio'] % 2 === 0) && ($dia_da_semana % 2 === 0)) {
+                    continue; // Ocultado temporariamente hoje para poupar espaço e rodar o feed
+                }
+            }
+
+            // Extrai e limpa o nome do arquivo gravado no banco de dados
+            $arquivo_banco = trim($fotoItem['imagem'] ?? '');
+            $arquivo_limpo = basename($arquivo_banco);
+            
+            if (empty($arquivo_limpo)) {
+                continue; 
+            }
+
+            // 🛡️ PROTEÇÃO ANTI-404: Só renderiza se o ficheiro físico estiver na pasta do Render
+            if (file_exists("upload/" . $arquivo_limpo)) {
+                $img_src_render = "upload/" . $arquivo_limpo;
+            } elseif (file_exists($arquivo_limpo)) {
+                $img_src_render = $arquivo_limpo;
+            } else {
+                continue; // Ignora se o ficheiro não existir fisicamente
+            }
+
+            $total_midias_validas++;
+    ?>
+            <!-- 🎴 CARD RESPONSIVO REATIVO PWA (FOTOS) -->
+            <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 200px; box-sizing: border-box; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                
+                <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #070b12; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
+                    <!-- Renderização fluida de fotografias de cortes -->
+                    <img src="<?php echo $img_src_render; ?>" decoding="async" style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;">
+                </div>
+
+                <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? 'Trabalho Aurélius'); ?></strong>
+                
+                <div style="height: 5px;"></div> 
+            </div>
+    <?php 
+        endforeach;
+    endif; 
+
+    if ($total_midias_validas === 0):
+    ?>
+        <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
+            Novas tendências e fotos de cortes serão exibidas brevemente.
+        </div>
+    <?php endif; ?>
+</div>
  
  
  

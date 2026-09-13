@@ -103,6 +103,14 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
         <button class="btn-filtro-media" id="btn_aba_horizontal" onclick="mudarFormatoExibicao('horizontal')">🖥️ Aulas Cinema</button>
     </div>
 
+
+    <div class="container-pesquisa-saas" style="padding: 15px; background: #0f172a; border-bottom: 1px solid #1e293b; box-sizing: border-box; width: 100%;">
+    <div style="display: flex; gap: 10px; max-width: 500px; margin: 0 auto;">
+        <input type="text" id="input_buscar_vistos" placeholder="Pesquisar vídeos já assistidos..." style="flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155; background: #1e293b; color: #fff; font-size: 13px; outline: none;">
+        <button onclick="consultarVideosAnteriores()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 0 16px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; white-space: nowrap;">Consultar</button>
+    </div>
+    <div id="status_busca_vistos" style="color: #64748b; font-size: 11px; text-align: center; margin-top: 6px; font-style: italic; display: none;"></div>
+</div>
     <!-- =========================================================================
          📱 ABA 1: FEED REELS VERTICAIS (SNAP DESLIZÁVEL)
          ========================================================================= -->
@@ -289,36 +297,114 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
            </div>
        <?php endif; ?>
    </div>
-   
+
+
+
+
    <script>
    let paginaAtualdoFeed = 1;
    let carregandoProximosVideos = false;
    
-   // 📱 1. AUTO-PLAY & GESTÃO DE MEMÓRIA (Intersection Observer)
+   // 🔄 SISTEMA DE ALTERNÂNCIA ALEATÓRIA E OCULTAÇÃO TEMPORÁRIA
+   function registrarBaralharEOcultarVideos() {
+       const containerDeScroll = document.getElementById('aba_conteudo_vertical');
+       if (!containerDeScroll) return;
+   
+       // Captura todos os cartões que vieram do servidor PHP
+       const cards = Array.from(containerDeScroll.querySelectorAll('.reel-card-vertical'));
+       if (cards.length === 0) return;
+   
+       // ⚡ 1. BARALHAR TOTAL: Algoritmo Fisher-Yates para alternar as posições a cada refresh
+       for (let i = cards.length - 1; i > 0; i--) {
+           const j = Math.floor(Math.random() * (i + 1));
+           const temp = cards[i];
+           cards[i] = cards[j];
+           cards[j] = temp;
+       }
+   
+       // Limpa o container e reinsere na nova ordem aleatória
+       containerDeScroll.innerHTML = '';
+       cards.forEach(card => containerDeScroll.appendChild(card));
+   
+       // Guardamos o título em metadados no HTML do card para o motor de busca ler depois
+       cards.forEach(card => {
+           const videoTag = card.querySelector('p');
+           if (videoTag) {
+               card.setAttribute('data-titulo-busca', videoTag.innerText.toLowerCase());
+           }
+       });
+   
+       // ⚡ 2. REGLA DE OCULTAÇÃO GRADUAL (Garante que os 3 primeiros do novo sorteio fiquem visíveis)
+       const videosParaOcultar = cards.slice(3); 
+       videosParaOcultar.forEach((card) => {
+           const idAnuncio = card.id.replace('reel-', '');
+           
+           if (sessionStorage.getItem('visto_' + idAnuncio)) {
+               // Oculta temporariamente do feed principal para não ocupar espaço
+               card.style.display = 'none'; 
+           } else {
+               // Se for a primeira vez que entra na sessão, guarda a flag de assistido
+               sessionStorage.setItem('visto_' + idAnuncio, 'true');
+           }
+       });
+   }
+   
+   // 🔍 3. MOTOR DE CONSULTA E BUSCA DE VÍDEOS JÁ ASSISTIDOS
+   function consultarVideosAnteriores() {
+       const termoBusca = document.getElementById('input_buscar_vistos').value.toLowerCase().trim();
+       const statusBox = document.getElementById('status_busca_vistos');
+       const cards = document.querySelectorAll('.reel-card-vertical');
+       let encontrados = 0;
+   
+       if (termoBusca === '') {
+           // Se a busca estiver vazia, restaura o comportamento padrão da sessão
+           registrarBaralharEOcultarVideos();
+           statusBox.style.display = 'none';
+           return;
+       }
+   
+       cards.forEach(card => {
+           const idAnuncio = card.id.replace('reel-', '');
+           const tituloCard = card.getAttribute('data-titulo-busca') || '';
+   
+           // Se o vídeo foi assistido nesta sessão e o título bate com a busca, trazemos de volta à vida!
+           if (sessionStorage.getItem('visto_' + idAnuncio) && tituloCard.includes(termoBusca)) {
+               card.style.display = 'flex'; // Exibe o card ocultado anteriormente
+               encontrados++;
+           } else {
+               card.style.display = 'none'; // Esconde os outros
+           }
+       });
+   
+       statusBox.innerText = `Foram localizados ${encontrados} vídeos assistidos anteriormente para a sua pesquisa.`;
+       statusBox.style.display = 'block';
+   }
+   
+   // 📱 4. AUTO-PLAY INTERSECTION OBSERVER (Garante performance fluida nos visíveis)
    const observadorDeFocoVideo = new IntersectionObserver((entradas) => {
        entradas.forEach(entrada => {
            const video = entrada.target.querySelector('video');
            if (video) {
-               if (entrada.isIntersecting) {
-                   // Entrou no foco do ecrã do telemóvel: Dá Play nativo instantâneo
+               if (entrada.isIntersecting && entrada.target.style.display !== 'none') {
                    video.play().catch(() => {});
                } else {
-                   // Saiu do ecrã: Dá Pausa imediatamente para poupar processador
                    video.pause();
-                   video.currentTime = 0; // Reseta o progresso
+                   video.currentTime = 0;
                }
            }
        });
-   }, { threshold: 0.6 }); // Requer 60% do card visível para ativar
+   }, { threshold: 0.6 });
    
-   // Inicializa a monitorização nos cartões carregados pelo PHP
-   document.querySelectorAll('.reel-card-vertical').forEach(card => observadorDeFocoVideo.observe(card));
+   // Executa o sorteio de posições e ocultação assim que o ecrã carrega
+   window.addEventListener('DOMContentLoaded', () => {
+       registrarBaralharEOcultarVideos();
+       document.querySelectorAll('.reel-card-vertical').forEach(card => observadorDeFocoVideo.observe(card));
+   });
    
-   // 🔄 2. DETETOR DE ROLAGEM INFINITA (Infinite Scroll ao estilo TikTok)
+   // 🔄 5. DETETOR DE ROLAGEM INFINITA (Infinite Scroll TikTok)
    const containerDeScroll = document.getElementById('aba_conteudo_vertical');
    if (containerDeScroll) {
        containerDeScroll.addEventListener('scroll', () => {
-           // Se o utilizador chegou perto do fundo da rolagem
            if (containerDeScroll.scrollTop + containerDeScroll.clientHeight >= containerDeScroll.scrollHeight - 600) {
                carregarMaisVideosDoServidor();
            }
@@ -352,7 +438,7 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
        let valorAtual = parseInt(spanContador.innerText) || 0;
        spanContador.innerText = valorAtual + 1;
    
-       fetch(`video.php?acao_reacao=${tipoReacao}&id_post=${idPost}`, { method: 'GET' })
+       fetch(`Video.php?acao_reacao=${tipoReacao}&id_post=${idPost}`, { method: 'GET' })
        .catch(err => console.error("Erro assíncrono ao registar reação:", err));
    }
    
@@ -361,7 +447,7 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
        carregandoProximosVideos = true;
        paginaAtualdoFeed++;
    
-       fetch(`video.php?acao=obter_proxima_pagina&page=${paginaAtualdoFeed}`)
+       fetch(`Video.php?acao=obter_proxima_pagina&page=${paginaAtualdoFeed}`)
        .then(res => res.json())
        .then(dadosNovos => {
            if (dadosNovos && dadosNovos.length > 0) {
@@ -370,6 +456,14 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
                    if (novoCard) {
                        containerDeScroll.appendChild(novoCard);
                        observadorDeFocoVideo.observe(novoCard);
+                       
+                       const idAnuncio = reel.id_anuncio;
+                       // Se o vídeo novo vindo da paginação já constar na sessão, oculta-o na hora
+                       if (sessionStorage.getItem('visto_' + idAnuncio)) {
+                           novoCard.style.display = 'none';
+                       } else {
+                           sessionStorage.setItem('visto_' + idAnuncio, 'true');
+                       }
                    }
                });
                carregandoProximosVideos = false;
@@ -382,7 +476,6 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
    }
    
    function criarEstruturaDoCardReel(reel) {
-       // 🛡️ Filtro do lado do cliente: ignora vídeos sem link
        if (!reel.imagem && !reel.image_url) return null;
        
        const div = document.createElement('div');
@@ -391,21 +484,23 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
        
        const srcVideo = reel.imagem || reel.image_url;
        
+       div.setAttribute('data-titulo-busca', (reel.titulo || '').toLowerCase());
+       
        div.innerHTML = `
        <video controls autoplay muted playsinline loop style="width: 100%; height: 100%; object-fit: cover; background: #000000;" onclick="gerenciarPlayVideo(this)">
-       <source src="<?= htmlspecialchars($reel['video_src_real']) ?>#t=0.1" type="video/mp4">
-       <source src="<?= htmlspecialchars($reel['video_src_real']) ?>#t=0.1" type="video/quicktime">
-       O seu telemóvel não suporta a reprodução deste vídeo.
-   </video>
-           <div class="barra-lateral-acoes">
-               <div class="btn-circulo-vivo" onclick="enviarReacaoAssincrona(${reel.id_anuncio}, 'adoro')">❤️<span class="txt-cont-viva" id="cont_like_${reel.id_anuncio}">${reel.likes_adoro || 0}</span></div>
-               <div class="btn-circulo-vivo" onclick="enviarReacaoAssincrona(${reel.id_anuncio}, 'ncurto')">❌<span class="txt-cont-viva" id="cont_dislike_${reel.id_anuncio}">${reel.likes_ncurto || 0}</span></div>
-               <div class="btn-circulo-vivo" onclick="abrirGavetaComentarios(${reel.id_anuncio})">💬<span class="txt-cont-viva">SMS</span></div>
-           </div>
-           <div class="info-overlay-inferior">
-               <strong style="color: #00d2ff; font-size: 14px; display: block;">👑 ${reel.nome_loja || 'Parceiro'}</strong>
-               <p style="margin: 4px 0 0 0; font-size: 12px; color: #fff;">${reel.titulo}</p>
-           </div>
+           <source src="${srcVideo}#t=0.1" type="video/mp4">
+           <source src="${srcVideo}#t=0.1" type="video/quicktime">
+           O seu telemóvel não suporta a reprodução deste vídeo.
+       </video>
+       <div class="barra-lateral-acoes">
+           <div class="btn-circulo-vivo" onclick="enviarReacaoAssincrona(${reel.id_anuncio}, 'adoro')">❤️<span class="txt-cont-viva" id="cont_like_${reel.id_anuncio}">${reel.likes_adoro || 0}</span></div>
+           <div class="btn-circulo-vivo" onclick="enviarReacaoAssincrona(${reel.id_anuncio}, 'ncurto')">❌<span class="txt-cont-viva" id="cont_dislike_${reel.id_anuncio}">${reel.likes_ncurto || 0}</span></div>
+           <div class="btn-circulo-vivo" onclick="abrirGavetaComentarios(${reel.id_anuncio})">💬<span class="txt-cont-viva">SMS</span></div>
+       </div>
+       <div class="info-overlay-inferior">
+           <strong style="color: #00d2ff; font-size: 14px; display: block;">👑 ${reel.nome_loja || 'Parceiro'}</strong>
+           <p style="margin: 4px 0 0 0; font-size: 12px; color: #fff;">${reel.titulo}</p>
+       </div>
        `;
        return div;
    }
@@ -429,7 +524,7 @@ if ($exec_reels && mysqli_num_rows($exec_reels) > 0) {
    }
    
    function dispararPartilhaSaaS(titulo, idPost, idBarb) {
-       const link_partilha = `${window.location.origin}/video.php?id_anuncio=${idPost}`;
+       const link_partilha = `${window.location.origin}/Video.php?id_anuncio=${idPost}`;
        if (navigator.share) {
            navigator.share({
                title: titulo,

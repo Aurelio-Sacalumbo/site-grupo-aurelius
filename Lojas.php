@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 date_default_timezone_set('Africa/Luanda');
 
-// 🟢 CORREÇÃO CRÍTICA: Motor Híbrido Unificado para Localhost e Produção Online
+// 🟢 Motor Híbrido Unificado para Localhost e Produção Online
 $h_host = getenv('DB_HOST') ?: "altaria.proxy.rlwy.net";
 $h_port = getenv('DB_PORT') ?: "52030";
 $h_name = getenv('DB_NAME') ?: "railway";
@@ -28,10 +28,18 @@ if (!$mysqli || mysqli_connect_errno()) {
 
 $mysqli->set_charset("utf8mb4");
 
+// Opcional: Desativa temporariamente o modo estrito para esta sessão como redundância de segurança
+$mysqli->query("SET SESSION sql_mode=''");
+
 $id_usuario_comprador = isset($_SESSION['codigo_usuario']) ? intval($_SESSION['codigo_usuario']) : 1;
 
-// Carrega as abas superiores lendo a tabela exclusiva de lojas
-$query_lojas = $mysqli->query("SELECT id AS codigo, nome_loja AS nome, endereco_armazem AS endereco, especificacoes_json FROM lojas WHERE visivel_no_site = 1 ORDER BY id DESC");
+// 🔒 LISTAGEM EXCLUSIVA DE LOJAS SEM DUPLICADOS:
+// Usamos DISTINCT no id para carregar os registos únicos da tabela lojas.
+// Desta forma, o teu HTML lê a array $lojas_parceiras corretamente e a mensagem de erro desaparece!
+$query_lojas = $mysqli->query("SELECT DISTINCT id AS codigo, nome_loja AS nome, endereco_armazem AS endereco, especificacoes_json 
+                               FROM lojas 
+                               WHERE visivel_no_site = 1 
+                               ORDER BY id DESC");
 
 $lojas_parceiras = [];
 if ($query_lojas) {
@@ -39,6 +47,16 @@ if ($query_lojas) {
         $lojas_parceiras[] = $row;
     }
 }
+
+$query_produtos_feed_real = $mysqli->query("SELECT 
+                                               p.*, 
+                                               l.nome_loja, 
+                                               l.endereco_armazem 
+                                           FROM produtos_cosmeticos p
+                                           INNER JOIN lojas l ON p.empresa_id = l.id
+                                           WHERE p.stock > 0
+                                           GROUP BY p.id
+                                           ORDER BY p.id DESC");
 ?>
 <!DOCTYPE html>
 <html lang="pt-PT">
@@ -158,109 +176,120 @@ if ($query_lojas) {
          }
      }
  </style>
- 
- <div class="container-hub">
+<div class="container-hub" style="max-width: 1200px; margin: 0 auto; padding: 15px; font-family: system-ui, -apple-system, sans-serif;">
      
-     <div class="barra-topo-lojas">
-         
-         <!-- Bloco de Texto Informativo -->
-         <div class="header-market">
-             <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 20px; font-weight: 600;">🌍 Distribuição de Lojas Nacionais</h2>
-             <p style="color: #94a3b8; font-size: 13px; margin: 0;">Lojas de distribuição de compras e Vendas online.</p>
-         </div>
-         
-         <!-- Bloco de Ações e Links Dinâmicos -->
-         <div class="grupo-botoes-hub">
-             <a class="btn-hub-lojas" href="Principal.php">Voltar</a>
-             <a class="btn-hub-lojas" href="Admin_Venda.php">Consultar Vendas</a>
-             <a class="btn-hub-lojas" href="produto%20Novo.php">Add produtos na Loja</a>
-         </div>
- 
-     </div>
- 
-     <!-- O conteúdo dinâmico da sua fita de lojas (grades ou mapas) entra logo abaixo desta linha -->
- </div>
-  <br> <br>
-    <!-- ABAS SUPERIORES -->
-    <div class="wrapper-abas">
-        <?php if (empty($lojas_parceiras)): ?>
-            <p style="color: #64748b; font-size: 14px; width: 100%; text-align: center; padding: 20px;">Nenhuma loja parceira ativa registada no banco de dados.</p>
-        <?php else: ?>
-            <?php foreach ($lojas_parceiras as $index => $loja): ?>
-                <button class="aba-loja-btn <?php echo $index === 0 ? 'active' : ''; ?>" onclick="alternarAbaLoja(<?php echo $loja['codigo']; ?>, this)">
-                    🏬 <?php echo htmlspecialchars($loja['nome']); ?>
-                </button>
-            <?php endforeach; ?>
-        <?php endif; ?>
+<div class="barra-topo-lojas" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; background: #1e293b; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+    
+    <!-- Bloco de Texto Informativo -->
+    <div class="header-market" style="flex: 1; min-width: 250px;">
+        <h2 style="color: #fff; margin: 0 0 5px 0; font-size: 20px; font-weight: 600;">🌍 Distribuição de Lojas Nacionais</h2>
+        <p style="color: #94a3b8; font-size: 13px; margin: 0;">Lojas de distribuição de compras e Vendas online.</p>
+    </div>
+    
+    <!-- Bloco de Ações e Links Dinâmicos Responsivos -->
+    <div class="grupo-botoes-hub" style="display: flex; flex-wrap: wrap; gap: 10px;">
+        <a class="btn-hub-lojas" href="Principal.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 80px;">Voltar</a>
+        <a class="btn-hub-lojas" href="Admin_Venda.php" style="background: #334155; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 130px;">Consultar Vendas</a>
+        <a class="btn-hub-lojas" href="produto%20Novo.php" style="background: #0284c7; color: #fff; padding: 8px 16px; text-decoration: none; font-size: 13px; font-weight: 500; border-radius: 6px; text-align: center; flex: 1; min-width: 160px;">Add produtos na Loja</a>
     </div>
 
-    <!-- CONTEÚDO DAS VITRINES -->
-    <div id="contentor_vitrines_SaaS">
-        <?php foreach ($lojas_parceiras as $index => $loja): 
-            $id_fornecedor = $loja['codigo'];
-            $config_loja = json_decode($loja['especificacoes_json'], true);
-            
-            $produtos_declarados = [];
+</div>
 
-            // 🧠 SINTONIA DIRETA: Procura na tabela usando a coluna empresa_id
-            $query_reais = $mysqli->query("SELECT * FROM produtos_cosmeticos WHERE empresa_id = '$id_fornecedor' ORDER BY id DESC");
-            if ($query_reais && $query_reais->num_rows > 0) {
-                while ($prod_real = $query_reais->fetch_assoc()) {
-                    $produtos_declarados[] = [
-                        'id'       => $prod_real['id'],
-                        'nome'     => $prod_real['nome_produto'],
-                        'serie'    => 'LOTE-COS-' . $id_fornecedor . '-' . $prod_real['id'],
-                        'tipo'     => 'Cosmético Comercial / Revenda',
-                        'cor'      => 'Original Embalado',
-                        'validade' => date('d/m/Y', strtotime('+18 months')),
-                        'stock'    => intval($prod_real['stock_atual']),
-                        'preco'    => floatval($prod_real['preco']),
-                        'imagem'   => $prod_real['imagem']
-                    ];
-                }
-            }
-        ?>
-            <div id="vitrine-loja-<?php echo $id_fornecedor; ?>" class="painel-vitrine <?php echo $index === 0 ? 'active' : ''; ?>" style="display: <?php echo $index === 0 ? 'grid' : 'none'; ?>; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%;">
-                <?php if (!empty($produtos_declarados)): ?>
-                    <?php foreach ($produtos_declarados as $prod): 
-                        $id_js_limpo = $prod['id']; 
-                    ?>
-                      <div class="card-produto" id="card_prod_<?php echo $prod['id']; ?>">
-                            <span class="badge-promo">Desconto +5 Unid.</span>
-                            <img src="uploads/<?php echo htmlspecialchars($prod['imagem']); ?>" class="img-produto" alt="Foto">
-                            
-                            <h3 style="color: #fff; font-size: 15px; margin: 12px 0 4px 0;"><?php echo htmlspecialchars($prod['nome']); ?></h3>
-                            <p style="color: #64748b; font-size: 11px; margin: 0;">🏬 Origem: <?php echo htmlspecialchars($loja['nome']); ?></p>
-                            <p style="color: #38bdf8; font-size: 11px; margin: 0 0 10px 0;">📍 Distribuição: <?php echo htmlspecialchars($loja['endereco']); ?></p>
+<!-- ABAS SUPERIORES RESPONSIVAS (Scroll horizontal automático no telemóvel) -->
+<div class="wrapper-abas" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 25px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+   <?php if (empty($lojas_parceiras)): ?>
+       <p style="color: #64748b; font-size: 14px; width: 100%; text-align: center; padding: 20px; background: #0f172a; border-radius: 12px;">Nenhuma loja parceira ativa registada no banco de dados.</p>
+   <?php else: ?>
+       <?php foreach ($lojas_parceiras as $index => $loja): ?>
+           <button class="aba-loja-btn <?php echo $index === 0 ? 'active' : ''; ?>" onclick="alternarAbaLoja(<?php echo $loja['codigo']; ?>, this)" style="white-space: nowrap; flex: 0 0 auto; background: #1e293b; color: #94a3b8; border: 1px solid #334155; padding: 10px 20px; font-size: 14px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+               🏬 <?php echo htmlspecialchars($loja['nome']); ?>
+           </button>
+       <?php endforeach; ?>
+   <?php endif; ?>
+</div>
 
-                            <div class="ficha-tecnica">
-                                <strong>Código Série:</strong> <?php echo $prod['serie']; ?><br>
-                                <strong>Tipo / Categoria:</strong> <?php echo htmlspecialchars($prod['tipo']); ?><br>
-                                <strong>Especificação Cor:</strong> <?php echo htmlspecialchars($prod['cor']); ?><br>
-                                <strong>Fim de Validade:</strong> <span style="color:#f87171; font-weight:600;"><?php echo $prod['validade']; ?></span><br>
-                                <strong>Disponível no Armazém:</strong> <?php echo $prod['stock']; ?> un.
-                            </div>
+<!-- CONTEÚDO DAS VITRINES AUTOMÁTICAS -->
+<div id="contentor_vitrines_SaaS">
+   <?php foreach ($lojas_parceiras as $index => $loja): 
+       $id_fornecedor = $loja['codigo'];
+       $config_loja = json_decode($loja['especificacoes_json'], true);
+       
+       $produtos_declarados = [];
 
-                            <div style="font-size: 16px; font-weight: bold; color: #22c55e; margin-bottom: 12px;">
-                                Preço: <span><?php echo number_format($prod['preco'], 2, ',', '.'); ?></span> Kz
-                            </div>
+       // 🧠 FILTRO AUTOMÁTICO REATIVO: Apenas produtos com unidades disponíveis (stock > 0)
+       $query_reais = $mysqli->query("SELECT * FROM produtos_cosmeticos WHERE empresa_id = '$id_fornecedor' AND stock > 0 ORDER BY id DESC");
+       if ($query_reais && $query_reais->num_rows > 0) {
+           while ($prod_real = $query_reais->fetch_assoc()) {
+               $produtos_declarados[] = [
+                   'id'       => $prod_real['id'],
+                   'nome'     => $prod_real['nome_produto'],
+                   'serie'    => 'LOTE-COS-' . $id_fornecedor . '-' . $prod_real['id'],
+                   'tipo'     => 'Cosmético Comercial / Revenda',
+                   'cor'      => 'Original Embalado',
+                   'validade' => date('d/m/Y', strtotime('+18 months')),
+                   'stock'    => intval($prod_real['stock']), // Sincronizado com a coluna real 'stock'
+                   'preco'    => floatval($prod_real['preco']),
+                   'imagem'   => $prod_real['imagem']
+               ];
+           }
+       }
+   ?>
+       <!-- Grid Fluida: Adapta-se automaticamente entre 1 a 4 colunas dependendo do ecrã -->
+       <div id="vitrine-loja-<?php echo $id_fornecedor; ?>" class="painel-vitrine <?php echo $index === 0 ? 'active' : ''; ?>" style="display: <?php echo $index === 0 ? 'grid' : 'none'; ?>; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; width: 100%;">
+           <?php if (!empty($produtos_declarados)): ?>
+               <?php foreach ($produtos_declarados as $prod): ?>
+                 <div class="card-produto" id="card_prod_<?php echo $prod['id']; ?>" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative; transition: transform 0.2s, box-shadow 0.2s;">
+                       <span class="badge-promo" style="position: absolute; top: 12px; left: 12px; background: #eab308; color: #000; font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; z-index: 2;">Desconto +5 Unid.</span>
+                       
+                       <div style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; background: #0f172a; display: flex; align-items: center; justify-content: center;">
+                           <img src="uploads/<?php echo htmlspecialchars($prod['imagem']); ?>" class="img-produto" alt="Foto" style="width: 100%; height: 100%; object-fit: cover;">
+                       </div>
+                       
+                       <h3 style="color: #fff; font-size: 16px; margin: 12px 0 4px 0; font-weight: 600;"><?php echo htmlspecialchars($prod['nome']); ?></h3>
+                       <p style="color: #94a3b8; font-size: 12px; margin: 0;">🏬 Origem: <?php echo htmlspecialchars($loja['nome']); ?></p>
+                       <p style="color: #38bdf8; font-size: 12px; margin: 0 0 12px 0;">📍 Distribuição: <?php echo htmlspecialchars($loja['endereco']); ?></p>
 
-                            <div class="form-pedido" style="margin-top: 15px;">
-                                <!-- 🔐 REDIRECIONAMENTO LIMPO E INTEGRADO: Envia o ID para o Unitele.php processar -->
-                                <a href="Unitele.php?id_produto_comprado=<?php echo $prod['id']; ?>&gateway=mcx_xpress" 
-                                style="display: block; background: #22c55e; color: #000; text-align: center; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 6px;">
-                                ⚡ Comprar Agora
-                             </a>
-                            </div>
-                        </div> <!-- 🟢 Fecha a div .card-produto de forma isolada -->
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <p style="color: #64748b; font-size: 13px; grid-column: 1/-1; text-align: center; padding: 40px; background: #0f172a; border-radius: 12px; border: 1px dashed #334155; width: 100%;">Esta loja parceira registou-se com sucesso, mas ainda não adicionou cosméticos ou equipamentos ao catálogo.</p>
-                <?php endif; ?>
-            </div> <!-- 🟢 Fecha a div .painel-vitrine da respetiva loja -->
-        <?php endforeach; ?>
-    </div> <!-- 🟢 Fecha a div #contentor_vitrines_SaaS -->
-</div> <!-- 🟢 Fecha o container-hub principal -->
+                       <div class="ficha-tecnica" style="background: #0f172a; padding: 12px; border-radius: 8px; font-size: 12px; color: #cbd5e1; line-height: 1.6; margin-bottom: 12px; border: 1px solid #1e293b;">
+                           <strong>Código Série:</strong> <?php echo $prod['serie']; ?><br>
+                           <strong>Tipo / Categoria:</strong> <?php echo htmlspecialchars($prod['tipo']); ?><br>
+                           <strong>Especificação Cor:</strong> <?php echo htmlspecialchars($prod['cor']); ?><br>
+                           <strong>Fim de Validade:</strong> <span style="color:#f87171; font-weight:600;"><?php echo $prod['validade']; ?></span><br>
+                           <strong>Disponível no Armazém:</strong> <span style="color: #fff; font-weight: 600;"><?php echo $prod['stock']; ?> un.</span>
+                       </div>
+
+                       <div style="font-size: 18px; font-weight: 700; color: #22c55e; margin-bottom: 12px; display: flex; align-items: center; gap: 4px;">
+                           Preço: <span><?php echo number_format($prod['preco'], 2, ',', '.'); ?></span> Kz
+                       </div>
+
+                       <div class="form-pedido" style="margin-top: auto;">
+                           <a href="Unitele.php?id_produto_comprado=<?php echo $prod['id']; ?>&gateway=mcx_xpress" 
+                           style="display: block; background: #22c55e; color: #000; text-align: center; padding: 12px; text-decoration: none; font-weight: 700; border-radius: 8px; transition: background 0.2s; font-size: 14px;">
+                           ⚡ Comprar Agora
+                        </a>
+                       </div>
+                   </div>
+               <?php endforeach; ?>
+           <?php else: ?>
+               <!-- Bloco de Aviso Automático e Fluido quando a Loja não tem produtos ativos -->
+               <div style="color: #64748b; font-size: 14px; grid-column: 1/-1; text-align: center; padding: 50px 20px; background: #0f172a; border-radius: 12px; border: 1px dashed #334155; width: 100%; box-sizing: border-radius;">
+                   <span style="font-size: 32px; display: block; margin-bottom: 10px;">📦</span>
+                   Esta loja parceira registou-se com sucesso, mas ainda não adicionou cosméticos ou equipamentos ao catálogo.
+               </div>
+           <?php endif; ?>
+       </div>
+   <?php endforeach; ?>
+</div>
+</div>
+
+
+
+
+
+
+
+
+
+
 <script>
 function alternarAbaLoja(idLoja, botaoClicado) {
     document.querySelectorAll('.aba-loja-btn').forEach(btn => btn.classList.remove('active'));

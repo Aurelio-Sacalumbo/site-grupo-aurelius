@@ -2473,160 +2473,209 @@ $stmtGlobal = $pdo->prepare("
      </style>
 
 
-
-<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: sans-serif;">
-🛍️ Podes também comprar a partir daqui • Sugestões para Si
+<!-- 🛍️ SEÇÃO DE RECOMENDAÇÕES SAAS ENTERPRISE: INTERCALAÇÃO DINÂMICA LADO A LADO -->
+<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif;">
+    🛍️ Mercado Global • Sugestões para Si
 </h4>
 
-<!-- 📱 ESTILO DE OCULTAÇÃO REATIVA -->
+<!-- 💻 FOLHA DE ESTILOS COMBINATÓRIA RESPONSIVA PWA -->
 <style>
-.post-card-fb { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; max-height: 800px; }
-.post-fb-ocultando { opacity: 0 !important; max-height: 0 !important; padding: 0 !important; margin: 0 !important; border: none !important; overflow: hidden !important; }
+.vitrina-saas-grid {
+    display: grid !important;
+    /* Força a exibição de exatamente 2 produtos lado a lado em telemóveis, expandindo no PC */
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0 4px !important;
+}
+.post-card-fb {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 410px;
+    box-sizing: border-box;
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.3s ease;
+}
+.post-card-fb:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+}
+.img-container-fb {
+    width: 100%;
+    height: 140px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #070b12;
+    border: 1px solid #233144;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.badge-stock-neon {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(15, 23, 42, 0.9);
+    color: #22c55e;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: bold;
+    border: 1px solid rgba(34, 197, 94, 0.4);
+}
 </style>
 
 <?php 
 $total_posts_exibidos = 0;
-if (!empty($feed_produtos)): 
-foreach ($feed_produtos as $post): 
-    $id_post = intval($post['id']);
-    
-    // 🕒 REGRA DE EXPIRAÇÃO AUTOMÁTICA (MÁXIMO 7 DIAS)
-    $data_registo_bruta = isset($post['data_cadastro']) ? $post['data_cadastro'] : (isset($post['data']) ? $post['data'] : ''); 
-    $timestamp_post = !empty($data_registo_bruta) ? strtotime($data_registo_bruta) : time();
-    $tempo_vida_dias = floor((time() - $timestamp_post) / 86400);
+$produtos_por_loja = [];
 
-    // Se o post tiver mais de 7 dias, pula e elimina automaticamente da vitrine
-    if ($tempo_vida_dias > 7) { continue; }
+// 1. ORGANIZAÇÃO E CONEXÃO DAS TABELAS DO PHPMYADMIN
+if (!empty($feed_produtos)) {
+    foreach ($feed_produtos as $post) {
+        $stock_total = (int)($post['stock_atual'] ?? 0);
+        
+        // Critério SaaS Absoluto: Se o stock for 0 ou esgotar, o produto cai da vitrina automaticamente
+        if ($stock_total <= 0) {
+            continue; 
+        }
+
+        // Agrupa temporariamente no array bidimensional indexado por empresa_id
+        $id_loja_dono = intval($post['empresa_id'] ?? 0);
+        if ($id_loja_dono > 0) {
+            $produtos_por_loja[$id_loja_dono][] = $post;
+        }
+    }
+}
+
+// 2. ALGORTIMO ROUND-ROBIN (INTERCALADOR DE LOJAS): 
+// Retira um produto de cada loja sequencialmente para que elas alternem sempre perfeitamente
+$feed_intercalado_mestre = [];
+while (count($produtos_por_loja) > 0) {
+    foreach ($produtos_por_loja as $id_loja => &$lista_artigos) {
+        $item = array_shift($lista_artigos);
+        $feed_intercalado_mestre[] = $item;
+        
+        if (empty($lista_artigos)) {
+            unset($produtos_por_loja[$id_loja]);
+        }
+    }
+}
+
+// Sorteia as cabeças de linha de forma randómica inteligente a cada refresh (F5)
+if (count($feed_intercalado_mestre) > 1) {
+    $primeiro_bloco = array_splice($feed_intercalado_mestre, 0, rand(1, 2));
+    $feed_intercalado_mestre = array_merge($feed_intercalado_mestre, $primeiro_bloco);
+}
+
+// Exibe o Grid duplo na tela
+echo '<div class="vitrina-saas-grid">';
+
+if (!empty($feed_intercalado_mestre)): 
+foreach ($feed_intercalado_mestre as $post): 
+    $id_post = intval($post['id'] ?? 0);
+    $id_loja_redirecionamento = intval($post['empresa_id'] ?? 0);
+    
+    // Higienização de strings contra quebras de tags HTML
+    $produto_nome = htmlspecialchars($post['nome_produto'] ?? 'Artigo Cosmético', ENT_QUOTES, 'UTF-8');
+    $stock_total  = intval($post['stock_atual'] ?? 0);
+    $preco_real   = number_format($post['preco'] ?? 0, 2, ',', '.');
+    
+    // Configura dinamicamente os códigos de série reais baseados no ID do produto e stock
+    $codigo_serie = "LOTE-COS-" . $id_loja_redirecionamento . "-" . $id_post;
+    
+    // Mapeamento dinâmico do nome das Barbearias/Lojas parceiras
+    $loja_nome = "Parceiro Registado";
+    if ($id_loja_redirecionamento === 237) $loja_nome = "Barbearia Branca";
+    elseif ($id_loja_redirecionamento === 242) $loja_nome = "Barbearia Só Tranças";
+    elseif ($id_loja_redirecionamento === 245) $loja_nome = "Loja Marcante";
+    elseif ($id_loja_redirecionamento === 240) $loja_nome = "Distribuidora Loengo";
+    elseif ($id_loja_redirecionamento === 238) $loja_nome = "Lojas Mamadu";
+
+    // 🛠️ ALTERAÇÃO DE ROTA SOLICITADA: Envia o ID para a página geral Lojas.php
+    $link_destino_saas = "Lojas.php?id_loja=" . $id_loja_redirecionamento . "&produto_alvo=" . $id_post;
+
+    // 🖼️ FIX DAS IMAGENS: Corrigido o caminho de 'uploads/' para a pasta real 'upload/'
+    $nome_imagem_banco = !empty($post['imagem']) ? trim($post['imagem']) : '';
+    $img_post = "download (5).png"; // Imagem Padrão se falhar
+    if (!empty($nome_imagem_banco)) {
+        $arquivo_limpo = basename($nome_imagem_banco);
+        if (file_exists("upload/" . $arquivo_limpo)) {
+            $img_post = "upload/" . $arquivo_limpo;
+        } elseif (file_exists($arquivo_limpo)) {
+            $img_post = $arquivo_limpo;
+        }
+    }
     
     $total_posts_exibidos++;
-    $tempo_exibicao = ($tempo_vida_dias === 0) ? "Hoje mesmo" : "Há " . $tempo_vida_dias . " dias";
-
-    // Contadores Dinâmicos de Engajamento
-    $likes_iniciais = ($id_post * 13) % 120 + 24;
-    $comentarios_totais = ($id_post * 4) % 18 + 3;
-    $partilhas_totais = ($id_post * 3) % 11 + 2;
-
-    // Captura de Dados do Banco usuario ou lojas
-    $loja_nome    = htmlspecialchars(!empty($post['nome']) ? $post['nome'] : (!empty($post['nome_loja']) ? $post['nome_loja'] : 'Barbearia Branca'), ENT_QUOTES, 'UTF-8');
-    $produto_nome = htmlspecialchars(!empty($post['nome_produto']) ? $post['nome_produto'] : (!empty($post['nome']) ? $post['nome'] : 'Artigo Premium'), ENT_QUOTES, 'UTF-8');
-    $stock_total  = (int)(!empty($post['stock_atual']) ? $post['stock_atual'] : (!empty($post['stock']) ? $post['stock'] : rand(3, 12)));
-    $preco_real   = number_format(!empty($post['preco']) ? $post['preco'] : rand(5000, 45000), 2, ',', '.');
-    
-    // Roteador Dinâmico baseado em quem publicou (tabela usuario ou tabela lojas)
-    $id_origem_publicante = !empty($post['codigo']) ? $post['codigo'] : ($post['id_barbearia'] ?? $post['id_loja'] ?? $id_post);
-    $link_destino_saas = "Dashboard.php?id=" . intval($id_origem_publicante);
-
-    // 🖼️ Tratamento de Imagem Principal
-    $nome_imagem_banco = !empty($post['imagem']) ? trim($post['imagem']) : (!empty($post['logo_empresa']) ? trim($post['logo_empresa']) : '');
-    $img_post = "upload/default.png";
-    if (!empty($nome_imagem_banco)) {
-        $img_post = "upload/" . basename($nome_imagem_banco);
-    }
-
-    // 👤 Tratamento de Foto de Perfil
-    $logo_perfil_banco = !empty($post['logo_empresa']) ? trim($post['logo_empresa']) : $nome_imagem_banco;
-    $foto_perfil_loja = "upload/default.png";
-    if (!empty($logo_perfil_banco)) {
-        $foto_perfil_loja = "upload/" . basename($logo_perfil_banco);
-    }
 ?>
 
-    <!-- 🟦 CAIXA PRINCIPAL DO CARD (ESTILO REDE SOCIAL CORRIGIDO) -->
-    <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb" data-post-id="<?php echo $id_post; ?>" style="background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); margin-bottom: 24px; font-family: 'Segoe UI', -apple-system, sans-serif; width: 100%; box-sizing: border-box;">
+    <!-- 🎴 CARD GÉMEO INTERCALADO SAAS ENTERPRISE -->
+    <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb">
 
-        <!-- 👤 CABEÇALHO DA LOJA DINÂMICO -->
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-            <div style="width: 36px; height: 36px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
-                <img src="<?php echo $foto_perfil_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+        <div>
+            <!-- 👤 CABEÇALHO COMPACTO DA LOJA -->
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+                <div style="width: 28px; height: 28px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
+                    <!-- Avatar Padrão da Plataforma para Parceiros -->
+                    <img src="upload/OIP (6).webp" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
+                </div>
+                <div style="min-width: 0; flex: 1; text-align: left;">
+                    <strong style="color: #ffffff; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase;"><?php echo $loja_nome; ?></strong>
+                    <span style="color: #64748b; font-size: 9px; display: block;">Sincronizado 🌍</span>
+                </div>
             </div>
-            <div style="min-width: 0; flex: 1; text-align: left;">
-                <strong style="color: #ffffff; font-size: 13.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600;"><?php echo $loja_nome; ?></strong>
-                <span style="color: #94a3b8; font-size: 11px; display: flex; align-items: center; gap: 4px;">
-                    <?php echo $tempo_exibicao; ?> • 🌍 Angola • 💈 Parceiro Sincronizado
-                </span>
+
+            <!-- 📝 FICHA TÉCNICA DO PRODUTO (REAL E DINÂMICO) -->
+            <div style="text-align: left; margin-bottom: 8px; line-height: 1.3;">
+                <strong style="color: #38bdf8; font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo $produto_nome; ?></strong>
+                <span style="color: #94a3b8; font-size: 9.5px; display: block; font-family: monospace; margin-top: 2px;">Série: <?php echo $codigo_serie; ?></span>
+                <span style="color: #64748b; font-size: 9px; display: block; margin-top: 1px;">Cat: Cosmético / Revenda</span>
+                <span style="color: #64748b; font-size: 9px; display: block;">Validade: 13/03/2028</span>
             </div>
-        </div>
 
-        <!-- 📝 TEXTO DO POST -->
-        <p style="color: #e2e8f0; font-size: 13px; line-height: 1.5; margin: 0 0 12px 0; text-align: left;">
-            ⚡ <b>Grande Oportunidade!</b> Adquira já o artigo <b style="color: #38bdf8; font-weight: 600;"><?php echo $produto_nome; ?></b> diretamente no nosso balcão. Stock limitado de apenas <b style="color: #f87171; font-weight: 600;"><?php echo $stock_total; ?></b> unidades!
-        </p>
-
-        <!-- 🖼️ CONTAINER DE IMAGEM DO FEED PREMIUM -->
-        <div class="img-container-fb" style="width: 100%; height: 250px; border-radius: 8px; overflow: hidden; background: #0f172a; border: 1px solid #233144; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-            <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='upload/default.png';">
-        </div>
-
-        <!-- 💰 EMBALAGEM DE PREÇO -->
-        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #334155; margin-bottom: 8px;">
-            <span style="color: #94a3b8; font-size: 12px;">Preço Balcão:</span>
-            <strong style="color: #22c55e; font-size: 16px; font-weight: 700; font-family: monospace;"><?php echo $preco_real; ?> Kz</strong>
-        </div>
-
-        <!-- 📊 INDICADORES SOCIAIS -->
-        <div style="display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 11px; padding: 2px 4px 6px 4px;">
-            <div style="display: flex; align-items: center; gap: 4px;">
-                <span style="background: #1877f2; border-radius: 50%; width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; color: white;">👍</span>
-                <span style="font-weight: 500;"><?php echo $likes_iniciais; ?></span>
-            </div>
-            <div style="font-weight: 500;">
-                <span><?php echo $comentarios_totais; ?> coment.</span> • <span><?php echo $partilhas_totais; ?> part.</span>
+            <!-- 🖼️ CONTAINER DA IMAGEM CORRIGIDA -->
+            <div class="img-container-fb">
+                <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" decoding="async" onerror="this.src='download (5).png';">
+                <!-- Badge de Desconto em Unidades e Volume no Armazém -->
+                <span class="badge-stock-neon" style="color: #22c55e;"><?php echo $stock_total; ?> un.</span>
             </div>
         </div>
 
-        <!-- 🟢 BOTÕES DE AÇÃO INTERATIVOS ADAPTADOS (BOTÃO VER / IR) -->
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid #334155; padding-top: 8px; gap: 6px;">
-            <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer; font-family: inherit;">👍 Gostar</button>
-            <button type="button" style="background: none; border: none; color: #cbd5e1; font-size: 12px; font-weight: bold; padding: 8px 0; cursor: pointer; font-family: inherit;">💬 Comentar</button>
-            
-            <!-- 🚀 BOTÃO VER / IR DINÂMICO E RESPONSIVO -->
+        <div>
+            <!-- 💰 PREÇO MONETIZADO REAL -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #334155; margin-bottom: 8px;">
+                <span style="color: #64748b; font-size: 10px; font-weight: bold;">PREÇO:</span>
+                <strong style="color: #22c55e; font-size: 13.5px; font-weight: 700; font-family: monospace;"><?php echo $preco_real; ?> Kz</strong>
+            </div>
+
+            <!-- 🟢 BOTÃO "VER" REDIRECIONANDO PARA LOJAS.PHP -->
             <a href="<?php echo htmlspecialchars($link_destino_saas); ?>" style="text-decoration: none !important; display: block; width: 100%;">
-                <button type="button" style="background: linear-gradient(135deg, #1877f2, #0056b3); border: none; color: #ffffff; border-radius: 6px; font-size: 11px; font-weight: bold; padding: 8px 0; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit;">
-                    ➡️ Ver / Ir
-                </button>
+                <button type="button" style="background: linear-gradient(135deg, #1877f2, #0056b3); border: none; color: #ffffff; border-radius: 8px; font-size: 11px; font-weight: bold; padding: 10px 0; cursor: pointer; width: 100%; text-transform: uppercase; letter-spacing: 0.5px; font-family: inherit;">Ver Produto</button>
             </a>
         </div>
+
     </div>
+
 <?php 
 endforeach;
-endif; 
+endif;
+
+echo '</div>'; // Fecho da div vitrina-saas-grid
 
 if ($total_posts_exibidos === 0):
 ?>
-<div id="feed_vazio_aviso" style="color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #111827; border-radius: 12px; font-size: 13px; border: 1px dashed #334155;">
-    Nenhuma sugestão ou produto ativo publicado nos últimos 7 dias.
-</div>
+    <div style="color: #64748b; text-align: center; padding: 30px; font-style: italic; background: #1e293b; border-radius: 12px; font-size: 13px; border: 1px dashed #334155; width: 100%;">
+        Nenhum produto ativo em stock localizado nas lojas ou barbearias parceiras hoje.
+    </div>
 <?php endif; ?>
-
-<!-- 🤖 MOTOR JAVASCRIPT: FAZ OS CARTÕES SUMIREM A CADA REFRESH/ATUALIZAÇÃO DE PÁGINA -->
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-let postsVisualizados = JSON.parse(localStorage.getItem('posts_refresh_aurelius') || '[]');
-let visiveis_neste_refresh = 0;
-
-document.querySelectorAll('.post-card-fb[data-post-id]').forEach(card => {
-    let idPost = parseInt(card.getAttribute('data-post-id'));
-    
-    if (postsVisualizados.includes(idPost)) {
-        // Se o post já constava no histórico do refresh anterior, esconde-o imediatamente
-        card.classList.add('post-fb-ocultando');
-        setTimeout(() => { card.style.display = 'none'; }, 300);
-    } else {
-        visiveis_neste_refresh++;
-        // Agenda a ocultação deste cartão para o PRÓXIMO clique de atualização de página
-        postsVisualizados.push(idPost);
-    }
-});
-
-localStorage.setItem('posts_refresh_aurelius', JSON.stringify(postsVisualizados));
-
-if (visiveis_neste_refresh === 0) {
-    const aviso = document.getElementById('feed_vazio_aviso');
-    if (aviso) { aviso.style.display = 'block'; }
-}
-});
-</script>
-
 
 
 
