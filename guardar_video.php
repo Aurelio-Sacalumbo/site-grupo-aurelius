@@ -1,6 +1,6 @@
 <?php
 // =========================================================================
-// 📹 ENGINE SaaS ULTRA-LEVE DE VÍDEOS: ARMAZENAMENTO EM /TMP (GUARDAR_VIDEO.PHP)
+// 📹 MOTOR CENTRAL SaaS — APENAS PARA VÍDEOS / REELS (GUARDAR-VIDEOS.PHP)
 // =========================================================================
 if (session_status() === PHP_SESSION_NONE) { 
     session_start(); 
@@ -17,15 +17,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
     $extensoesPermitidas = ['mp4', 'mov', 'avi', 'mpeg', 'webm'];
     $extensao = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
 
+    // 🛡️ TRAVA DE SEGURANÇA: Se não for vídeo, rejeita imediatamente
     if (!in_array($extensao, $extensoesPermitidas)) {
-        die("<script>alert('Erro: Formato de vídeo não suportado.'); window.location.href='Dashboard.php#photos';</script>");
+        die("<script>alert('Erro: Apenas formatos de vídeo (MP4, MOV, WEBM) são aceites neste painel.'); window.location.href='Dashboard.php#photos';</script>");
     }
 
-    // 🟢 ENGENHARIA DE NUVEM: Cria o ficheiro físico na pasta /tmp livre do Linux
     $nomeUnico = "vid_" . time() . "_" . uniqid() . "." . $extensao;
-    $pastaDestino = "/tmp/" . $nomeUnico;
+    $pastaDestino = "/tmp/" . $nomeUnico; // Gravação livre e leve no Linux do Render
 
-    // Move o ficheiro para a área de escrita livre do Render sem estourar a memória RAM
     if (move_uploaded_file($arquivo['tmp_name'], $pastaDestino)) {
         try {
             $sql = "INSERT INTO anuncios (id_barbearia, titulo, imagem, ativo, likes_adoro, likes_ncurto, data_publicacao, tipo_media) 
@@ -35,16 +34,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES['ficheiro_foto'])) {
             $stmt->execute([
                 ':id_barbearia' => $id_barbearia,
                 ':titulo'       => $titulo,
-                ':imagem'       => $nomeUnico // Guarda apenas o nome limpo no banco
+                ':imagem'       => $nomeUnico
             ]);
 
-            echo "<script>alert('🎉 Sucesso! O seu vídeo foi processado e já está ativo online!'); window.location.href='Dashboard.php#photos';</script>";
+            echo "<script>alert('🎉 Vídeo guardado e ativo no feed de Reels!'); window.location.href='Dashboard.php#photos';</script>";
             exit();
         } catch (PDOException $e) {
             die("Erro ao registrar no MySQL: " . $e->getMessage());
         }
-    } else {
-        die("Erro ao processar upload. Ficheiro muito pesado ou sem espaço em disco.");
     }
 }
 ?>
