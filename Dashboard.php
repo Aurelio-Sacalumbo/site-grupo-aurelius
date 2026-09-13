@@ -1577,24 +1577,27 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
          ?>
                  <div class="aba-item" style="background:#1e293b; padding:12px; border-radius:12px; text-align:center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid #334155; display: flex; flex-direction: column; justify-content: space-between; min-height: 220px; box-sizing: border-box;">
                      
-                     <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #0f172a; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
-                         <?php if ($is_video): ?>
-                             <video src="<?php echo $img_src_render; ?>#t=0.1" preload="metadata" playsinline muted style="width:100%; height:100%; object-fit:cover; opacity: 0.6;"></video>
-                             <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(7,11,18,0.85); color: #ca8a04; padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">Animação 📹</span>
-                         <?php else: ?>
-                             <img src="<?php echo $img_src_render; ?>" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='upload/default.png';">
-                         <?php endif; ?>
-                     </div>
- 
-                     <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? ($fotoItem['title'] ?? 'Trabalho Aurélius')); ?></strong>
-                     
+                 <!-- Container de Mídia Blindado contra Telas Escuras -->
+                 <div style="width: 100%; height: 130px; overflow: hidden; border-radius: 8px; background: #070b12; position: relative; border: 1px solid #233144; display: flex; align-items: center; justify-content: center;">
                      <?php if ($is_video): ?>
-                         <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0); ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
+                         <!-- 🟢 CORREÇÃO MESTRE VÍDEOS: Atributos preload, playsinline e muted forçam o navegador a desenhar o frame do vídeo Base64 online -->
+                         <video src="<?php echo $img_src_render; ?>" preload="auto" playsinline muted loop autoplay style="width:100%; height:100%; object-fit:cover; opacity: 1 !important; display: block;"></video>
+                         <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(7,11,18,0.85); color: #ca8a04; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: bold; text-transform: uppercase; border: 1px solid rgba(202,138,4,0.3); pointer-events: none;">📹 REEL</span>
                      <?php else: ?>
-                         <div style="height: 1px;"></div> 
+                         <!-- 🟢 CORREÇÃO MESTRE IMAGENS: Atributos decoding e crossOrigin forçam a renderização instantânea da string de texto Base64 sem deixar o quadrado escuro -->
+                         <img src="<?php echo $img_src_render; ?>" decoding="async" crossOrigin="anonymous" style="width:100%; height:100%; object-fit:cover; display: block; opacity: 1 !important;" onerror="this.src='upload/default.png';">
                      <?php endif; ?>
- 
                  </div>
+
+                 <strong style="color: #fff; font-size:12px; display:block; margin-top:10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; font-weight: 600; text-align: left; padding: 0 2px;"><?php echo htmlspecialchars($fotoItem['titulo'] ?? ($fotoItem['title'] ?? 'Trabalho Aurélius')); ?></strong>
+                 
+                 <?php if ($is_video): ?>
+                     <a href="video.php?id_anuncio=<?php echo $fotoItem['id_anuncio'] ?? ($fotoItem['id'] ?? 0); ?>" style="display: block; background: linear-gradient(135deg, #ca8a04, #b47b02); color: white; text-decoration: none; padding: 8px 0; margin-top: 10px; border-radius: 6px; font-size: 10.5px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(202,138,4,0.15);">Assistir Vídeo</a>
+                 <?php else: ?>
+                     <div style="height: 1px;"></div> 
+                 <?php endif; ?>
+
+             </div>
          <?php 
              endforeach;
          endif; 
