@@ -315,6 +315,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['cadastrar_salao'])) {
 </head>
 <body>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     <header class="header-painel">
         <h1>Grupo Aurélius — Painel de Controle</h1>
         <div class="info-gerente">
@@ -340,6 +373,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['cadastrar_salao'])) {
             <?php endif; ?>
         </form>
     </div>
+
+
+
+
+
+
 
     <div class="grid-contratos">
         <?php 
@@ -440,5 +479,6 @@ function alternarAba(id) {
     }
 }
 </script>
+
 </body>
 </html>

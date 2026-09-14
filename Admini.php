@@ -80,6 +80,17 @@ if ($conexao_link) {
 
 
 <?php
+if (session_status() === PHP_SESSION_NONE) { session_start(); }
+include_once __DIR__ . '/Conexao.php';
+
+// Salva a loja selecionada na sessão para uso posterior no redirecionamento post-login
+if (isset($_GET['loja'])) {
+    $_SESSION['loja_contexto'] = (int)$_GET['loja'];
+}
+?>
+
+
+<?php
 // Coloque este bloco no topo do seu Admini.php onde faz as consultas SQL
 
 $totalProfissionais = 0;
