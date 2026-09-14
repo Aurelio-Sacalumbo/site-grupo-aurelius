@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_trabalho'])
 
     if ($resultado && $assinatura === $resultado['cliente_telefone']) {
         // Atualiza o estado do atendimento e aciona o aviso luminoso no painel master (visto_admin = 0)
-        $update = $pdo->prepare("UPDATE `pagamentos` SET `status_trab` = 'Concluido', `status_atendimento` = 'Confirmado', `assinatura_cliente` = ?, `visto_admin` = 0 WHERE `id_pagamento` = ?");
+        $update = $pdo->prepare("UPDATE `pagamentos` SET `status_trabalho` = 'Concluido', `status_atendimento` = 'Confirmado', `assinatura_cliente` = ?, `visto_admin` = 0 WHERE `id_pagamento` = ?");
         $update->execute([$assinatura, $id_pag]);
         
         echo "<script>
@@ -46,8 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finalizar_trabalho'])
     }
 }
 
-// 🟢 ISOLAMENTO MESTRE: Procura os agendamentos pendentes apenas desta barbearia ativa
-$query = $pdo->prepare("SELECT * FROM `pagamentos` WHERE `id_parceiro` = ? AND `tipo_parceiro` = 'barbearia' AND `status_trab` = 'Pendente' ORDER BY id_pagamento DESC");
+// 🟢 ISOLAMENTO MESTRE CORRIGIDO: 
+// 1. Alterado para 'status_trab' que é a coluna de fluxo usada no teu UPDATE (Linha 32).
+// 2. Ordenação corrigida para 'id_pagamento' que é a chave primária real da tua tabela.
+$query = $pdo->prepare("SELECT * FROM `pagamentos` WHERE `id_parceiro` = ? AND `tipo_parceiro` = 'barbearia' AND `status_trabalho` = 'Pendente' ORDER BY `id_pagamento` DESC");
 $query->execute([$id_barbearia_logada]);
 $agendamentos = $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -57,65 +59,79 @@ $busca_nome->execute([$id_barbearia_logada]);
 $salao_info = $busca_nome->fetch();
 $nome_salao_atual = $salao_info ? $salao_info['nome'] : "Salão Parceiro";
 ?>
+
+
+
+
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
-<!-- Configurações nativas para PWA no iOS e Android -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Aurélius">
-<link rel="manifest" href="manifest.json">
-
-<script>
-// Ativa o Service Worker nos bastidores do navegador do telemóvel
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('serviceWorker.js')
-            .then(reg => console.log('✓ PWA Aurélius registado com sucesso!', reg))
-            .catch(err => console.log('❌ Falha ao registar PWA:', err));
-    });
-}
-</script>
-<!-- Configurações nativas para PWA no iOS e Android -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Aurélius">
-<link rel="manifest" href="manifest.json">
-
-<script>
-// Ativa o Service Worker nos bastidores do navegador do telemóvel
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('serviceWorker.js')
-            .then(reg => console.log('✓ PWA Aurélius registado com sucesso!', reg))
-            .catch(err => console.log('❌ Falha ao registar PWA:', err));
-    });
-}
-</script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Aurelius Business - Painel Operacional</title>
+    
+    <!-- Configurações nativas para PWA no iOS e Android -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Aurélius">
+    <link rel="manifest" href="manifest.json">
+
+    <script>
+    // Ativa o Service Worker nos bastidores do navegador do telemóvel
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('serviceWorker.js')
+                .then(reg => console.log('✓ PWA Aurélius registado com sucesso!', reg))
+                .catch(err => console.log('❌ Falha ao registar PWA:', err));
+        });
+    }
+    </script>
+
     <style>
-        body { background: #0f172a; color: #fff; font-family: sans-serif; padding: 0; margin: 0; }
-        .barra-testes { background: #1e293b; padding: 10px; text-align: center; border-bottom: 2px dashed #22c55e; font-size: 12px; }
-        .barra-testes a { color: #22c55e; text-decoration: none; margin: 0 10px; font-weight: bold; }
+        * { box-sizing: border-box; }
+        body { background: #0f172a; color: #fff; font-family: system-ui, -apple-system, sans-serif; padding: 0; margin: 0; min-height: 100vh; }
+        
+        .barra-testes { background: #1e293b; padding: 12px 10px; text-align: center; border-bottom: 2px dashed #22c55e; font-size: 11.5px; line-height: 1.5; }
+        .barra-testes a { color: #22c55e; text-decoration: none; margin: 0 6px; font-weight: bold; white-space: nowrap; display: inline-block; }
         .barra-testes a:hover { color: aqua; }
-        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
-        .card-pedido { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: border-color 0.2s; }
-        .card-pedido:hover { border-color: #38bdf8; }
-        .input-text { padding: 12px; background: #0f172a; color: white; border: 1px solid #374151; border-radius: 6px; width: 240px; outline: none; }
-        .input-text:focus { border-color: #38bdf8; }
-        .btn-confirmar { background: #22c55e; color: #000; padding: 12px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; transition: background 0.2s; }
-        .btn-confirmar:hover { background: #4ade80; }
-        .header-painel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; }
-        .badge-loja { background: rgba(56, 189, 248, 0.1); padding: 6px 12px; border-radius: 20px; font-size: 12px; color: #38bdf8; font-weight: bold; border: 1px solid rgba(56, 189, 248, 0.2); }
-        .btn-sair { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #f87171; padding: 6px 14px; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: bold; text-transform: uppercase; transition: all 0.2s; }
+        
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; width: 100%; }
+        
+        .header-painel { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 15px; text-align: left; }
+        .header-info-bloco { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+        
+        .badge-loja { background: rgba(56, 189, 248, 0.1); padding: 6px 12px; border-radius: 20px; font-size: 11.5px; color: #38bdf8; font-weight: bold; border: 1px solid rgba(56, 189, 248, 0.2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+        .btn-sair { background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #f87171; padding: 6px 14px; text-decoration: none; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase; transition: all 0.2s; text-align: center; }
         .btn-sair:hover { background: #dc2626; color: #fff; }
+        
+        .card-pedido { background: #1e293b; border: 1px solid #334155; padding: 16px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: border-color 0.2s; text-align: left; }
+        .card-pedido:hover { border-color: #38bdf8; }
+        
+        /* Formulário Reativo Ajustado para Mobile */
+        .form-assinatura { margin-top: 15px; display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        
+        /* 🟢 PREVINE ZOOM AUTOMÁTICO: font-size em 16px tranca a tela em smartphones */
+        .input-text { padding: 12px; background: #0f172a; color: white; border: 1px solid #374151; border-radius: 8px; width: 100%; outline: none; font-size: 16px; inputmode: numeric; font-family: inherit; }
+        .input-text:focus { border-color: #38bdf8; }
+        
+        .btn-confirmar { background: #22c55e; color: #000; padding: 14px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12.5px; transition: background 0.2s; width: 100%; letter-spacing: 0.5px; }
+        .btn-confirmar:hover { background: #4ade80; }
+
+        /* 📱 MEDIA QUERIES: Melhoria de Design para ecrãs intermédios e Computador */
+        @media (min-width: 576px) {
+            .header-painel { flex-direction: row; justify-content: space-between; align-items: center; }
+            .header-info-bloco { width: auto; justify-content: flex-end; }
+            .form-assinatura { flex-direction: row; flex-wrap: wrap; align-items: center; }
+            .input-text { width: 220px; }
+            .btn-confirmar { width: auto; padding: 12px 20px; }
+            .barra-testes { font-size: 12px; }
+            .card-pedido { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- 🛰️ SIMULADOR DE BARBEARIAS PARA AMBIENTE DE DESENVOLVIMENTO -->
+    <!-- 🛰️ SIMULADOR DE BARBEARIAS PARA AMBIENTE DE DESENVOLVIMENTO LOCALHOST -->
     <div class="barra-testes">
         🛠️ <b>Simulador de Barbearias Aurelius:</b> 
         <a href="Admin_Barbearias.php?forcar_barbearia=237">Barbearia Branca (237)</a> | 
@@ -125,35 +141,48 @@ if ('serviceWorker' in navigator) {
 
     <div class="container">
         <div class="header-painel">
-            <h2 style="margin: 0; font-size: 20px;">✂️ Central Operacional do Barbeiro</h2>
-            <div style="display: flex; align-items: center;">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600;">✂️ Central Operacional do Barbeiro</h2>
+            <div class="header-info-bloco">
                 <span class="badge-loja">💈 <?= htmlspecialchars($nome_salao_atual) ?> (ID: <?= $id_barbearia_logada ?>)</span>
-                <a href="login_parceiros.php?logout=1" class="btn-sair" style="margin-left: 10px;">Sair</a>
+                <a href="login_parceiros.php?logout=1" class="btn-sair">Sair</a>
             </div>
         </div>
-        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 14px;">Confirme os serviços executados no salão recolhendo a assinatura digital do cliente para libertar o pagamento no SaaS.</p>
+        <p style="color: #94a3b8; margin-bottom: 25px; font-size: 13.5px; line-height: 1.5;">Confirme os serviços executados no salão recolhendo a assinatura digital do cliente para libertar o pagamento no SaaS.</p>
 
         <?php if(!empty($agendamentos)): ?>
             <?php foreach($agendamentos as $row): ?>
                 <div class="card-pedido">
-                    <h4 style="color: #38bdf8; margin: 0 0 8px 0; font-size: 15px;">📅 Atendimento Agendado Nº <?= intval($row['id_pagamento']) ?></h4>
-                    <p style="margin: 5px 0; font-size: 14px;">Serviço Reservado: <strong style="color:#fff;"><?= htmlspecialchars($row['servico']) ?></strong></p>
-                    <p style="margin: 5px 0; font-size: 14px;">Nome do Cliente: <b><?= htmlspecialchars($row['cliente']) ?></b></p>
-                    <p style="margin: 5px 0; font-size: 14px;">Balanço Custodiado: <strong style="color:#eab308;"><?= number_format($row['valor'], 2, ',', '.') ?> AOA</strong></p>
+                    <h4 style="color: #38bdf8; margin: 0 0 10px 0; font-size: 15px; font-weight: 600;">📅 Atendimento Agendado Nº <?= intval($row['id_pagamento']) ?></h4>
+                    <p style="margin: 5px 0; font-size: 13.5px; color: #cbd5e1;">Serviço Reservado: <strong style="color:#fff; font-weight: 600;"><?= htmlspecialchars($row['servico']) ?></strong></p>
+                    <p style="margin: 5px 0; font-size: 13.5px; color: #cbd5e1;">Nome do Cliente: <b style="color: #fff; font-weight: 600;"><?= htmlspecialchars($row['cliente']) ?></b></p>
+                    <p style="margin: 5px 0; font-size: 13.5px; color: #cbd5e1;">Balanço Custodiado: <strong style="color:#eab308; font-weight: 600;"><?= number_format($row['valor'], 2, ',', '.') ?> AOA</strong></p>
                     
-                    <form method="POST" action="" style="margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                    <!-- Formulário Responsivo Flexível -->
+                    <form method="POST" action="" class="form-assinatura">
                         <input type="hidden" name="finalizar_trabalho" value="1">
                         <input type="hidden" name="id_pagamento" value="<?= intval($row['id_pagamento']) ?>">
                         
-                        <label style="font-size: 13px; color:#cbd5e1; font-weight: bold;">Assinatura Digital (Telefone ou BI):</label>
-                        <input type="tel" name="assinatura_cliente" class="input-text" placeholder="Ex: 925347372" required autocomplete="off">
+                        <label style="font-size: 13px; color:#94a3b8; font-weight: 600; display: block; width: 100%;">Assinatura Digital (Telefone do Cliente):</label>
+                        
+                        <!-- Lock numérico com filtro reativo regex embutido -->
+                        <input type="tel" 
+                               name="assinatura_cliente" 
+                               class="input-text" 
+                               placeholder="Ex: 925347372" 
+                               inputmode="numeric" 
+                               pattern="[0-9]*" 
+                               maxlength="9"
+                               oninput="this.value = this.value.replace(/[^0-9]/g, '');" 
+                               required 
+                               autocomplete="off">
                         
                         <button type="submit" class="btn-confirmar">Confirmar Execução</button>
                     </form>
                 </div>
             <?php endforeach; ?>
         <?php else: ?>
-            <div style="text-align:center; padding:40px; background:#1e293b; border-radius:12px; border:1px dashed #334155; color:#94a3b8; font-style:italic; font-size: 14px;">
+            <div style="text-align:center; padding:50px 20px; background:#1e293b; border-radius:12px; border:1px dashed #334155; color:#94a3b8; font-style:italic; font-size: 13.5px; line-height: 1.5;">
+                <span style="font-size: 28px; display: block; margin-bottom: 8px;">📅</span>
                 Não existem serviços ou agendamentos pendentes na sua agenda de atendimento hoje.
             </div>
         <?php endif; ?>

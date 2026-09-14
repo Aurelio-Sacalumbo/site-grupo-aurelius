@@ -189,40 +189,52 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
             background: #070b12; 
             color: #fff; 
             font-family: system-ui, -apple-system, sans-serif; 
-            padding: 12px 10px; /* Reduzido para dar mais espaço útil no ecrã do telemóvel */
+            padding: 12px 10px;
             min-height: 100vh;
+            /* 🟢 CORREÇÃO MESTRE: Flexbox ativo apenas no PC. No telemóvel, o fluxo será natural para esticar */
+            display: block;
+        }
+
+        /* Se for aberto num computador, centraliza e limita o tamanho normalmente */
+        @media (min-width: 576px) {
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
         }
         
-        /* 📱 CONTAINER DE CADASTRO/CHECKOUT RESPONSIVO */
+        /* 📱 CONTAINER DE CHECKOUT TOTALMENTE AMPLILADO E EXPANDIDO */
         .seccao-cadastro { 
             background: #111827; 
             border: 2px solid <?= $cor_tema ?>; 
-            border-radius: 16px; 
-            width: 100%;
+            border-radius: 12px; 
+            width: 100%; /* Ocupa toda a largura do ecrã do telemóvel */
             max-width: 550px; 
-            margin: 15px auto; /* Reduzida a margem para não flutuar longe do topo */
-            padding: 20px 15px; /* Espaçamento interno otimizado para mobile */
+            margin: 0 auto 20px auto; /* Encosta perfeitamente próximo ao topo */
+            padding: 22px 16px; /* Espaço interno generoso para os inputs respirarem */
             box-shadow: 0 15px 35px rgba(0,0,0,0.6); 
+            box-sizing: border-box;
         }
         
         .campo-grupo { 
             display: flex; 
             flex-direction: column; 
             gap: 6px; 
-            margin-bottom: 15px; 
+            margin-bottom: 16px; 
             text-align: left; 
         }
         
         .campo-grupo label { 
-            font-size: 12.5px; 
+            font-size: 13px; 
             color: #94a3b8; 
             font-weight: 600; 
         }
         
-        /* 🟢 PREVINE ZOOM DO TELEMÓVEL: font-size em 16px impede o zoom automático do navegador no input */
+        /* inputs e seletores robustos e fáceis de clicar com o polegar */
         .campo-grupo input, 
         .campo-grupo select { 
-            padding: 12px 14px; 
+            padding: 13px 14px; /* Aumentado ligeiramente para melhor usabilidade touch */
             background: #070b12; 
             border: 1px solid #374151; 
             border-radius: 8px; 
@@ -241,18 +253,20 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
         
         .fatura-box { 
             background: #070b12; 
-            padding: 15px; 
+            padding: 16px; 
             border-radius: 10px; 
             border: 1px solid #1f2937; 
             margin-bottom: 20px; 
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .linha-fatura { 
             display: flex; 
             justify-content: space-between; 
-            font-size: 13px; 
+            font-size: 13.5px; 
             color: #94a3b8; 
-            margin-bottom: 8px; 
+            margin-bottom: 10px; 
         }
         
         .linha-fatura span:last-child { 
@@ -262,23 +276,24 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
         
         .total-row { 
             border-top: 1px solid #1f2937; 
-            padding-top: 10px; 
-            margin-top: 10px; 
+            padding-top: 12px; 
+            margin-top: 12px; 
             font-size: 15px; 
             font-weight: bold; 
         }
         
         .total-row span:last-child { 
             color: #eab308 !important; 
-            font-size: 17px; 
+            font-size: 18px; 
         }
         
+        /* Botão principal robusto e expandido */
         .btn-pagar { 
             width: 100%; 
             background: <?= $cor_tema ?>; 
             color: white; 
             border: none; 
-            padding: 14px; 
+            padding: 15px; 
             font-size: 14px; 
             font-weight: bold; 
             border-radius: 8px; 
@@ -295,7 +310,7 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
         }
         
         .btn-sair { 
-            display: block; /* Mudado para block para melhor alinhamento em ecrãs pequenos */
+            display: block; 
             width: fit-content;
             background: #1e293b; 
             color: white; 
@@ -309,15 +324,15 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
             text-transform: uppercase; 
         }
         
-        /* 📱 RECIBO DE FATURA RESPONSIVO */
+        /* 📱 TALÃO DE COMPRA RESPONSIVO */
         .fatura-recibo-container { 
             background: #fff; 
             color: #000; 
-            padding: 20px 15px; /* Reduzido o padding para não cortar o texto nas laterais */
+            padding: 22px 16px; 
             border-radius: 12px; 
             width: 100%;
             max-width: 500px; 
-            margin: 20px auto; 
+            margin: 15px auto; 
             box-shadow: 0 10px 25px rgba(255,255,255,0.05); 
             font-family: monospace; 
             border-top: 8px solid #22c55e; 
@@ -325,26 +340,26 @@ $cor_tema      = ($gateway_atual === 'mcx_xpress') ? '#0066cc' : '#ff6600';
             box-sizing: border-box;
         }
 
-        /* 🟢 MEDIA QUERIES: Regras exclusivas para otimização em telemóveis */
+        /* 🟢 OTIMIZAÇÕES ADICIONAIS PARA ECRÃS ULTRA-PEQUENOS (MÓVEL) */
         @media (max-width: 480px) {
             body {
-                padding: 8px 6px;
+                padding: 6px 4px; /* Minimiza as bordas pretas externas */
             }
             .seccao-cadastro {
-                margin: 10px auto;
-                padding: 16px 12px;
+                margin: 5px auto;
+                padding: 18px 14px;
                 border-radius: 12px;
+                border-width: 1px; /* Linha mais fina para telas pequenas */
             }
             .fatura-recibo-container {
-                margin: 10px auto;
-                padding: 18px 12px;
-                font-size: 12px; /* Encolhe ligeiramente a fonte tipográfica do recibo para caber faturas grandes */
+                margin: 5px auto;
+                padding: 16px 12px;
+                font-size: 12.5px; 
             }
-            /* Ajuste para grids com múltiplos campos lado a lado */
             .grid-dupla-mobile {
                 display: grid !important;
                 grid-template-columns: 1fr 1fr !important;
-                gap: 10px !important;
+                gap: 8px !important;
             }
         }
     </style>
