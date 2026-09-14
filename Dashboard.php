@@ -594,8 +594,8 @@ nav {
     
     <!-- Logotipo -->
     <div class="logo" onclick="irParaSecao('home')" style="color: #d32f2f; cursor: pointer;">
-        <h1 style="font-size: 22px; font-weight: bold; line-height: 1; margin: 0;">🎌AURE<span style="color: #0b1a30;">LIUS</span></h1>
-        <h6 style="color: #0b1a30; font-size: 11px; margin: 2px 0 0 0;">Salão de Beleza e Barbearia</h6>
+        <h1 style="font-size: 40px; font-weight: bold; line-height: 1; margin: 0;">🎌  BRA<span style="color: #0b1a30;">NCA</span></h1>
+        <h6 style="color: #0b1a30; font-size: 20px; margin: 2px 0 0 0;">Salão de Beleza e Barbearia</h6>
     </div>
 
     <!-- =========================================================================
@@ -655,7 +655,7 @@ nav {
 
     <!-- ÍCONE DAS 3 BARRAS -->
     <div class="Menu-Icon" onclick="toggleMenu()" style="cursor: pointer;">
-        <svg viewBox="0 0 100 80" width="28" height="28" style="fill: #0b1a30; display: block;">
+        <svg viewBox="0 0 100 80" width="58" height="58" style="fill: #0b1a30; display: block;">
             <rect width="100" height="15" rx="8"></rect>
             <rect y="30" width="100" height="15" rx="8"></rect>
             <rect y="60" width="100" height="15" rx="8"></rect>
@@ -665,23 +665,23 @@ nav {
     <!-- MENU LATERAL RETRÁTIL (Mobile Overlay) -->
     <div id="menuLateralMobile" style="position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background-color: #0f172a; border-right: 2px solid #0088cc; box-shadow: 5px 0 15px rgba(0,0,0,0.5); transition: 0.3s ease; padding: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 15px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
-            <strong style="color: #fff; font-size: 18px;">AURELIUS</strong>
+            <strong style="color: #fff; font-size: 28px;">AURELIUS</strong>
             <span onclick="toggleMenu()" style="font-size: 24px; color: #ef4444; cursor: pointer; font-weight: bold;">&times;</span>
         </div>
      
-        <a href="Principal.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">Sair</a>
+        <a href="Principal.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SAIR</a>
     
-        <a href="unitel.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">📱 Pagamentos Móveis
+        <a href="unitel.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">📱 PAGAMENTOS MÓVEIS
 </a>
     
         <a href="./fatura.php" target="_blank" style="display: inline-block; background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: bold; border-radius: 20px !important; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #b91c1c; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: 0.2s; font-family: sans-serif; text-align: center;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#d32f2f'">
             🖨️ Emitir Última Fatura
         </a>
 
-        <a href="#" onclick="alternarAbas('servicos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">Serviços</a>
-        <a href="#" onclick="alternarAbas('photos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">Photos</a>
-        <a href="#" onclick="abrirAbas(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">Sobre Nós</a>
-        <a href="#" onclick="abrirTermos(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">Termos & Privacidade</a>
+        <a href="#" onclick="alternarAbas('servicos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SERVIÇOS</a>
+        <a href="#" onclick="alternarAbas('photos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">PHOTOS</a>
+        <a href="#" onclick="abrirAbas(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SOBNRE NÓS</a>
+        <a href="#" onclick="abrirTermos(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">TERMOS & PRIVACIDADE </a>
     </div>
 </nav>
 
@@ -1610,12 +1610,31 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
     if ($total_midias_validas === 0):
     ?>
-        <div style="grid-column: 1 / -1; color: #64748b; text-align: center; padding: 40px 20px; font-style: italic; background: #0f172a; border-radius: 12px; font-size: 13px; border: 1px dashed #233144; width:100%; box-sizing:border-box;">
-            Novas tendências e fotos de cortes serão exibidas brevemente.
-        </div>
-    <?php endif; ?>
-</div>
+         <p style="color: #aaa; text-align: center; grid-column: 1 / -1; padding: 25px; background: #1e293b; border-radius: 8px; font-style: italic;">Nenhuma foto ou vídeo carregado na galeria ainda.</p>
+         <?php endif; ?>
+     </div>
  
+     <!-- SEÇÃO DOS PROFISSIONAIS ENVELOPADA (Inicia 100% Oculta) -->
+     <div id="secaoFuncionarios" style="margin: 20px auto; max-width: 1200px; padding: 0 15px; display: none !important; visibility: hidden; height: 0; overflow: hidden;">
+         <h3 style="color: #fff; font-size: 14px; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Status dos Profissionais:</h3>
+         <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px;">
+             <?php if(empty($lista_cards)): ?>
+                 <p style="color: #94a3b8; grid-column: 1/-1;">Nenhum profissional cadastrado no sistema.</p>
+             <?php else: ?>
+                 <?php foreach($lista_cards as $card): 
+                     $corCard = '#22c55e';
+                     if (strpos($card['status'], 'Ausente') !== false || strpos($card['status'], 'Folga') !== false) { $corCard = '#ef4444'; }
+                     elseif (strpos($card['status'], 'Atendimento') !== false || strpos($card['status'], 'Em') !== false) { $corCard = '#ffaa00'; }
+                 ?>
+                     <div style="background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
+                         <span style="color: #cbd5e1; font-weight: bold;"><?php echo htmlspecialchars($card['nome']); ?></span>
+                         <span id="status-text-<?php echo $card['id_funcionario']; ?>" style="font-weight: bold; color: <?php echo $corCard; ?>;"><?php echo htmlspecialchars($card['status']); ?></span>
+                     </div>
+                 <?php endforeach; ?>
+             <?php endif; ?>
+         </div>
+     </div>
+ </div>
  
  
  

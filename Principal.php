@@ -1293,37 +1293,161 @@ if (isset($mysqli) && !$mysqli->connect_error) {
 
 
 
-
-<div style="width: 100%; max-width: 450px; margin: 10px auto; padding: 0 10px; box-sizing: border-box; font-family: system-ui,-apple-system,sans-serif;">
-    <div style="background: #111827; padding: 10px; border-radius: 25px; border: 1px solid #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); animation: pulse 3s infinite alternate;">
-        <form action="principal.php" method="POST" style="display: flex; gap: 6px; width: 100%; align-items: center;">
-            
-            <!-- Campo ultra-compacto -->
-            <input type="text" name="termo_cliente" style="flex: 1; min-width: 0; padding: 10px 14px; border: none; border-radius: 20px; font-size: 14px; background: #0b0f19; color: #fff; outline: none;" 
-                   placeholder="Barbearia ou bairro..." 
+<div class="search-container">
+    <div class="search-wrapper" id="searchWrapper">
+        <!-- Botão de Ativação / Ícone Inicial -->
+        <button type="button" class="search-trigger" id="searchTrigger" aria-label="Abrir busca">🔍</button>
+        
+        <!-- Formulário Oculto que se expande -->
+        <form action="principal.php" method="POST" class="search-form">
+            <input type="text" name="termo_cliente" class="search-input" id="searchInput"
+                   placeholder="Pesquise barbearias e lojas..." 
                    value="<?php echo isset($_POST['termo_cliente']) ? htmlspecialchars($_POST['termo_cliente']) : ''; ?>">
             
-            <!-- Botão de ícone mini -->
-            <button type="submit" name="disparar_busca" style="padding: 10px 14px; background: #38bdf8; color: #0f172a; border: none; border-radius: 20px; font-weight: bold; font-size: 13px; cursor: pointer; white-space: nowrap;">
-                🔍
-            </button>
+            <button type="submit" name="disparar_busca" class="search-submit" aria-label="Pesquisar">🔍</button>
             
-            <!-- Botão X mini -->
-            <?php if (isset($_POST['disparar_busca']) && !empty($_POST['termo_cliente'])): ?>
-                <a href="principal.php" style="padding: 10px 12px; background: #1f2937; color: #94a3b8; border-radius: 20px; font-size: 13px; text-decoration: none; font-weight: bold;">✕</a>
-            <?php endif; ?>
-            
+            <!-- Botão de Fechar (Volta a ser apenas a lupa) -->
+            <button type="button" class="search-close" id="searchClose">✕</button>
         </form>
     </div>
 </div>
 
 <style>
+    /* Container Geral Responsivo */
+    .search-container {
+        width: 100%;
+        max-width: 450px;
+        margin: 10px auto;
+        padding: 0 10px;
+        box-sizing: border-box;
+        font-family: system-ui, -apple-system, sans-serif;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* O Wrapper começa compacto (apenas o tamanho do botão) e transiciona suavemente */
+    .search-wrapper {
+        background: #111827;
+        border: 1px solid #38bdf8;
+        border-radius: 30px;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* Estado Ativo: Quando clicado, expande para 100% do container */
+    .search-wrapper.active {
+        width: 100%;
+        padding: 6px;
+        animation: pulse 3s infinite alternate;
+    }
+
+    /* Botão inicial da lupa */
+    .search-trigger {
+        background: transparent;
+        border: none;
+        color: #fff;
+        font-size: 20px;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+    }
+
+    .search-wrapper.active .search-trigger {
+        display: none;
+    }
+
+    /* Formulário interno */
+    .search-form {
+        display: none;
+        width: 100%;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .search-wrapper.active .search-form {
+        display: flex;
+    }
+
+    /* Campo de texto profissional */
+    .search-input {
+        flex: 1;
+        min-width: 0;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 20px;
+        font-size: 14px;
+        background: #0b0f19;
+        color: #fff;
+        outline: none;
+    }
+
+    /* Botão de envio dentro da barra expandida */
+    .search-submit {
+        padding: 10px 14px;
+        background: #38bdf8;
+        color: #0f172a;
+        border: none;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 13px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    /* Botão X para fechar a expansão */
+    .search-close {
+        padding: 10px 12px;
+        background: #1f2937;
+        color: #94a3b8;
+        border: none;
+        border-radius: 20px;
+        font-size: 13px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    /* Animação Pulse mantida do seu código original */
     @keyframes pulse {
         0% { box-shadow: 0 0 5px rgba(56,189,248,0.2); border-color: #0369a1; }
         100% { box-shadow: 0 0 12px rgba(56,189,248,0.4); border-color: #38bdf8; }
     }
 </style>
 
+<script>
+    const searchWrapper = document.getElementById('searchWrapper');
+    const searchTrigger = document.getElementById('searchTrigger');
+    const searchClose = document.getElementById('searchClose');
+    const searchInput = document.getElementById('searchInput');
+
+    // Ao clicar na lupa inicial, expande a barra
+    searchTrigger.addEventListener('click', () => {
+        searchWrapper.classList.add('active');
+        setTimeout(() => searchInput.focus(), 100); // Dá foco automático no input
+    });
+
+    // Ao clicar no X, recolhe a barra de volta para o botão
+    searchClose.addEventListener('click', (e) => {
+        e.stopPropagation();
+        searchWrapper.classList.remove('active');
+        searchInput.value = ''; // Limpa o texto ao fechar
+    });
+
+    // Mantém a barra aberta caso a página recarregue com uma busca já feita
+    if (searchInput.value.trim() !== '') {
+        searchWrapper.classList.add('active');
+    }
+</script>
 
 
 
@@ -1332,117 +1456,332 @@ if (isset($mysqli) && !$mysqli->connect_error) {
 
 
 
+<?php
+// =========================================================================
+// 🔄 1. INICIALIZAÇÃO E CONSULTA DE DADOS (SEMPRE ANTES DO HTML)
+// =========================================================================
+$todas_prov_angola = ['Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando-Cubango', 'Cuanza-Norte', 'Cuanza-Sul', 'Cunene', 'Huambo', 'Huíla', 'Luanda', 'Lunda-Norte', 'Lunda-Sul', 'Malanje', 'Moxico', 'Namibe', 'Uíge', 'Zaire'];
 
-      <!-- =========================================================================
-     📍 FILTRO GEOGRÁFICO NACIONAL AUTOMÁTICO (ESTILO FACEBOOK RESPONSIVO)
-     ========================================================================= -->
-<div style="margin: 20px auto 10px auto; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1350px; padding: 0 10px;">
-<span style="color: #94a3b8; font-size: 11px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 10px; letter-spacing: 0.5px;"> Filtrar por Província Ativa:</span>
+$prov_com_parceiros = [];
 
-<!-- Container Flex Estilo Facebook: Botões pequenos, fluidos e dinâmicos -->
-<div style="display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
+// Abre ou reutiliza a conexão ativa do sistema
+$mysqli = $conexao_link ?? $conexao_aurelius ?? null;
+
+if ($mysqli && !$mysqli->connect_error) {
+    $mysqli->set_charset("utf8mb4");
     
-    <!-- Botão Mestre Inicial -->
-    <button class="btn-filtro-prov-nacional" onclick="executarFiltragemGeograficaCarrossel('todos', this)" style="background: #38bdf8; color: #0f172a; border: none; padding: 6px 14px; font-size: 11px; font-weight: 600; border-radius: 14px; cursor: pointer; text-transform: uppercase; transition: background 0.2s; outline: none;">🇦🇴 Todas</button>
+    // Consulta otimizada diretamente na tabela 'usuario'
+    $query_botoes = $mysqli->query("SELECT DISTINCT `endereco` FROM `usuario` WHERE `visivel_no_site` = 1 AND `nivel` = 'parceiro_hospedado'");
     
-    <?php
-    // Lista padrão regulamentar de Angola para indexação estrita na rede SaaS
-    $todas_prov_angola = ['Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando-Cubango', 'Cuanza-Norte', 'Cuanza-Sul', 'Cunene', 'Huambo', 'Huíla', 'Luanda', 'Lunda-Norte', 'Lunda-Sul', 'Malanje', 'Moxico', 'Namibe', 'Uíge', 'Zaire'];
-    
-    $prov_com_parceiros = [];
-    
-    // Abre conexão única reutilizável para varrer todas as frentes comerciais ativas
-    $mysqli = $conexao_link ?? $conexao_aurelius;
-    if ($mysqli && !$mysqli->connect_error) {
-        $mysqli->set_charset("utf8mb4");
-        
-        // Consulta sem duplicações estruturais diretamente na tabela 'usuario'
-        $query_botoes = $mysqli->query("SELECT DISTINCT `endereco` FROM `usuario` WHERE `visivel_no_site` = 1 AND `nivel` = 'parceiro_hospedado'");
-        
-        if ($query_botoes && $query_botoes->num_rows > 0) {
-            while ($p_row = $query_botoes->fetch_assoc()) {
-                if (empty($p_row['endereco'])) continue;
+    if ($query_botoes && $query_botoes->num_rows > 0) {
+        while ($p_row = $query_botoes->fetch_assoc()) {
+            if (empty($p_row['endereco'])) continue;
+            
+            $endereco_limpo = mb_strtolower(trim($p_row['endereco']), 'UTF-8');
+            
+            foreach ($todas_prov_angola as $prov_nome) {
+                $prov_lower = mb_strtolower($prov_nome, 'UTF-8');
                 
-                $endereco_limpo = mb_strtolower(trim($p_row['endereco']), 'UTF-8');
+                // Normaliza acentos e hifens comuns
+                $prov_sem_acento = str_replace(['í', 'é', 'á'], ['i', 'e', 'a'], $prov_lower);
+                $prov_sem_hifen = str_replace('-', ' ', $prov_lower);
                 
-                foreach ($todas_prov_angola as $prov_nome) {
-                    $prov_lower = mb_strtolower($prov_nome, 'UTF-8');
+                if (str_contains($endereco_limpo, $prov_lower) || 
+                    str_contains($endereco_limpo, $prov_sem_acento) || 
+                    str_contains($endereco_limpo, $prov_sem_hifen)) {
                     
-                    // Normaliza acentos e hifens comuns (Ex: huila, lunda sul, bengo)
-                    $prov_sem_acento = str_replace(['í', 'é', 'á'], ['i', 'e', 'a'], $prov_lower);
-                    $prov_sem_hifen = str_replace('-', ' ', $prov_lower);
-                    
-                    if (str_contains($endereco_limpo, $prov_lower) || 
-                        str_contains($endereco_limpo, $prov_sem_acento) || 
-                        str_contains($endereco_limpo, $prov_sem_hifen)) {
-                        
-                        // Adiciona apenas se não existir no array, evitando repetições de botões
-                        if (!in_array($prov_nome, $prov_com_parceiros)) {
-                            $prov_com_parceiros[] = $prov_nome;
-                        }
+                    if (!in_array($prov_nome, $prov_com_parceiros)) {
+                        $prov_com_parceiros[] = $prov_nome;
                     }
                 }
             }
         }
     }
-    
-    // Desenha apenas as províncias que realmente possuem parceiros na base de dados
-    foreach ($prov_com_parceiros as $nome_p):
-        $slug_prov = str_replace(['í', 'é', 'á'], ['i', 'e', 'a'], mb_strtolower($nome_p, 'UTF-8'));
-        $slug_prov = str_replace('-', ' ', $slug_prov);
-    ?>
-        <button class="btn-filtro-prov-nacional" onclick="executarFiltragemGeograficaCarrossel('<?= $slug_prov ?>', this)" style="background: #1e293b; color: #f8fafc; border: 1px solid #334155; padding: 6px 14px; font-size: 11px; font-weight: 600; border-radius: 14px; cursor: pointer; text-transform: uppercase; transition: background 0.2s; outline: none;"><?= $nome_p ?></button>
-    <?php endforeach; ?>
-</div>
-</div>
+}
+?>
 
 <!-- =========================================================================
- 🟩 SCRIPT JAVASCRIPT: MOTOR DE FILTRAGEM REATIVA DE CARROSSEL
- ========================================================================= -->
-<script>
+     📍 2. ESTRUTURA VISUAL DO CARROSSEL (HTML CORRIGIDO)
+     ========================================================================= -->
+<div class="filtro-prov-container">
+    <span class="filtro-prov-titulo">Filtrar por Província Ativa:</span>
+    <div class="carrossel-wrapper">
+        <button class="seta-carrossel seta-esquerda" id="setaEsquerda" onclick="scrollCarrossel(-150)">‹</button>
+        
+        <div class="trilho-botoes" id="trilhoBotoes">
+            <!-- Botão Mestre -->
+            <button class="btn-filtro-prov-nacional ativo" onclick="executarFiltragemGeograficaCarrossel('todos', this)">🇦🇴 Todas</button>
+            
+            <!-- Renderiza os botões dinamicamente sem gerar Warnings -->
+            <?php 
+            if (!empty($prov_com_parceiros) && is_array($prov_com_parceiros)):
+                foreach ($prov_com_parceiros as $nome_p): 
+                    $slug_prov = str_replace(['í', 'é', 'á'], ['i', 'e', 'a'], mb_strtolower($nome_p, 'UTF-8'));
+                    $slug_prov = str_replace('-', ' ', $slug_prov);
+                ?>
+                    <button class="btn-filtro-prov-nacional" onclick="executarFiltragemGeograficaCarrossel('<?= $slug_prov ?>', this)"><?= $nome_p ?></button>
+                <?php 
+                endforeach; 
+            endif;
+            ?>
+        </div>
+        
+        <button class="seta-carrossel seta-direita" id="setaDireita" onclick="scrollCarrossel(150)">›</button>
+    </div>
+</div>
+
+ <!-- =========================================================================
+      🎨 DESIGN E IDENTIDADE VISUAL CSS (COMPLETA E RESPONSIVA)
+      ========================================================================= -->
+ <style>
+     .filtro-prov-container {
+         margin: 25px auto 15px auto;
+         text-align: center;
+         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+         max-width: 1350px;
+         padding: 0 10px;
+         box-sizing: border-box;
+     }
+ 
+     .filtro-prov-titulo {
+         color: #94a3b8;
+         font-size: 11px;
+         font-weight: bold;
+         text-transform: uppercase;
+         display: block;
+         margin-bottom: 12px;
+         letter-spacing: 0.8px;
+     }
+ 
+     /* Caixa externa que contém o trilho e as setas */
+     .carrossel-wrapper {
+         position: relative;
+         display: flex;
+         align-items: center;
+         background: #111827;
+         padding: 8px 12px;
+         border-radius: 20px;
+         border: 1px solid #1e293b;
+         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+     }
+ 
+     /* O Trilho onde os botões ficam alinhados */
+     .trilho-botoes {
+         display: flex;
+         gap: 8px;
+         overflow-x: auto;
+         scroll-behavior: smooth;
+         width: 100%;
+         padding: 4px 0;
+         scrollbar-width: none; /* Oculta a barra no Firefox */
+     }
+ 
+     /* Oculta a barra de rolagem nativa no Chrome, Safari e Edge */
+     .trilho-botoes::-webkit-scrollbar {
+         display: none;
+     }
+ 
+     /* Estilização base de cada botão de província */
+     .btn-filtro-prov-nacional {
+         background: #1e293b;
+         color: #f8fafc;
+         border: 1px solid #334155;
+         padding: 7px 16px;
+         font-size: 12px;
+         font-weight: 600;
+         border-radius: 30px;
+         cursor: pointer;
+         text-transform: uppercase;
+         white-space: nowrap; /* Evita que o nome quebre em duas linhas */
+         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+         outline: none;
+     }
+ 
+     .btn-filtro-prov-nacional:hover {
+         background: #334155;
+         border-color: #475569;
+         transform: translateY(-1px);
+     }
+ 
+     /* Estado Ativo: Iluminação Neon Azul condizente com a barra de pesquisa */
+     .btn-filtro-prov-nacional.ativo {
+         background: #38bdf8;
+         color: #0f172a;
+         border-color: #38bdf8;
+         box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+     }
+ 
+     /* Setas de navegação elegantes */
+     .seta-carrossel {
+         position: absolute;
+         top: 50%;
+         transform: translateY(-50%);
+         background: rgba(30, 41, 59, 0.9);
+         color: #38bdf8;
+         border: 1px solid #334155;
+         width: 28px;
+         height: 28px;
+         border-radius: 50%;
+         font-size: 18px;
+         display: flex;
+         align-items: center;
+         justify-content: center;
+         cursor: pointer;
+         z-index: 10;
+         transition: all 0.2s;
+         user-select: none;
+     }
+ 
+     .seta-carrossel:hover {
+         background: #38bdf8;
+         color: #0f172a;
+         box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+     }
+ 
+     .seta-esquerda { left: -10px; }
+     .seta-direita { right: -10px; }
+ 
+     /* Esconde as setas em telas muito pequenas (onde arrastar com o dedo é natural) */
+     @media (max-width: 768px) {
+         .seta-carrossel {
+             display: none;
+         }
+         .carrossel-wrapper {
+             padding: 8px 6px;
+         }
+     }
+     .barbearias-container-outer {
+    width: 100%;
+    max-width: 1350px;
+    margin: 20px auto;
+    padding: 0 10px;
+    box-sizing: border-box;
+    overflow: hidden; /* Corta o que passar das bordas laterais da tela */
+}
+
+/* O Trilho que armazena os Cards e permite o Arraste (Touch e Mouse) */
+.trilho-barbearias {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding: 10px 5px;
+    scrollbar-width: none; /* Firefox */
+    cursor: grab; /* Cursor de "mão aberta" indicando que pode arrastar */
+    user-select: none; /* Evita selecionar textos acidentalmente ao arrastar */
+}
+
+.trilho-barbearias:active {
+    cursor: grabbing; /* Mão fechada durante o arraste */
+}
+
+.trilho-barbearias::-webkit-scrollbar {
+    display: none; /* Chrome, Safari e Edge */
+}
+
+/* Estutura dos Cards Internos Adaptada para Carrossel Horizontal */
+.trilho-barbearias .sub-grid {
+    flex: 0 0 280px; /* Não permite encolher e define a largura fixa de cada card */
+    max-width: 280px;
+    background: #111827;
+    border: 1px solid #1e293b;
+    border-radius: 16px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    display: flex; /* Mantido display flex exigido pelo seu motor de busca */
+    flex-direction: column;
+}
+
+.trilho-barbearias .sub-grid:hover {
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+}
+
+
+
+ </style>
+ 
+ <!-- =========================================================================
+      🟩 SCRIPT JAVASCRIPT: MOTOR DE FILTRAGEM REATIVA E NAVEGAÇÃO
+      ========================================================================= -->
+ <script>
+ // Controla a rolagem através dos botões de setas laterais
+ const trilhoSalas = document.getElementById('trilho_carrossel_salao');
+let isDown = false;
+let startX;
+let scrollLeft;
+
+if (trilhoSalas) {
+    trilhoSalas.addEventListener('mousedown', (e) => {
+        isDown = true;
+        trilhoSalas.classList.add('dragging');
+        startX = e.pageX - trilhoSalas.offsetLeft;
+        scrollLeft = trilhoSalas.scrollLeft;
+    });
+
+    trilhoSalas.addEventListener('mouseleave', () => {
+        isDown = false;
+    });
+
+    trilhoSalas.addEventListener('mouseup', () => {
+        isDown = false;
+    });
+
+    trilhoSalas.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - trilhoSalas.offsetLeft;
+        const walk = (x - startX) * 2; // Multiplicador de velocidade do arraste
+        trilhoSalas.scrollLeft = scrollLeft - walk;
+    });
+}
+
+// =========================================================================
+// 🎯 FILTRAGEM GEOGRÁFICA REATIVA ATUALIZADA
+// =========================================================================
 function executarFiltragemGeograficaCarrossel(provinciaAlvo, botaoElemento) {
-// 1. Reseta os estados visuais da botonera estilo Facebook
-const botoes = document.querySelectorAll('.btn-filtro-prov-nacional');
-botoes.forEach(btn => {
-    btn.style.background = '#1e293b';
-    btn.style.color = '#f8fafc';
-    btn.style.border = '1px solid #334155';
-});
-botaoElemento.style.background = '#38bdf8';
-botaoElemento.style.color = '#0f172a';
-botaoElemento.style.border = 'none';
+    // 1. Alterna estado visual dos botões do topo
+    const botoes = document.querySelectorAll('.btn-filtro-prov-nacional');
+    botoes.forEach(btn => btn.classList.remove('ativo'));
+    botaoElemento.classList.add('ativo');
 
-// 2. Captura os cards do carrossel para aplicação da máscara
-const cardsCarrossel = document.querySelectorAll('#trilho_carrossel_salao .sub-grid');
+    botaoElemento.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
 
-// Normalização completa de acentuação e hifens para busca flexível
-let provLimpa = provinciaAlvo.toLowerCase().trim()
-    .replace(/[íìî]/g, 'i')
-    .replace(/[éèê]/g, 'e')
-    .replace(/[áàâã]/g, 'a')
-    .replace(/-/g, ' ');
+    // 2. Captura todos os cards de barbearias
+    const cards = document.querySelectorAll('#trilho_carrossel_salao .sub-grid');
+    
+    // Reseta o scroll do trilho de barbearias para o início ao filtrar
+    if (trilhoSalas) {
+        trilhoSalas.scrollTo({ left: 0, behavior: 'smooth' });
+    }
 
-const trilho = document.getElementById('trilho_carrossel_salao');
-if (trilho) trilho.style.transform = `translateX(0px)`;
-
-cardsCarrossel.forEach(card => {
-    let textoCardCompleto = card.innerText.toLowerCase()
+    // Normalização da string de busca
+    let provLimpa = provinciaAlvo.toLowerCase().trim()
         .replace(/[íìî]/g, 'i')
         .replace(/[éèê]/g, 'e')
         .replace(/[áàâã]/g, 'a')
         .replace(/-/g, ' ');
-    
-    if (provinciaAlvo === 'todos') {
-        card.style.setProperty('display', 'flex', 'important');
-    } else if (textoCardCompleto.includes(provLimpa)) {
-        card.style.setProperty('display', 'flex', 'important');
-    } else {
-        card.style.setProperty('display', 'none', 'important');
-    }
-});
+
+    // 3. Aplica o filtro de visibilidade baseado no texto interno ou data-attribute
+    cards.forEach(card => {
+        // Tenta ler primeiro do atributo data-provincia, se não existir lê o texto do card
+        let provinciaCard = card.getAttribute('data-provincia') || card.innerText;
+        
+        let textoCardCompleto = provinciaCard.toLowerCase()
+            .replace(/[íìî]/g, 'i')
+            .replace(/[éèê]/g, 'e')
+            .replace(/[áàâã]/g, 'a')
+            .replace(/-/g, ' ');
+        
+        if (provinciaAlvo === 'todos') {
+            card.style.setProperty('display', 'flex', 'important');
+        } else if (textoCardCompleto.includes(provLimpa)) {
+            card.style.setProperty('display', 'flex', 'important');
+        } else {
+            card.style.setProperty('display', 'none', 'important');
+        }
+    });
 }
 </script>
-
 
 
 
