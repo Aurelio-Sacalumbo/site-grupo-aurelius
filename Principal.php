@@ -1337,7 +1337,7 @@ if (isset($mysqli) && !$mysqli->connect_error) {
      📍 FILTRO GEOGRÁFICO NACIONAL AUTOMÁTICO (ESTILO FACEBOOK RESPONSIVO)
      ========================================================================= -->
 <div style="margin: 20px auto 10px auto; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 1350px; padding: 0 10px;">
-<span style="color: #94a3b8; font-size: 11px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 10px; letter-spacing: 0.5px;">📍 Filtrar por Província Ativa:</span>
+<span style="color: #94a3b8; font-size: 11px; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 10px; letter-spacing: 0.5px;"> Filtrar por Província Ativa:</span>
 
 <!-- Container Flex Estilo Facebook: Botões pequenos, fluidos e dinâmicos -->
 <div style="display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; box-sizing: border-box;">
@@ -1455,9 +1455,6 @@ cardsCarrossel.forEach(card => {
 
 
 
-
-
-
 <!-- =================================================================
      🔮 CONTEÚDO INTEGRAL DA GRAD DINÂMICA UNIVERSAL COESORA COM MOVIMENTO
      ================================================================= -->
@@ -1474,325 +1471,126 @@ cardsCarrossel.forEach(card => {
          <div class="grid" id="trilho_carrossel_salao" style="display: flex !important; gap: 20px !important; width: max-content !important; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); box-sizing: border-box !important; padding: 0 10px;">
  
          <?php
-// =========================================================================
-// 🔮 ECOSSISTEMA MESTRE - MOTOR SAAS MULTI-TENANT E ROTEADOR (PRINCIPAL.PHP)
-// =========================================================================
+         // =========================================================================
+         // 🟢 ALINHAMENTO EXCLUSIVO E DIRECIONAMENTO POR SLUG DINÂMICO
+         // =========================================================================
+         if (!empty($lista_parceiros_ativos)):
+             foreach ($lista_parceiros_ativos as $barbearia_item):
+                 $id_foto = (int)$barbearia_item['codigo'];
+                 $nome_barbearia = trim($barbearia_item['nome'] ?? '');
+                 
+                 // 🖼️ MOTOR DE IMAGENS MULTI-PASTAS RECUPERADO (Todas as fotos antigas de volta)
+                 $arquivo_logo = trim($barbearia_item['logo_empresa'] ?? '');
+                 $foto_src = "uploads/OIP (6).webp"; // Fallback padrão inicial
 
-// 🔑 CONEXÃO DIRETA E ISOLADA À BASE DE DADOS MESTRE
-$h_host = getenv('DB_HOST') ?: "altaria.proxy.rlwy.net";
-$h_port = getenv('DB_PORT') ?: "52030";
-$h_name = getenv('DB_NAME') ?: "railway";
-$h_user = getenv('DB_USER') ?: "root";
-$h_pass = getenv('DB_PASSWORD') ?: "tPzDwXGkyczyyYdcyvLmHLSMmfZmnMIZ";
+                 if (!empty($arquivo_logo)) {
+                     $arquivo_limpo = basename($arquivo_logo); // Higieniza caminhos sujos do banco
+                     
+                     if (file_exists("uploads/" . $arquivo_limpo)) {
+                         $foto_src = "uploads/" . $arquivo_limpo;
+                     } elseif (file_exists("upload/" . $arquivo_limpo)) {
+                         $foto_src = "upload/" . $arquivo_limpo;
+                     } elseif (file_exists("guardar-fotos/" . $arquivo_limpo)) {
+                         $foto_src = "guardar-fotos/" . $arquivo_limpo;
+                     } elseif (file_exists($arquivo_limpo)) {
+                         $foto_src = $arquivo_limpo;
+                     }
+                 }
 
-$mysqli = mysqli_init();
-if (!@mysqli_real_connect($mysqli, $h_host, $h_user, $h_pass, $h_name, (int)$h_port)) {
-    die("<p style='color:red; font-family:sans-serif; padding:15px;'>Erro crítico na ligação do painel: " . mysqli_connect_error() . "</p>");
-}
+                 // 🟢 DIRECIONADOR DE SLUG DINÂMICO INDEPENDENTE CONTRA LINKS QUEBRADOS
+                 $slug_limpo = !empty($barbearia_item['slug']) ? trim($barbearia_item['slug']) : '';
+                 
+                 if (!empty($slug_limpo)) {
+                     // Garante compatibilidade total convertendo maiúsculas para rotas limpas
+                     $link_destino = strtolower($slug_limpo) . ".php";
+                 } else {
+                     // Salvaguarda: Se o slug for nulo, cria uma rota segura baseada no nome comercial
+                     $slug_gerado = strtolower(preg_replace('/[^A-Za-z0-9]/', '', $nome_barbearia));
+                     $link_destino = $slug_gerado . ".php";
+                 }
+                 
+                 $servico_real = !empty($barbearia_item['tipos_de_servico']) ? trim($barbearia_item['tipos_de_servico']) : "Geral";
+                 $endereco_real = !empty($barbearia_item['endereco']) ? trim($barbearia_item['endereco']) : "Huambo";
+                 
+                 // Matriz cronológica e ano de adesão
+                 $data_bruta = $barbearia_item['data'] ?? '';
+                 $ano_cadastro = (!empty($data_bruta) && $data_bruta !== '0000-00-00') ? "Desde " . date('Y', strtotime($data_bruta)) : "Desde 2026";
+         ?>
+                 
+                 <!-- 💎 CARD GÉMEO IDENTICO AO DA IMAGEM: Pílula Azul Escura Vertical Arredondada -->
+                 <div class="sub-grid" style="width: 175px !important; height: 320px !important; flex-shrink: 0 !important; background: #0b1a30 !important; border: 2px solid #1e293b !important; border-radius: 40px !important; padding: 18px 12px !important; text-align: center !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 8px 16px rgba(0,0,0,0.4) !important;">
+                      
+                      <!-- Nome Fantasia da Barbearia -->
+                      <h2 class="h2-sub-grid" style="font-size: 13px !important; font-weight: bold !important; color: #ffffff !important; margin: 0 0 10px 0 !important; font-family: sans-serif !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-transform: uppercase !important;" title="<?php echo htmlspecialchars($nome_barbearia); ?>">
+                          <?php echo htmlspecialchars($nome_barbearia); ?>
+                      </h2>
+                      
+                      <!-- Contentor do Logótipo Redondo com Borda -->
+                      <div class="img-container" style="width: 110px !important; height: 110px !important; border-radius: 16px !important; overflow: hidden !important; margin: 0 auto !important; background: #ffffff !important; display: flex !important; align-items: center !important; justify-content: center !important; border: 1px solid #1e293b !important; box-sizing: border-box;">
+                          <img src="<?php echo $foto_src; ?>" alt="Logo" style="width: 100% !important; height: 100% !important; object-fit: cover !important;" onerror="this.src='uploads/OIP (6).webp';">
+                       </div>
+                       
+                      <!-- 🟢 BOTÃO ENTRAR: Redireciona de forma reativa para o Slug específico da barbearia -->
+                      <a href="<?php echo $link_destino; ?>" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
+                          <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7.5px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 8px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 12px rgba(211,47,47,0.3) !important; outline: none !important; transition: all 0.2s ease; display: flex !important; align-items: center !important; justify-content: center !important;">
+                              ENTRAR
+                          </button>
+                      </a>
 
-$mysqli->set_charset("utf8mb4");
+                      <!-- Seletor Azul de Informações Inferiores -->
+                      <select style="width: 100% !important; background: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; padding: 4px; font-size: 11px; border-radius: 4px; outline: none; cursor: pointer; margin-top: 5px; text-align: center;">
+                          <option><?php echo $ano_cadastro; ?></option>
+                          <option>📍 <?php echo htmlspecialchars($endereco_real); ?></option>
+                          <option>⚡ <?php echo htmlspecialchars($servico_real); ?></option>
+                          <option>⏰ 08:00 - 19:00</option>
+                      </select>
+                 </div> <!-- Fim do card individual -->
+     
+         <?php 
+             endforeach; // Termina o loop das barbearias
+         else:
+             echo "<p style='color: #94a3b8; padding: 20px; font-style: italic; width:100%; text-align:center;'>Nenhuma barbearia ativa de momento no ecossistema.</p>";
+         endif; 
+         ?>
 
-if (isset($mysqli)) {
-    
-    // Motor de filtragem do portal público
-    $pesquisa_filtro = "";
-    if (isset($_POST['disparar_busca']) && !empty($_POST['termo_cliente'])) {
-        $busca = $mysqli->escape_string(trim($_POST['termo_cliente']));
-        $pesquisa_filtro = " AND (`nome` LIKE '%$busca%' OR `endereco` LIKE '%$busca%' OR `tipos_de_servico` LIKE '%$busca%') ";
-    }
+         </div> <!-- Fim trilho_carrossel_salao -->
+     </div> <!-- Fim mascara_carrossel_salao -->
+</div> <!-- Fim a div grad principal -->
 
-    // 🟢 FILTRAGEM EXECUTIVA ATIVADA: Agora apenas barbearias com status 'Confirmado' aparecem no ecrã público
-    $query_publica = $mysqli->query("
-       SELECT * FROM `usuario` 
-       WHERE `visivel_no_site` = 1 
-         AND `nivel` = 'parceiro_hospedado'
-         AND `transacao_status` = 'Confirmado' " . $pesquisa_filtro . " 
-       ORDER BY `codigo` DESC
-    ");
-    
-    if ($query_publica && $query_publica->num_rows > 0) {
-        // Cria um array temporário para registar quem já foi desenhado no ecrã
-        $parceiros_desenhados = [];
-  
-        while ($row = $query_publica->fetch_assoc()) {
-            $id_foto = (int)$row['codigo'];
-            $nome_barbearia = trim($row['nome'] ?? '');
-
-            // 🔒 TRAVA ANTI-REPETIÇÃO ANDROID/LOCAL: Se já foi desenhada, salta para a próxima
-            if (in_array($nome_barbearia, $parceiros_desenhados)) {
-                continue;
-            }
-            // Regista o nome no array para travar futuras repetições
-            $parceiros_desenhados[] = $nome_barbearia;
-            
-           // 🟢 SUBSTITUA O BLOCO DE TRATAMENTO DE IMAGEM POR ESTE INTEGRADO:
-$arquivo_logo = trim($row['logo_empresa'] ?? '');
-
-if (!empty($arquivo_logo) && file_exists(__DIR__ . "/uploads/" . $arquivo_logo)) {
-    $foto_src = "uploads/" . $arquivo_logo;
-} elseif (!empty($arquivo_logo) && file_exists(__DIR__ . "/guardar-fotos/" . $arquivo_logo)) {
-    $foto_src = "guardar-fotos/" . $arquivo_logo;
-} elseif (!empty($arquivo_logo) && (strpos($arquivo_logo, 'http') === 0 || file_exists($arquivo_logo))) {
-    $foto_src = $arquivo_logo;
-} else {
-    // Fallback de contingência caso o parceiro não tenha enviado imagem de perfil
-    $foto_src = "OIP (6).webp"; 
-}
-            // Roteador dinâmico reativo por slug
-            $slug_banco = !empty($row['slug']) ? trim($row['slug']) : 'Login';
-            $link_destino = $slug_banco . ".php";
-            
-            $servico_real = !empty($row['tipos_de_servico']) ? trim($row['tipos_de_servico']) : "Geral";
-            
-            // =========================================================================
-            // 🌍 MÓDULO NOVO: GEOLOCALIZAÇÃO REGIONALIZADA AVANÇADA
-            // =========================================================================
-            $provincia  = !empty($row['provincia']) ? trim($row['provincia']) : "Huambo";
-            $municipio  = !empty($row['municipio']) ? trim($row['municipio']) : "Huambo";
-            $rua_bairro = !empty($row['rua']) ? trim($row['rua']) : (!empty($row['endereco']) ? trim($row['endereco']) : "Centro da Cidade");
-            
-            $endereco_estruturado = "Prov. " . $provincia . ", Mun. " . $municipio . " (" . $rua_bairro . ")";
-
-            // =========================================================================
-            // ☎️ MÓDULO NOVO: MOTOR WHATSAPP COM DISPARO AUTOMÁTICO DE SMS
-            // =========================================================================
-            $telefone_limpo = !empty($row['telefone']) ? preg_replace('/[^0-9]/', '', $row['telefone']) : "920000000";
-            // Acopla o indicativo internacional de Angola se for um número padrão de 9 dígitos
-            $whatsapp_final = (strpos($telefone_limpo, '244') === 0) ? $telefone_limpo : "244" . $telefone_limpo;
-            $texto_whatsapp = urlencode("Olá! Vi o vosso salão no portal do Grupo Aurélius e gostaria de obter mais informações sobre o serviço de " . $servico_real);
-            $link_whatsapp_api = "https://whatsapp.com" . $whatsapp_final . "&text=" . $texto_whatsapp;
-
-            // =========================================================================
-            // ⏰ MÓDULO NOVO: MATRIZ CRONOLÓGICA DE HORÁRIOS & DIAS DE TRABALHO
-            // =========================================================================
-            $hora_abertura = !empty($row['hora_abertura']) ? date('H:i', strtotime($row['hora_abertura'])) : "08:00";
-            $hora_fecho    = !empty($row['hora_fecho']) ? date('H:i', strtotime($row['hora_fecho'])) : "19:00";
-            $horario_funcionamento = $hora_abertura . " às " . $hora_fecho;
-
-            $dias_trabalho = !empty($row['dias_trabalho']) ? trim($row['dias_trabalho']) : "Segunda a Sábado";
-            $dias_folga    = !empty($row['dias_folga']) ? trim($row['dias_folga']) : "Domingos e Feriados";
-
-            // Extração automática do ano de registo
-            $ano_cadastro = "Membro";
-            $data_bruta = $row['data'] ?? '';
-            if (!empty($data_bruta) && $data_bruta !== '0000-00-00') {
-                $ano_cadastro = "Desde " . date('Y', strtotime($data_bruta));
-            } else {
-                if ($id_foto === 237) $ano_cadastro = "Desde 2026";
-                elseif ($id_foto === 238) $ano_cadastro = "Desde 2025";
-                else $ano_cadastro = "Desde 2024";
-            }
-            
-            // 🟢 A partir daqui o PHP fecha o bloco lógico para dar lugar à renderização HTML do seu card/tabela
-            ?>
-                          
-                          <!-- 💎 DESIGN PREMIUM: Cartão Pílula Azul Escura Vertical Arredondada -->
-                          <div class="sub-grid" style="width: 175px !important; height: 320px !important; flex-shrink: 0 !important; background: #0b1a30 !important; border: 2px solid #1e293b !important; border-radius: 40px !important; padding: 18px 12px !important; text-align: center !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; box-shadow: 0 8px 16px rgba(0,0,0,0.4) !important;">
-                               
-                               <!-- Nome Fantasia do Salão / Loja -->
-                               <h2 class="h2-sub-grid" style="font-size: 13px !important; font-weight: bold !important; color: #ffffff !important; margin: 0 0 10px 0 !important; font-family: sans-serif !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; text-transform: uppercase !important;" title="<?php echo htmlspecialchars($row['nome']); ?>">
-                                   <?php echo htmlspecialchars($row['nome']); ?>
-                               </h2>
-                               
-                               <!-- Contentor do Logótipo -->
-                               <div class="img-container" style="width: 110px !important; height: 110px !important; border-radius: 16px !important; overflow: hidden !important; margin: 0 auto !important; background: #ffffff !important; display: flex !important; align-items: center !important; justify-content: center !important; border: 1px solid #1e293b !important; box-sizing: border-box;">
-                                   <img class="img-Comidas" src="<?php echo $foto_src; ?>" alt="Logo" style="width: 100% !important; height: 100% !important; object-fit: cover !important;">
-                                </div>
-                                
-                               <!-- Botão ENTRAR Vermelho Original -->
-                              <!-- Botão ENTRAR Dinâmico e Compatível com Linux (Render) -->
-
-
-
-
-                              <a href="Admini.php?loja=<?php echo htmlspecialchars($row['slug'] ?? 'BarbeariaBranca'); ?>&id=<?php echo htmlspecialchars($row['codigo'] ?? '0'); ?>" style="text-decoration: none !important; display: block !important; margin-top: 12px !important; width: 100%;">
-                              <button class="botao-acção" style="width: 100% !important; background: #d32f2f !important; color: #ffffff !important; border: none !important; padding: 7.5px 0 !important; font-size: 12px !important; font-weight: bold !important; text-transform: uppercase !important; border-radius: 8px !important; cursor: pointer !important; letter-spacing: 0.5px !important; box-shadow: 0 4px 12px rgba(211,47,47,0.3) !important; border: none !important; outline: none !important; transition: all 0.2s ease; display: flex !important; align-items: center !important; justify-content: center !important;">
-                                  ENTRAR
-                              </button>
-                          </a>
-                               <!-- Seletor Azul de Informações do Balcão -->
-                               <select style="width: 100% !important; background: #1e293b !important; color: #38bdf8 !important; border: 1px solid #334155 !important; padding: 4px; font-size: 11px; border-radius: 4px; outline: none; cursor: pointer; margin-top: 5px;">
-                                   <option><?php echo $ano_cadastro; ?></option>
-                                   <!-- Usando as variáveis limpas geradas pelo motor -->
-                                   <option>📍 <?php echo !empty($rua_bairro) ? $rua_bairro : $endereco_real; ?></option>
-                                   <option>⚡ <?php echo $servico_real; ?></option>
-                                   <option>⏰ <?php echo isset($horario_funcionamento) ? $horario_funcionamento : '08:00 - 19:00'; ?></option>
-                               </select>
-                          </div> <!-- Fecha o card individual da barbearia -->
-              
-                          <?php 
-                          // 🟢 REABRE O PHP APENAS AGORA PARA FECHAR OS BLOCOS OPERACIONAIS SEGURAMENTE
-                      } // 1. Fecha o loop 'while' de cada barbearia após o HTML ter sido desenhado
-                  } else {
-                      // Caso a consulta corra bem, mas não existam registos ou não passem no filtro de busca
-                      echo "<p style='color: #94a3b8; padding: 20px; font-style: italic; width:100%; text-align:center;'>Nenhum estabelecimento ativo corresponde aos critérios de pesquisa no Huambo.</p>";
-                  }
-              } // 2. Fecha o 'if ($query_publica...)' que valida os resultados do banco
-              ?>
-              </div> <!-- Fecha trilho_carrossel_salao -->
-              </div> <!-- Fecha mascara_carrossel_salao -->
-              </div> <!-- Fecha a div grad principal -->
-
-
-              <script>
-              // 🟢 Alterado o nome da variável para evitar conflito global com a linha 1185
-              let posicaoDeslocamentoSalores = 0;
-              
-              function moverCarrosselSalores(direcao) {
-                  const trilho = document.getElementById('trilho_carrossel_salao');
-                  const mascara = document.getElementById('mascara_carrossel_salao');
-                  
-                  if (!trilho || !mascara) return;
-                  
-                  const larguraMascaraVisivel = mascara.offsetWidth;
-                  const larguraTotalTrilho = trilho.scrollWidth;
-                  
-                  // Distância de salto padrão ao clicar nas setas (largura de um cartão + gap)
-                  const larguraSaltoCartao = 195; 
-              
-                  if (direcao === 'direita') {
-                      // Impede que o carrossel corra infinitamente para o vazio
-                      if (Math.abs(posicaoDeslocamentoSalores) + larguraMascaraVisivel < larguraTotalTrilho) {
-                          posicaoDeslocamentoSalores -= larguraSaltoCartao;
-                      }
-                  } else if (direcao === 'esquerda') {
-                      if (posicaoDeslocamentoSalores < 0) {
-                          posicaoDeslocamentoSalores += larguraSaltoCartao;
-                      }
-                  }
-              
-                  // Aplica o movimento fluido no hardware do telemóvel/computador
-                  trilho.style.transform = `translateX(${posicaoDeslocamentoSalores}px)`;
-              }
-              </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- <!-- =========================================================================
-      🟩 CONTROLADOR JAVASCRIPT: MOTOR DE MOVIMENTO LATERAL CONTÍNUO
-      ========================================================================= -->
-      <script>
-// 1. Iniciamos a posição em 0
-var posicaoDeslocamentoAtual = 0;
+<!-- 🟢 SCRIPT DO CARROSSEL DE BARBEARIAS SINCRO -->
+<script>
+let posicaoDeslocamentoSalores = 0;
 
 function moverCarrosselSalores(direcao) {
     const trilho = document.getElementById('trilho_carrossel_salao');
     const mascara = document.getElementById('mascara_carrossel_salao');
-    const itens = document.querySelectorAll('.sub-grid'); // Captura os cartões
     
-    if (!trilho || itens.length === 0) return;
+    if (!trilho || !mascara) return;
     
-    // 2. Cálculo dinâmico: Largura do primeiro cartão + o gap de 20px
-    const larguraCardCompleto = itens[0].offsetWidth + 20; 
-    const larguraVisivel = mascara.offsetWidth;
+    const larguraMascaraVisivel = mascara.offsetWidth;
     const larguraTotalTrilho = trilho.scrollWidth;
-    
-    // 3. Define o limite para não mostrar espaço em branco no fim
-    const limiteMaximoRolagem = -(larguraTotalTrilho - larguraVisivel);
+    const larguraSaltoCartao = 195; // 175px de largura + 20px de gap
 
     if (direcao === 'direita') {
-        posicaoDeslocamentoAtual -= larguraCardCompleto;
-        // Se ultrapassar o limite, volta ao início (0)
-        if (posicaoDeslocamentoAtual < (limiteMaximoRolagem - 10)) {
-            posicaoDeslocamentoAtual = 0;
+        if (Math.abs(posicaoDeslocamentoSalores) + larguraMascaraVisivel < larguraTotalTrilho) {
+            posicaoDeslocamentoSalores -= larguraSaltoCartao;
         }
-    } else {
-        posicaoDeslocamentoAtual += larguraCardCompleto;
-        // Se for para a esquerda além do início, vai para o último cartão possível
-        if (posicaoDeslocamentoAtual > 0) {
-            posicaoDeslocamentoAtual = Math.floor(limiteMaximoRolagem / larguraCardCompleto) * larguraCardCompleto; 
+    } else if (direcao === 'esquerda') {
+        if (posicaoDeslocamentoSalores < 0) {
+            posicaoDeslocamentoSalores += larguraSaltoCartao;
         }
     }
-
-    // 4. Aplica o movimento suave
-    trilho.style.transform = `translateX(${posicaoDeslocamentoAtual}px)`;
+    trilho.style.transform = `translateX(${posicaoDeslocamentoSalores}px)`;
 }
-
-// ⚠️ NOTA: Removi o setInterval para cumprir a tua regra de NÃO se auto-movimentar.
-// Agora o carrossel só se move quando clicas nas setas ‹ ou ›.
 </script>
 
 
-<!-- FITA DE CUPÃO INTERATIVA VERSÃO DIAMANTE -->
-<?php if ($cupao_desconto > 0): ?>
-    <div class="fita-cupao-premium" 
-         onclick="dispararEcraCupaoReativo(<?php echo $id_foto; ?>, <?php echo $cupao_desconto; ?>)" 
-         title="Clique para resgatar os seus <?php echo $cupao_desconto; ?>% de desconto!">
-         <span class="brilho-animado"></span>
-         <i class="emoji-presente">🎁</i> PEGAR -<?php echo $cupao_desconto; ?>%
-    </div>
-<?php endif; ?>
-<style>
-.fita-cupao-premium {
-    position: absolute;
-    top: 25px;
-    left: -35px;
-    width: 160px;
-    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
-    color: white;
-    font-size: 11px;
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    font-weight: 800;
-    padding: 6px 0;
-    transform: rotate(-45deg);
-    z-index: 50;
-    text-transform: uppercase;
-    text-align: center;
-    cursor: pointer;
-    letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    user-select: none;
-    overflow: hidden;
-}
 
-/* Efeito de aumento ao passar o rato */
-.fita-cupao-premium:hover {
-    background: linear-gradient(135deg, #26e069 0%, #1bbd51 100%);
-    transform: rotate(-45deg) scale(1.1);
-    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
-}
 
-/* Animação de Brilho (Flash) que atravessa a fita */
-.brilho-animado {
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-    animation: flashPass 3s infinite;
-}
 
-@keyframes flashPass {
-    0% { left: -100%; }
-    20% { left: 100%; }
-    100% { left: 100%; }
-}
 
-/* Pequeno pulso no emoji para dar vida */
-.emoji-presente {
-    display: inline-block;
-    animation: bounceEmoji 1s infinite alternate;
-}
 
-@keyframes bounceEmoji {
-    from { transform: scale(1); }
-    to { transform: scale(1.3); }
-}
-</style>
+
 
 
 
@@ -2544,7 +2342,7 @@ $stmtGlobal = $pdo->prepare("
 
 <!-- 🛍️ SEÇÃO DE RECOMENDAÇÕES SAAS ENTERPRISE: INTERCALAÇÃO DINÂMICA LADO A LADO -->
 <h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif;">
-    🛍️ Mercado Global • Sugestões para Si
+    • Sugestões para Si
 </h4>
 
 <!-- 💻 FOLHA DE ESTILOS COMBINATÓRIA RESPONSIVA PWA -->
@@ -3216,10 +3014,7 @@ if ($query_mapa_lojas && $query_mapa_lojas->num_rows > 0) {
 
 <!-- 🗺️ COMPONENTE VISUAL PREMIUM DO MAPA (Sem escuridão) -->
 <div class="painel-mapa" style="max-width: 1100px; margin: 40px auto; padding: 0 20px; box-sizing: border-box;">
-    <div style="text-align: left; margin-bottom: 20px;">
-        <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">🌍 LOGÍSTICA DE GEOLOCALIZAÇÃO</span>
-        <h2 style="color: #fff; font-size: 22px; font-weight: bold; margin-top: 4px; font-family: sans-serif;">Nossos Pontos de Atendimento</h2>
-    </div>
+   
 
     <!-- O Contentor do Mapa Leaflet -->
     <div id="mapa_aurelius_SaaS" style="width: 100%; height: 450px; border-radius: 20px; border: 2px solid #1e293b; box-shadow: 0 15px 35px rgba(0,0,0,0.6); background: #070b12; overflow: hidden; z-index: 1;"></div>

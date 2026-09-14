@@ -80,15 +80,15 @@ $url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal
     <a href="<?php echo htmlspecialchars($url_voltar); ?>" class="btn-voltar-premium">✕ Voltar</a>
 
     <div class="header-portal">
-        <h2 style="color: #fff; margin: 0 0 6px 0; font-size: 19px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">💼 Bolsa de Oportunidades Coesora</h2>
-        <p style="color: #64748b; font-size: 12.5px; margin: 0; line-height: 1.4;">Espaço aberto e dinâmico para publicar e preencher vagas técnicas e operacionais no Huambo.</p>
+        <h2 style="color: #fff; margin: 0 0 6px 0; font-size: 19px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;"> Oportunidades de Empregos</h2>
+        <p style="color: #64748b; font-size: 12.5px; margin: 0; line-height: 1.4;">Espaço aberto e dinâmico para publicar e preencher vagas técnicas e operacionais em Angola.</p>
     </div>
 
     <!-- Abas de Navegação SaaS -->
     <div class="tabs-control">
-        <button id="btn-ver" class="tab-btn active" onclick="mudarAba('ver')">📢 Ver Vagas</button>
-        <button id="btn-candidatar" class="tab-btn" onclick="mudarAba('candidatar')">✍️ Candidatar-me</button>
-        <button id="btn-publicar" class="tab-btn" onclick="mudarAba('publicar')">➕ Publicar Vaga</button>
+        <button id="btn-ver" class="tab-btn active" onclick="mudarAba('ver')"> Ver Vagas</button>
+        <button id="btn-candidatar" class="tab-btn" onclick="mudarAba('candidatar')"> Candidatar-me</button>
+        <button id="btn-publicar" class="tab-btn" onclick="mudarAba('publicar')"> Publicar Vaga</button>
     </div>
 
     <!-- ABA 1: VER VAGAS ATIVAS -->
@@ -107,13 +107,13 @@ $url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal
                         </div>
                         <div style="text-align: left;">
                             <strong style="color: #fff; font-size: 14px; display: block; text-transform: uppercase;"><?= htmlspecialchars($vaga['nome_salao'] ?? 'Anunciante Geral'); ?></strong>
-                            <span style="color: #64748b; font-size: 11px; display: block;">📍 Local: <?= htmlspecialchars($vaga['endereco'] ?? 'Huambo'); ?></span>
+                            <span style="color: #64748b; font-size: 11px; display: block;"> Local: <?= htmlspecialchars($vaga['endereco'] ?? 'Huambo'); ?></span>
                         </div>
                     </div>
                     <div style="text-align: left; background: #070b12; padding: 14px; border-radius: 8px; border: 1px solid #1e293b; margin-bottom: 12px;">
                         <h3 style="color: #38bdf8; margin: 0 0 6px 0; font-size: 15px; text-transform: uppercase; font-weight: bold;"><?= htmlspecialchars($vaga['cargo']); ?></h3>
-                        <p style="font-size: 12.5px; margin: 0 0 4px 0; color: #cbd5e1;">💰 <b>Remuneração:</b> <?= htmlspecialchars($vaga['salario']); ?></p>
-                        <p style="font-size: 12.5px; margin: 0; color: #94a3b8; line-height: 1.4; word-break: break-word;">📝 <b>Requisitos:</b> <?= nl2br(htmlspecialchars($vaga['requisitos'])); ?></p>
+                        <p style="font-size: 12.5px; margin: 0 0 4px 0; color: #cbd5e1;"> <b>Remuneração:</b> <?= htmlspecialchars($vaga['salario']); ?></p>
+                        <p style="font-size: 12.5px; margin: 0; color: #94a3b8; line-height: 1.4; word-break: break-word;"> <b>Requisitos:</b> <?= nl2br(htmlspecialchars($vaga['requisitos'])); ?></p>
                     </div>
                     <button class="btn-submeter" style="padding: 10px; font-size: 11px;" onclick="iniciarCandidatura(<?= $vaga['id_barbearia']; ?>, <?= $vaga['id']; ?>)">Preencher Ficha de Candidatura</button>
                 </div>
@@ -128,7 +128,7 @@ $url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal
     <!-- ABA 2: FORMULÁRIO DE CANDIDATURA (DESPACHA PARA ADMINI.PHP) -->
     <div id="aba-candidatar" class="painel-conteudo">
         <div class="card-oportunidade" style="box-shadow: none;">
-            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #38bdf8; padding-left: 8px;">✍️ Enviar Ficha ao Painel de Auditoria</h3>
+            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #38bdf8; padding-left: 8px;"> Enviar Ficha de Cadastro</h3>
             <form action="Admini.php" method="POST">
                 <input type="hidden" name="requisicao_tipo" value="nova_candidatura_SaaS">
                 <input type="hidden" name="vaga_id_referencia" id="vaga_id_referencia" value="0">
@@ -142,15 +142,15 @@ $url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal
                 </select>
                 
                 <label class="label-premium">Teu Nome Completo:</label>
-                <input type="text" name="candidato_nome" class="form-control" placeholder="Ex: Aurélio Jamba" required autocomplete="name">
+                <input type="text" name="candidato_nome" class="form-control" required autocomplete="name">
                 
                 <label class="label-premium">Telemóvel (WhatsApp):</label>
-                <input type="tel" name="candidato_telefone" class="form-control" placeholder="Ex: 915658574" required autocomplete="tel">
+                <input type="tel" name="candidato_telefone" class="form-control"  required autocomplete="tel">
                 
                 <label class="label-premium">Resumo das Suas Competências:</label>
-                <textarea name="candidato_experiencia" class="form-control" rows="4" placeholder="Quais os cortes, tranças ou químicas que dominas? Deixa aqui o teu mini-portfólio..." required style="resize: none; background: #070b12; color: #fff;"></textarea>
+                <textarea name="candidato_experiencia" class="form-control" rows="4" placeholder="Quais os cortes, tranças ou químicas que dominas?..." required style="resize: none; background: #070b12; color: #fff;"></textarea>
                 
-                <button type="submit" name="enviar_para_admini_candidatura" class="btn-submeter">Submeter ao Balcão Administrativo</button>
+                <button type="submit" name="enviar_para_admini_candidatura" class="btn-submeter">Enviar</button>
             </form>
         </div>
     </div>
@@ -158,23 +158,23 @@ $url_voltar = ($id_retorno > 0) ? "Principal.php?id=" . $id_retorno : "Principal
     <!-- ABA 3: FORMULÁRIO DE PUBLICAÇÃO DE VAGAS -->
     <div id="aba-publicar" class="painel-conteudo">
         <div class="card-oportunidade" style="box-shadow: none;">
-            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #ca8a04; padding-left: 8px;">➕ Propor Nova Publicação de Vaga</h3>
+            <h3 style="color: #fff; margin-bottom: 20px; text-transform: uppercase; font-size: 14px; font-weight: bold; border-left: 3px solid #ca8a04; padding-left: 8px;"> Propor Nova Publicação de Vaga</h3>
             <form action="Admini.php" method="POST">
                 <input type="hidden" name="requisicao_tipo" value="nova_vaga_proposta">
                 
                 <label class="label-premium">O Teu Código ou Código do Salão (Se tiver):</label>
                 <input type="number" name="editor_loja_id" class="form-control" placeholder="Ex: 237 (Deixe vazio caso seja Cliente Geral)">
                 
-                <label class="label-premium">Cargo / Título do Trabalho:</label>
+                <label class="label-premium"> Título do Trabalho:</label>
                 <input type="text" name="vaga_cargo" class="form-control" placeholder="Ex: Barbeiro Profissional, Manicure Esteticista" required>
                 
-                <label class="label-premium">Remuneração Proposta (Kz ou Percentagem):</label>
-                <input type="text" name="vaga_salario" class="form-control" placeholder="Ex: 50.000,00 Kz + 10% ou À Percentagem" required>
+                <label class="label-premium">Remuneração Proposta :</label>
+                <input type="text" name="vaga_salario" class="form-control"  required>
                 
                 <label class="label-premium">Requisitos Detalhados:</label>
                 <textarea name="vaga_requisitos" class="form-control" rows="5" placeholder="Quais as condições, horários e portfólio que exiges do profissional?" required style="resize: none; background: #070b12; color: #fff;"></textarea>
                 
-                <button type="submit" name="enviar_para_admini_vaga" class="btn-submeter" style="background: linear-gradient(135deg, #ca8a04, #eab308);">Disparar Proposta ao Administrador</button>
+                <button type="submit" name="enviar_para_admini_vaga" class="btn-submeter" style="background: linear-gradient(135deg, #ca8a04, #eab308);">Enviar Proposta ao Administrador</button>
             </form>
         </div>
     </div>
