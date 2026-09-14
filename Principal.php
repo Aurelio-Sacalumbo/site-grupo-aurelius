@@ -2679,6 +2679,18 @@ $stmtGlobal = $pdo->prepare("
          }
      </style>
 
+
+
+
+
+
+
+
+
+
+
+
+
 <!-- 🛍️ SEÇÃO DE RECOMENDAÇÕES SAAS ENTERPRISE: INTERCALAÇÃO DINÂMICA LADO A LADO -->
 <h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif;">
     • Sugestões para Si
@@ -2737,18 +2749,19 @@ $stmtGlobal = $pdo->prepare("
     border: 1px solid rgba(34, 197, 94, 0.3);
 }
 </style>
-
 <?php 
 $total_posts_exibidos = 0;
 $produtos_por_loja = [];
 
-// 1. ORGANIZAÇÃO E CONEXÃO DINÂMICA DAS TABELAS DO PHPMYADMIN
+// 🔀 MOTOR DE MISTURA INICIAL: Embaralha os produtos recebidos antes da separação por loja
 if (!empty($feed_produtos)) {
+    shuffle($feed_produtos); 
+    
     foreach ($feed_produtos as $post) {
         // 🟢 INTERCONEXÃO REATIVA: Usa a coluna viva 'stock' e valida se há unidades reais
         $stock_real = isset($post['stock']) ? intval($post['stock']) : 0;
         
-        // Regra SaaS: Se o stock for 0 ou esgotar (ex: Forno, Funje, Pipoca), cai da vitrina automaticamente
+        // Regra SaaS: Se o stock for 0 ou esgotar, cai da vitrina automaticamente
         if ($stock_real <= 0) {
             continue; 
         }
@@ -2774,6 +2787,14 @@ while (count($produtos_por_loja) > 0) {
     }
 }
 
+// 🎰 LIMITE DINÂMICO ALEATÓRIO: Sorteia exibir entre 4 e 8 produtos a cada refresh de página
+$limite_produtos_atualizacao = rand(4, 8);
+
+// Corta o feed final para exibir apenas a quantidade sorteada simultaneamente
+if (!empty($feed_intercalado_mestre)) {
+    $feed_intercalado_mestre = array_slice($feed_intercalado_mestre, 0, $limite_produtos_atualizacao);
+}
+
 // Renderiza a Grid Responsiva Dupla PWA
 echo '<div class="vitrina-saas-grid">';
 
@@ -2787,14 +2808,14 @@ foreach ($feed_intercalado_mestre as $post):
     $preco_real   = number_format($post['preco'] ?? 0, 2, ',', '.');
     $codigo_serie = "LOTE-COS-" . $id_loja_redirecionamento . "-" . $id_post;
     
-    // Mapeamento Dinâmico Automático baseado nos teus IDs de Fornecedores reais
+    // Mapeamento Dinâmico Automático baseado nos teus IDs de Fornecedores reais (Removido Barbearia Branca por segurança)
     $loja_nome = "Parceiro ID " . $id_loja_redirecionamento;
-    if ($id_loja_redirecionamento === 237) $loja_nome = "Barbearia Branca";
-    elseif ($id_loja_redirecionamento === 238) $loja_nome = "Mamadu";
+    if ($id_loja_redirecionamento === 238) $loja_nome = "Mamadu";
     elseif ($id_loja_redirecionamento === 240) $loja_nome = "Loengo";
     elseif ($id_loja_redirecionamento === 241) $loja_nome = "Angelino Comercial";
     elseif ($id_loja_redirecionamento === 242) $loja_nome = "Gráfica Soma";
     elseif ($id_loja_redirecionamento === 245) $loja_nome = "Loja Marcante";
+    elseif ($id_loja_redirecionamento === 247) $loja_nome = "Totale";
 
     $link_destino_saas = "Lojas.php?id_loja=" . $id_loja_redirecionamento . "&produto_alvo=" . $id_post;
 
@@ -2851,10 +2872,10 @@ foreach ($feed_intercalado_mestre as $post):
 
             <!-- ⚡ BOTÃO DE COMPRA DIRECIONADA -->
             <div style="margin-top: 6px; display: flex; justify-content: center; width: 100%;">
-            <a href="<?php echo $link_destino_saas; ?>" style="display: inline-block; width: 85%; max-width: 140px; background: linear-gradient(135deg, #1877f2, #1159c7); color: #ffffff; text-align: center; padding: 6px 10px; text-decoration: none; font-weight: bold; border-radius: 20px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.15); margin: 0 auto; transition: background 0.2s;">
-                ⚡ Ir na Loja
-            </a>
-        </div>
+                <a href="<?php echo $link_destino_saas; ?>" style="display: inline-block; width: 85%; max-width: 140px; background: linear-gradient(135deg, #1877f2, #1159c7); color: #ffffff; text-align: center; padding: 6px 10px; text-decoration: none; font-weight: bold; border-radius: 20px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.15); margin: 0 auto; transition: background 0.2s;">
+                    ⚡ Ir na Loja
+                </a>
+            </div>
         </div>
 
     </div>
@@ -2865,8 +2886,6 @@ endif;
 
 echo '</div>'; // Fecha a div .vitrina-saas-grid
 ?>
-
-
 
 
 
@@ -4311,83 +4330,173 @@ function processarEnvioMensagemAlana(origemTela) {
 
 
 
-    <div style="width: 100%; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
-    <!-- Links de Filtros por Categoria com Estilo Premium e Fluido -->
-        <a href="Loja.php" style="padding: 10px 20px; background: #1e293b; color: #fff; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #334155; transition: background 0.2s;">⭐ Todos os Itens</a>
-        <a href="Lojas.php?filtro_cat=Ceras" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🧴 Pomadas de Caspa</a>
-        <a href="Lojas.php?filtro_cat=Oleos" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">💧 Óleos de Crescimento</a>
-        <a href="Principal.php?filtro_cat=Shampoo" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🚿 Champôs Ativos</a>
-    </div>
 
-    <!-- Grid de Exibição Dinâmica de Produtos (Mapeamento do Banco de Dados) -->
-    <div style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important;">
-        <?php
-        // Definição segura da conexão utilizando a instância global ativa
-        $mysqli_produtos = $conexao_link ?? $conexao_aurelius;
-    
-        // Se a conexão não existir ou tiver sido fechada, reabre dinamicamente
-        if (!$mysqli_produtos || @mysqli_ping($mysqli_produtos) === false) {
-            $h_host = getenv('DB_HOST') ?: "altaria.proxy.rlwy.net";
-            $h_port = getenv('DB_PORT') ?: "52030";
-            $h_name = getenv('DB_NAME') ?: "railway";
-            $h_user = getenv('DB_USER') ?: "root";
-            $h_pass = getenv('DB_PASSWORD') ?: "tPzDwXGkyczyyYdcyvLmHLSMmfZmnMIZ";
-            
-            $mysqli_produtos = @mysqli_connect($h_host . ":" . $h_port, $h_user, $h_pass, $h_name);
+
+
+<!-- Links de Filtros por Categoria Ajustados para o Principal.php -->
+<div style="width: 100%; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
+    <a href="Principal.php" style="padding: 10px 20px; background: #1e293b; color: #fff; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #334155; transition: background 0.2s;">⭐ Todos os Itens</a>
+    <a href="Principal.php?filtro_cat=Ceras" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🧴 Pomadas de Caspa</a>
+    <a href="Principal.php?filtro_cat=Oleos" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">💧 Óleos de Crescimento</a>
+    <a href="Principal.php?filtro_cat=Shampoo" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🚿 Champôs Ativos</a>
+</div>
+
+
+
+<!-- 🔷 SECÇÃO DE LOJAS PARCEIRAS (MARKETPLACE - FIXADO EM 2 PARCEIROS POR VEZ) -->
+<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; text-align: left; margin: 30px 0 15px 0; border-left: 4px solid #38bdf8; padding-left: 10px;">🏪 Lojas e Fornecedores Oficiais</h4>
+
+<div style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; margin-bottom: 50px;">
+    <?php
+    // Estabelece ou reaproveita a ligação segura com a Aiven Cloud
+    $mysqli_produtos = $conexao_link ?? $conexao_aurelius;
+
+    if (!$mysqli_produtos || @mysqli_ping($mysqli_produtos) === false) {
+        $h_host = getenv('DB_HOST') ?: "://aivencloud.com";
+        $h_port = getenv('DB_PORT') ?: 22002;
+        $h_name = getenv('DB_NAME') ?: "defaultdb";
+        $h_user = getenv('DB_USER') ?: "avnadmin";
+        $h_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm";
+        
+        $mysqli_produtos = mysqli_init();
+        if ($mysqli_produtos) {
+            mysqli_ssl_set($mysqli_produtos, NULL, NULL, NULL, NULL, NULL);
+            @mysqli_real_connect($mysqli_produtos, $h_host, $h_user, $h_pass, $h_name, (int)$h_port, NULL, MYSQLI_CLIENT_SSL);
         }
-    
-        // Executa as consultas se a conexão estiver 100% operacional
-        if ($mysqli_produtos && !$mysqli_produtos->connect_error) {
-            $mysqli_produtos->set_charset("utf8mb4");
-    
-            // Higieniza filtros passados por URL
-            $categoria_filtro = isset($_GET['filtro_cat']) ? $mysqli_produtos->escape_string(trim($_GET['filtro_cat'])) : '';
-            $clausula_sql = !empty($categoria_filtro) ? " WHERE `categoria` LIKE '%$categoria_filtro%' " : "";
-    
-            // Consulta os cosméticos registrados no phpMyAdmin (Tabela: produtos)
-            $query_cosmeticos = $mysqli_produtos->query("SELECT * FROM `produtos` " . $clausula_sql . " ORDER BY id DESC LIMIT 8");
-            
-            if ($query_cosmeticos && $query_cosmeticos->num_rows > 0) {
-                while ($prod = $query_cosmeticos->fetch_assoc()) {
-                    $preco_prod = number_format((float)($prod['preco_venda'] ?? 0), 2, ',', '.') . " Kz";
-                    $imagem_prod = !empty($prod['imagem']) ? "uploads/" . $prod['imagem'] : "OIP (6).webp";
-                    ?>
-                      
-                    <?php
-                }
-                $query_cosmeticos->free();
-            } else {
-                echo "<p style='color: #64748b; grid-column: 1/-1; text-align: center; font-style: italic; padding: 25px;'>Nenhum cosmético localizado nas tabelas operacionais da rede.</p>";
+    }
+
+    if ($mysqli_produtos && !$mysqli_produtos->connect_error) {
+        $mysqli_produtos->set_charset("utf8mb4");
+
+        // 🔒 AJUSTE DE LIMITE: Fixado estritamente em 2 lojas por atualização, ordenadas aleatoriamente
+        $limite_fixo = 2;
+
+        // 🎲 Seleciona os parceiros ativos de forma completamente misturada com o novo limite
+        $query_lojas_real = $mysqli_produtos->query("SELECT * FROM `lojas` WHERE `visivel_no_site` = 1 AND `transacao_status` = 'Confirmado' ORDER BY RAND() LIMIT $limite_fixo");
+        
+        if ($query_lojas_real && $query_lojas_real->num_rows > 0) {
+            $posicao = 1;
+            while ($loja = $query_lojas_real->fetch_assoc()) {
+                // Configuração das mídias das lojas parceiras
+                $logo_loja = (!empty($loja['logo_empresa'])) ? "uploads/" . $loja['logo_empresa'] : "OIP (6).webp";
+                $slug_rota = !empty($loja['slug_loja']) ? trim($loja['slug_loja']) : "default";
+                
+                // Mapeia e decodifica as especificações técnicas
+                $specs = json_decode($loja['especificacoes_json'], true) ?? [];
+                $controle_stock = $specs['controlo_stock'] ?? 'Geral';
+                $escala = $specs['escala_catalogo'] ?? 'Pequeno';
+                
+                // Empacota os dados comerciais para leitura rápida no JavaScript Modal
+                $info_modal = htmlspecialchars(json_encode([
+                    'name' => $loja['nome_loja'],
+                    'email' => $loja['email_mercantil'],
+                    'telefone' => $loja['telefone_corporativo'],
+                    'endereco' => $loja['endereco_armazem'],
+                    'iban' => $loja['iban_bancario'] ?? 'Não Disponível',
+                    'escala' => $escala,
+                    'stock' => $controle_stock
+                ]), ENT_QUOTES, 'UTF-8');
+                ?>
+                
+                <!-- Cartão Premium Unificado de Loja Parceira -->
+                <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                    <div>
+                        <span style="font-size: 10px; color: #38bdf8; font-weight: bold; background: #1e293b; padding: 4px 10px; border-radius: 10px;">PARCEIRO EXIBIDO Nº <?php echo $posicao++; ?></span>
+                        <h2 style="font-size: 14px; font-weight: bold; color: #ffffff; margin: 15px 0 5px 0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($loja['nome_loja']); ?></h2>
+                        <p style="font-size: 11px; color: #64748b; margin-bottom: 15px;">SOMOS A SOLUÇÃO PARA TI E PARA A SUA FAMÍLIA</p>
+                    </div>
+                    
+                    <!-- Logotipo Redondo da Loja -->
+                    <div style="width: 300px; height: 200px; border-radius: 20%; overflow: hidden; margin: 0 auto 15px auto; background: #fff; border: 3px solid #22d3ee;">
+                        <img src="<?php echo $logo_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="font-size: 11px; color: #94a3b8; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 <?php echo htmlspecialchars($loja['endereco_armazem']); ?></p>
+                        <span style="font-size: 11px; color: #22c55e; font-weight: bold;">✓ Catálogo: <?php echo ucfirst($escala); ?></span>
+                    </div>
+
+                    <!-- Botões Operacionais das Lojas -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Botão 1: Detalhes e Variantes (Aba Reativa Pop-up) -->
+                        <button type="button" onclick="mostrarDetalhesLoja('<?php echo $info_modal; ?>')" style="width: 100%; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
+                            🔎 Ficha Técnica
+                        </button>
+                        
+                        <!-- Botão 2: Redirecionamento Dinâmico focado em Lojas.php -->
+                        <a href="Lojas.php?slug_loja=<?php echo urlencode($slug_rota); ?>" style="text-decoration: none; width: 100%;">
+                            <button type="button" style="width: 100%; background: #22c55e; color: #ffffff; border: none; padding: 9px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
+                                ENTRAR NA LOJA
+                            </button>
+                        </a>
+                    </div>
+                </div>
+
+                <?php
             }
-           
+        } else {
+            echo "<p style='color: #64748b; font-style: italic; padding: 15px; grid-column: 1/-1; text-align: center;'>Nenhum parceiro comercial registado de momento.</p>";
         }
-        ?>
+    }
+    ?>
+</div>
+<!-- 🌐 ABA POP-UP SUSPENSA (FICHA TÉCNICA REATIVA) -->
+<div id="modal_info_loja" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;">
+    <div style="background: #0f172a; border: 2px solid #38bdf8; border-radius: 16px; width: 100%; max-width: 450px; padding: 25px; color: #fff; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+        
+        <button onclick="fecharDetalhesLoja()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #64748b; font-size: 20px; cursor: pointer;">✕</button>
+        
+        <h3 id="modal_nome" style="color: #38bdf8; font-size: 16px; text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">Ficha Comercial</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; text-align: left;">
+            <p><strong> TELEFONE: </strong> <span id="modal_telefone" style="color: #94a3b8;"></span></p>
+            <p><strong>CORREIO MERCANTIL: </strong> <span id="modal_email" style="color: #94a3b8;"></span></p>
+            <p><strong>ENDEREÇO: </strong> <span id="modal_endereco" style="color: #94a3b8;"></span></p>
+            <p><strong>TIPO DE EMPRESA: </strong> <span id="modal_escala" style="color: #eab308; font-weight: bold;"></span></p>
+           
+            <p><strong>INFORMAÇÕES GERAIS DE VARIANTES: </strong> <br> <span style="color: #a855f7;">Esta loja opera com gerenciamento dinâmico de cores, tamanhos e unidades reativas conforme a disponibilidade de stock e o seu gosto.</span></p>
+            <p><strong>CANAIS DE ABASTECIMENTO: </strong> <br> <span style="color: #ca8a04;">Parcerias logísticas integradas para distribuição nacional.</span></p>
+        </div>
+        
+        <button onclick="fecharDetalhesLoja()" style="width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 10px 0; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+            FECHAR ESPECIFICAÇÕES
+        </button>
     </div>
 </div>
 
 <script>
-// Motor JavaScript Unificado para Gerenciamento de Abas do Rodapé
-function abrirAbaRodape(nomeAba) {
-    const painelAlvo = document.getElementById('aba_' + nomeAba);
-    if (painelAlvo) {
-        // Se clicar na mesma aba que já está aberta, ela recolhe (Efeito Sanfona)
-        if (painelAlvo.classList.contains('active')) {
-            painelAlvo.classList.remove('active');
-        } else {
-            // Oculta qualquer aba aberta anteriormente para evitar sobreposição gráfica
-            document.querySelectorAll('.quadrado-conteudo-SaaS').forEach(painel => {
-                painel.classList.remove('active');
-            });
-            painelAlvo.classList.add('active');
-            
-            // Centraliza e rola o ecrã de forma suave até à informação aberta
-            setTimeout(() => {
-                painelAlvo.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }, 50);
-        }
-    }
+function mostrarDetalhesLoja(dadosString) {
+    const dados = JSON.parse(dadosString);
+    
+    document.getElementById('modal_nome').innerText = "NOME DA LOJA: " + dados.nome;
+    document.getElementById('modal_telefone').innerText = dados.telefone;
+    document.getElementById('modal_email').innerText = dados.email;
+    document.getElementById('modal_endereco').innerText = dados.endereco;
+    document.getElementById('modal_escala').innerText = dados.escala.toUpperCase() + " (Controlo: " + dados.stock + ")";
+   
+    
+    document.getElementById('modal_info_loja').style.display = 'flex';
+}
+
+function fecharDetalhesLoja() {
+    document.getElementById('modal_info_loja').style.display = 'none';
 }
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
