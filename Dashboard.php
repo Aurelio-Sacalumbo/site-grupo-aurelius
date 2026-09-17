@@ -156,9 +156,10 @@ if (isset($pdo)) {
 }
 
 html, body { 
-    width: 100% !important; 
-    max-width: 100% !important; 
-    overflow-x: hidden !important; 
+    width: 100%; 
+    max-width: 100%; 
+    /* 🔴 RETIFICAÇÃO CRÍTICA: Removido !important para o fundo não congelar com elementos fixed */
+    overflow-x: hidden; 
     background-color: #0f172a; 
     color: #ffffff; 
 }
@@ -178,6 +179,37 @@ body {
 /* Classes de Ocultação */
 .hidden, #area-impressao-global.hidden { 
     display: none !important; 
+}
+
+/* =========================================================================
+   🚀 RETIFICAÇÃO DO MENU LATERAL (DESIGN ORIGINAL PRESERVADO A 100%)
+   ========================================================================= */
+#menuLateralMobile {
+    position: fixed;
+    top: 0;
+    /* 🟢 RETIFICAÇÃO: Começa em 0 fixo na borda esquerda */
+    left: 0; 
+    width: 50vw; /* Mantém os seus 50% de largura originais */
+    height: 100vh;
+    background-color: #0f172a;
+    border-right: 4px solid #0088cc;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+    
+    /* 🟢 RETIFICAÇÃO: Esconde movendo exatamente a sua própria largura para fora da tela */
+    transform: translateX(-100%); 
+    transition: transform 0.3s ease-in-out; 
+    
+    padding: 25px 15px;
+    z-index: 999999 !important; /* Camada máxima absoluta para não travar atrás de nada */
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-sizing: border-box;
+}
+
+/* 🟢 Classe ativa controlada pelo clique do JavaScript */
+#menuLateralMobile.menu-ativo {
+    transform: translateX(0) !important; /* Entra 100% até ao meio matemático */
 }
 
 /* =========================================================================
@@ -213,12 +245,8 @@ body {
 /* =========================================================================
    💇 INTERFACE DE ABAS, SERVIÇOS & EQUIPA (DASHBOARD)
    ========================================================================= */
-.aba-conteudo { 
-    display: none; 
-}
-.aba-conteudo.active { 
-    display: block; 
-}
+.aba-conteudo { display: none; }
+.aba-conteudo.active { display: block; }
 
 .grid-categorias, .grid-container { 
     display: grid; 
@@ -243,18 +271,8 @@ body {
     justify-content: space-between; 
     overflow: hidden;
 }
-.aba-item:hover { 
-    background-color: #334155; 
-    transform: translateY(-2px);
-}
-
-.aba-item img { 
-    border-radius: 8px; 
-    margin-bottom: 12px; 
-    object-fit: cover; 
-    height: 220px; 
-    width: 100%; 
-}
+.aba-item:hover { background-color: #334155; transform: translateY(-2px); }
+.aba-item img { border-radius: 8px; margin-bottom: 12px; object-fit: cover; height: 220px; width: 100%; }
 
 /* =========================================================================
    💸 CAIXA DE PREÇO, COMPROVATIVOS E IMPRESSÃO (MODAL NEON)
@@ -282,9 +300,7 @@ body {
     display: inline-block; 
 }
 
-#faturaPainelNatural {
-    background-color: rgba(11, 26, 48, 0.96) !important;
-}
+#faturaPainelNatural { background-color: rgba(11, 26, 48, 0.96) !important; }
 
 /* =========================================================================
    🛍️ MERCADO GLOBAL & FLUXO DE PRODUTOS COSMÉTICOS
@@ -298,95 +314,124 @@ body {
     position: relative;
     overflow: hidden;
 }
-
-.passo-card:hover {
-    transform: translateY(-4px);
-    border-color: #38bdf8;
-    box-shadow: 0 10px 20px rgba(56, 189, 248, 0.15);
-}
-
-.passo-card img {
-    width: 100%;
-    max-width: 100%;
-    height: 160px;
-    object-fit: cover;
-    margin: 0 auto 10px auto;
-    display: block;
-    border-radius: 8px;
-}
+.passo-card:hover { transform: translateY(-4px); border-color: #38bdf8; box-shadow: 0 10px 20px rgba(56, 189, 248, 0.15); }
+.passo-card img { width: 100%; max-width: 100%; height: 160px; object-fit: cover; margin: 0 auto 10px auto; display: block; border-radius: 8px; }
 
 /* =========================================================================
    📱 REGRAS DE ADAPTAÇÃO TOTAL PARA TELEMÓVEIS (ABAIXO DE 991PX)
    ========================================================================= */
 @media (max-width: 991px) {
-    /* Esconde o menu de texto do computador e revela as 3 barras */
-    #menuDesktop { 
-        display: none !important; 
-    }
-    
-    .Menu-Icon { 
-        display: block !important; 
-    }
+    #menuDesktop { display: none !important; }
+    .Menu-Icon { display: block !important; cursor: pointer; }
+    body { padding: 0 10px 80px 10px !important; }
 
-    body { 
-        padding: 0 10px 80px 10px !important; 
-    }
-
-    /* Grids em 2 colunas perfeitas e nítidas lado a lado no telemóvel */
     .grid-inputs, .grid-categorias, .grid-container { 
         grid-template-columns: repeat(2, 1fr) !important; 
         gap: 12px !important; 
     }
-
-    .grid-inputs input, .grid-inputs select {
-        grid-column: span 2;
-    }
-
-    /* 🔥 ZOOM REATIVO: Aumenta as imagens para visualização gigante no telefone */
-    .aba-item { 
-        padding: 14px 10px !important; 
-    }
-    
-    .aba-item img { 
-        height: 220px !important; /* Zoom na imagem do serviço */
-    }
-
-    .passo-card { 
-        padding: 14px 10px !important; 
-    }
-    
-    .passo-card img { 
-        height: 200px !important; /* Zoom na imagem do cosmético */
-    }
+    .grid-inputs input, .grid-inputs select { grid-column: span 2; }
+    .aba-item { padding: 14px 10px !important; }
+    .aba-item img { height: 220px !important; }
+    .passo-card { padding: 14px 10px !important; }
+    .passo-card img { height: 200px !important; }
 }
 
 /* =========================================================================
    🖨️ CONTROLO EXCLUSIVO DE IMPRESSÃO LIMPA 
    ========================================================================= */
 @media print {
-    body * { 
-        visibility: hidden !important; 
-    }
-    .no-print, nav, footer, .Menu-Icon, button, .btn-voltar, .botoes-pagamento { 
-        display: none !important; 
-    }
-    #area-impressao-global, #area-impressao-global * { 
-        visibility: visible !important; 
-    }
-    #area-impressao-global { 
-        position: absolute !important; 
-        left: 0 !important; 
-        top: 0 !important; 
-        width: 100% !important; 
-        background: #ffffff !important; 
-        color: #000000 !important; 
-    }
+    body * { visibility: hidden !important; }
+    .no-print, nav, footer, .Menu-Icon, button, .btn-voltar, .botoes-pagamento { display: none !important; }
+    #area-impressao-global, #area-impressao-global * { visibility: visible !important; }
+    #area-impressao-global { position: absolute !important; left: 0 !important; top: 0 !important; width: 100% !important; background: #ffffff !important; color: #000000 !important; }
 }
 </style>
 
 
 </head>
 <body>
+
+
+<style>
+    /* Oculta o gatilho */
+    #menu-toggle {
+        display: none !important;
+    }
+
+    /* 🔴 O SEGREDO PARA DESTRAVAR O FUNDO: Uma máscara que cobre o ecrã apenas quando o menu abre */
+    .menu-mascara-fundo {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.4); /* Escurece o fundo de forma suave */
+        z-index: 99998;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease-in-out;
+    }
+
+    /* Estrutura Original do Menu Lateral */
+    #menuLateralMobile {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 50vw;
+        height: 100vh;
+        background-color: #0f172a;
+        border-right: 4px solid #0088cc;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+        padding: 25px 15px;
+        z-index: 99999; /* Fica acima da máscara de fundo */
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        box-sizing: border-box;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    /* 🟢 SELETOR 1: Quando ativa a checkbox, a máscara aparece e destrava o clique de fecho */
+    #menu-toggle:checked ~ .menu-mascara-fundo {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* 🟢 SELETOR 2: Quando ativa a checkbox, o menu entra perfeitamente até ao meio */
+    #menu-toggle:checked ~ #menuLateralMobile {
+        transform: translateX(0) !important;
+    }
+</style>
+
+<!-- 🚨 CHECKBOX DE SINALIZAÇÃO MÁXIMA -->
+<input type="checkbox" id="menu-toggle">
+
+<!-- 🔴 MÁSCARA QUE DESCONGELA O FUNDO (Clicar aqui fecha o menu instantaneamente) -->
+<label for="menu-toggle" class="menu-mascara-fundo"></label>
+
+<!-- =========================================================================
+     🚀 MENU LATERAL RETRÁTIL (DESIGN E ESTRUTURA PRESERVADOS)
+     ========================================================================= -->
+<div id="menuLateralMobile">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #1e293b; padding-bottom: 15px;">
+        <strong style="color: #fff; font-size: 24px; letter-spacing: 0.5px;">AURELIUS</strong>
+        <!-- Clicar no X desmarca a checkbox mecanicamente -->
+        <label for="menu-toggle" style="font-size: 55px; color: #ef4444; cursor: pointer; font-weight: bold; line-height: 0.5; user-select: none;">&times;</label>
+    </div>
+ 
+    <!-- Links com ações embutidas e fecho automático em paralelo -->
+    <a href="Principal.php" style="background:#d32f2f; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; text-transform:uppercase;">SAIR</a>
+    <a href="unitel.php" style="background:#ff6600; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; text-align:center; text-transform:uppercase; border: 1px solid #cc5200;">📱 PAGAMENTOS MÓVEIS</a>
+    <a href="./fatura.php" target="_blank" style="background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 14px; font-size: 14px; font-weight: bold; border-radius: 10px; text-transform: uppercase; border: 1px solid #006699; text-align: center;">🖨️ Emitir Fatura</a>
+    
+    <a href="#" onclick="alternarAbas('servicos'); document.getElementById('menu-toggle').checked = false; return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SERVIÇOS</a>
+    <a href="#" onclick="alternarAbas('photos'); document.getElementById('menu-toggle').checked = false; return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">PHOTOS</a>
+    <a href="#" onclick="abrirAbas(); document.getElementById('menu-toggle').checked = false; return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SOBRE NÓS</a>
+    <a href="#" onclick="abrirTermos(); document.getElementById('menu-toggle').checked = false; return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:13px; text-align:center; border: 1px solid #334155;">TERMOS & PRIVACIDADE</a>
+</div>
+
+<!-- BARRA SUPERIOR ORIGINAL (NAVBAR) -->
 <nav style="display: flex; justify-content: space-between; align-items: center; background-color: #e0e0e0; padding: 10px 40px; position: relative; z-index: 1000; width: 100%; box-sizing: border-box;">
     
     <!-- Logotipo -->
@@ -395,99 +440,44 @@ body {
         <h6 style="color: #0b1a30; font-size: 20px; margin: 2px 0 0 0;">Salão de Beleza e Barbearia</h6>
     </div>
 
-    <!-- =========================================================================
-         📱 MENU DESKTOP TOTALMENTE ORGANIZADO, SIMÉTRICO E ALINHADO (DASHBOARD)
-         ========================================================================= -->
+    <!-- MENU DESKTOP -->
     <ul class="ul" id="menuDesktop" style="display: flex; align-items: center; gap: 10px; list-style: none; margin: 0; padding: 0;">
-        
-        <!-- 1. Pagamentos Móveis (Laranja Uniforme) -->
-        <li>
-            <a href="unitel.php" style="display: block; background-color: #ff6600; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #cc5200; white-space: nowrap;">
-                📱 Pagamentos Móveis
-            </a>
-        </li>
- 
-        <!-- 2. Serviços (Azul Padrão) -->
-        <li>
-            <a href="#" onclick="alternarAbas('servicos')" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">
-                Serviços
-            </a>
-        </li>
- 
-        <!-- 3. Photos (Azul Padrão) -->
-        <li>
-            <a href="#" onclick="alternarAbas('photos')" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">
-                Photos
-            </a>
-        </li>
- 
-        <!-- 4. Sobre Nós (Azul Padrão) -->
-        <li>
-            <a href="#" onclick="abrirAbas()" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">
-                Sobre Nós
-            </a>
-        </li>
- 
-        <!-- 5. Termos & Privacidade (Azul Padrão) -->
-        <li>
-            <a href="#" onclick="abrirTermos()" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">
-                Termos & Privacidade
-            </a>
-        </li>
- 
-        <!-- 6. Emitir Última Fatura -->
-        <li>
-            <a href="./fatura.php?id=<?= intval($row['id'] ?? ($venda['id'] ?? ($f['id'] ?? 118))) ?>" target="_blank" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: 0.2s;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#d32f2f'">
-                🖨️ Emitir Fatura
-            </a>
-        </li>
- 
-        <!-- 7. Botão Sair -->
-        <li>
-            <a href="Principal.php" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap;">
-                Sair
-            </a>
-        </li>
+        <li><a href="unitel.php" style="display: block; background-color: #ff6600; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #cc5200; white-space: nowrap;">📱 Pagamentos Móveis</a></li>
+        <li><a href="#" onclick="alternarAbas('servicos')" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">Serviços</a></li>
+        <li><a href="#" onclick="alternarAbas('photos')" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">Photos</a></li>
+        <li><a href="#" onclick="abrirAbas()" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">Sobre Nós</a></li>
+        <li><a href="#" onclick="abrirTermos()" style="display: block; background-color: #0088cc; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #006699; white-space: nowrap;">Termos & Privacidade</a></li>
+        <li><a href="./fatura.php?id=118" target="_blank" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap; text-transform: uppercase;">🖨️ Emitir Fatura</a></li>
+        <li><a href="Principal.php" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap;">Sair</a></li>
     </ul>
 
     <!-- ÍCONE DAS 3 BARRAS -->
-    <div class="Menu-Icon" onclick="toggleMenu()" style="cursor: pointer;">
+    <label for="menu-toggle" class="Menu-Icon" style="cursor: pointer; display: block;">
         <svg viewBox="0 0 100 80" width="58" height="58" style="fill: #0b1a30; display: block;">
             <rect width="100" height="15" rx="8"></rect>
             <rect y="30" width="100" height="15" rx="8"></rect>
             <rect y="60" width="100" height="15" rx="8"></rect>
         </svg>
-    </div>
-
-    <!-- =========================================================================
-         🚀 MENU LATERAL RETRÁTIL EXPANDIDO ATÉ AO MEIO (50% DA LARGURA)
-         ========================================================================= -->
-    <div id="menuLateralMobile" style="position: fixed; top: 0; left: -50vw; width: 50vw; height: 100vh; background-color: #0f172a; border-right: 4px solid #0088cc; box-shadow: 5px 0 15px rgba(0,0,0,0.5); transition: 0.3s ease; padding: 25px 15px; z-index: 9999; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box;">
-        
-        <!-- Topo do Menu Mobile -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #1e293b; padding-bottom: 15px;">
-            <strong style="color: #fff; font-size: 24px; letter-spacing: 0.5px;">AURELIUS</strong>
-            <span onclick="toggleMenu()" style="font-size: 55px; color: #ef4444; cursor: pointer; font-weight: bold; line-height: 0.5;">&times;</span>
-        </div>
-     
-        <!-- Links em tamanho aumentado com espaçamento confortável -->
-        <a href="Principal.php" style="background:#d32f2f; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; text-transform:uppercase;">SAIR</a>
-    
-        <a href="unitel.php" style="background:#ff6600; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; text-align:center; text-transform:uppercase; border: 1px solid #cc5200;">📱 PAGAMENTOS MÓVEIS</a>
-    
-        <a href="./fatura.php" target="_blank" style="background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 14px; font-size: 14px; font-weight: bold; border-radius: 10px; text-transform: uppercase; border: 1px solid #006699; text-align: center;">
-            🖨️ Emitir Fatura
-        </a>
-
-        <a href="#" onclick="alternarAbas('servicos'); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SERVIÇOS</a>
-        
-        <a href="#" onclick="alternarAbas('photos'); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">PHOTOS</a>
-        
-        <a href="#" onclick="abrirAbas(); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SOBRE NÓS</a>
-        
-        <a href="#" onclick="abrirTermos(); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:13px; text-align:center; border: 1px solid #334155;">TERMOS & PRIVACIDADE</a>
-    </div>
+    </label>
 </nav>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 <!-- =========================================================================
      📅 PAUTA DE AGENDAMENTO TÉCNICO COMPLETA — GRADIENTE PREMIUM VÍVIDO
