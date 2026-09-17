@@ -263,13 +263,6 @@ require_once __DIR__ . "/config/Banco.php";
 ?>
 
 
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="pt">
 <head>
@@ -277,24 +270,20 @@ require_once __DIR__ . "/config/Banco.php";
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Aurélius">
+<!-- 📱 Ativação PWA -->
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f19">
+<meta name="apple-mobile-web-app-capable" content="yes">
 
 <script>
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('serviceWorker.js')
-            .then(reg => console.log('✓ PWA Aurélius Inicializado com sucesso!', reg))
-            .catch(err => console.log('❌ Erro no Service Worker:', err));
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('PWA Aurélius: Ativado com sucesso!', reg.scope))
+            .catch(err => console.log('Erro ao registar Service Worker:', err));
     });
 }
 </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <!-- Na barra de navegação e instalação do PWA -->
-<title>BarbeariasAngola — Rede de Distribuição & Estética</title>
-
-
     
     <style>
         /* =========================================================================
@@ -1460,7 +1449,7 @@ if (isset($mysqli) && !$mysqli->connect_error) {
 // =========================================================================
 // 🔄 1. INICIALIZAÇÃO E CONSULTA DE DADOS (SEMPRE ANTES DO HTML)
 // =========================================================================
-$todas_prov_angola = ['Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando-Cubango', 'Cuanza-Norte', 'Cuanza-Sul', 'Cunene', 'Huambo', 'Huíla', 'Luanda', 'Lunda-Norte', 'Lunda-Sul', 'Malanje', 'Moxico', 'Namibe', 'Uíge', 'Zaire'];
+$todas_prov_angola = ['Bengo', 'Benguela', 'Bié', 'Cabinda', 'Cuando', 'Cubango', 'Cuanza-Norte', 'Cuanza-Sul', 'Cunene', 'Huambo', 'Huíla', 'Luanda', 'Lunda-Norte', 'Lunda-Sul', 'Malanje', 'Moxico', 'Namibe', 'Uíge', 'Zaire'];
 
 $prov_com_parceiros = [];
 
@@ -2170,6 +2159,282 @@ if (!empty($lista_lojas)) {
     </div>
 </div>
 
+🎌 GRUPO AURELIUS
+
+
+
+
+
+
+
+
+<!-- 🔷 SECÇÃO DE LOJAS PARCEIRAS (MARKETPLACE - FIXADO EM 2 PARCEIROS POR VEZ) -->
+<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; text-align: left; margin: 30px 0 15px 0; border-left: 4px solid #38bdf8; padding-left: 10px;">🏪 Lojas e Fornecedores Oficiais</h4>
+
+<div style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; margin-bottom: 50px;">
+    <?php
+    // Estabelece ou reaproveita a ligação segura com a Aiven Cloud
+    $mysqli_produtos = $conexao_link ?? $conexao_aurelius;
+
+    if (!$mysqli_produtos || @mysqli_ping($mysqli_produtos) === false) {
+        $h_host = getenv('DB_HOST') ?: "://aivencloud.com";
+        $h_port = getenv('DB_PORT') ?: 22002;
+        $h_name = getenv('DB_NAME') ?: "defaultdb";
+        $h_user = getenv('DB_USER') ?: "avnadmin";
+        $h_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm";
+        
+        $mysqli_produtos = mysqli_init();
+        if ($mysqli_produtos) {
+            mysqli_ssl_set($mysqli_produtos, NULL, NULL, NULL, NULL, NULL);
+            @mysqli_real_connect($mysqli_produtos, $h_host, $h_user, $h_pass, $h_name, (int)$h_port, NULL, MYSQLI_CLIENT_SSL);
+        }
+    }
+
+    if ($mysqli_produtos && !$mysqli_produtos->connect_error) {
+        $mysqli_produtos->set_charset("utf8mb4");
+
+        // 🔒 AJUSTE DE LIMITE: Fixado estritamente em 2 lojas por atualização, ordenadas aleatoriamente
+        $limite_fixo = 2;
+
+        // 🎲 Seleciona os parceiros ativos de forma completamente misturada com o novo limite
+        $query_lojas_real = $mysqli_produtos->query("SELECT * FROM `lojas` WHERE `visivel_no_site` = 1 AND `transacao_status` = 'Confirmado' ORDER BY RAND() LIMIT $limite_fixo");
+        
+        if ($query_lojas_real && $query_lojas_real->num_rows > 0) {
+            $posicao = 1;
+            while ($loja = $query_lojas_real->fetch_assoc()) {
+                // Configuração das mídias das lojas parceiras
+                $logo_loja = (!empty($loja['logo_empresa'])) ? "uploads/" . $loja['logo_empresa'] : "OIP (6).webp";
+                $slug_rota = !empty($loja['slug_loja']) ? trim($loja['slug_loja']) : "default";
+                
+                // Mapeia e decodifica as especificações técnicas
+                $specs = json_decode($loja['especificacoes_json'], true) ?? [];
+                $controle_stock = $specs['controlo_stock'] ?? 'Geral';
+                $escala = $specs['escala_catalogo'] ?? 'Pequeno';
+                
+                // Empacota os dados comerciais para leitura rápida no JavaScript Modal
+                $info_modal = htmlspecialchars(json_encode([
+                    'name' => $loja['nome_loja'],
+                    'email' => $loja['email_mercantil'],
+                    'telefone' => $loja['telefone_corporativo'],
+                    'endereco' => $loja['endereco_armazem'],
+                    'iban' => $loja['iban_bancario'] ?? 'Não Disponível',
+                    'escala' => $escala,
+                    'stock' => $controle_stock
+                ]), ENT_QUOTES, 'UTF-8');
+                ?>
+                
+                <!-- Cartão Premium Unificado de Loja Parceira -->
+                <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s;">
+                    <div>
+                        <span style="font-size: 10px; color: #38bdf8; font-weight: bold; background: #1e293b; padding: 4px 10px; border-radius: 10px;">PARCEIRO EXIBIDO Nº <?php echo $posicao++; ?></span>
+                        <h2 style="font-size: 14px; font-weight: bold; color: #ffffff; margin: 15px 0 5px 0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($loja['nome_loja']); ?></h2>
+                        <p style="font-size: 11px; color: #64748b; margin-bottom: 15px;">SOMOS A SOLUÇÃO PARA TI E PARA A SUA FAMÍLIA</p>
+                    </div>
+                    
+                    <!-- Logotipo Redondo da Loja -->
+                    <div style="width: 300px; height: 200px; border-radius: 20%; overflow: hidden; margin: 0 auto 15px auto; background: #fff; border: 3px solid #22d3ee;">
+                        <img src="<?php echo $logo_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <p style="font-size: 11px; color: #94a3b8; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 <?php echo htmlspecialchars($loja['endereco_armazem']); ?></p>
+                        <span style="font-size: 11px; color: #22c55e; font-weight: bold;">✓ Catálogo: <?php echo ucfirst($escala); ?></span>
+                    </div>
+
+                    <!-- Botões Operacionais das Lojas -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <!-- Botão 1: Detalhes e Variantes (Aba Reativa Pop-up) -->
+                        <button type="button" onclick="mostrarDetalhesLoja('<?php echo $info_modal; ?>')" style="width: 100%; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
+                            🔎 Ficha Técnica
+                        </button>
+                        
+                        <!-- Botão 2: Redirecionamento Dinâmico focado em Lojas.php -->
+                        <a href="Lojas.php?slug_loja=<?php echo urlencode($slug_rota); ?>" style="text-decoration: none; width: 100%;">
+                            <button type="button" style="width: 100%; background: #22c55e; color: #ffffff; border: none; padding: 9px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
+                                ENTRAR NA LOJA
+                            </button>
+                        </a>
+                    </div>
+                </div>
+
+                <?php
+            }
+        } else {
+            echo "<p style='color: #64748b; font-style: italic; padding: 15px; grid-column: 1/-1; text-align: center;'>Nenhum parceiro comercial registado de momento.</p>";
+        }
+    }
+    ?>
+</div>
+<!-- 🌐 ABA POP-UP SUSPENSA (FICHA TÉCNICA REATIVA) -->
+<div id="modal_info_loja" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;">
+    <div style="background: #0f172a; border: 2px solid #38bdf8; border-radius: 16px; width: 100%; max-width: 450px; padding: 25px; color: #fff; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
+        
+        <button onclick="fecharDetalhesLoja()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #64748b; font-size: 20px; cursor: pointer;">✕</button>
+        
+        <h3 id="modal_nome" style="color: #38bdf8; font-size: 16px; text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">Ficha Comercial</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; text-align: left;">
+            <p><strong> TELEFONE: </strong> <span id="modal_telefone" style="color: #94a3b8;"></span></p>
+            <p><strong>CORREIO MERCANTIL: </strong> <span id="modal_email" style="color: #94a3b8;"></span></p>
+            <p><strong>ENDEREÇO: </strong> <span id="modal_endereco" style="color: #94a3b8;"></span></p>
+            <p><strong>TIPO DE EMPRESA: </strong> <span id="modal_escala" style="color: #eab308; font-weight: bold;"></span></p>
+           
+            <p><strong>INFORMAÇÕES GERAIS DE VARIANTES: </strong> <br> <span style="color: #a855f7;">Esta loja opera com gerenciamento dinâmico de cores, tamanhos e unidades reativas conforme a disponibilidade de stock e o seu gosto.</span></p>
+            <p><strong>CANAIS DE ABASTECIMENTO: </strong> <br> <span style="color: #ca8a04;">Parcerias logísticas integradas para distribuição nacional.</span></p>
+        </div>
+        
+        <button onclick="fecharDetalhesLoja()" style="width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 10px 0; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+            FECHAR ESPECIFICAÇÕES
+        </button>
+    </div>
+</div>
+
+<script>
+function mostrarDetalhesLoja(dadosString) {
+    const dados = JSON.parse(dadosString);
+    
+    document.getElementById('modal_nome').innerText = "NOME DA LOJA: " + dados.nome;
+    document.getElementById('modal_telefone').innerText = dados.telefone;
+    document.getElementById('modal_email').innerText = dados.email;
+    document.getElementById('modal_endereco').innerText = dados.endereco;
+    document.getElementById('modal_escala').innerText = dados.escala.toUpperCase() + " (Controlo: " + dados.stock + ")";
+   
+    
+    document.getElementById('modal_info_loja').style.display = 'flex';
+}
+
+function fecharDetalhesLoja() {
+    document.getElementById('modal_info_loja').style.display = 'none';
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- =================================================================
+    🎛️ MINI BARRA INFERIOR DE NAVEGAÇÃO REATIVA (100% RESPONSIVA)
+    ================================================================= -->
+    <style>
+        /* Estilos base estruturais para o rodapé */
+        .footer-aurelius {
+            background: #0b111e; 
+            padding: 20px 15px; 
+            text-align: center; 
+            border-top: 1px solid #1e293b;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        
+        /* Contentor pílula principal adaptável */
+        .lista-nav-footer {
+            display: inline-flex; 
+            gap: 15px; 
+            background: #101f38; 
+            border: 2px solid #38bdf8; 
+            border-radius: 30px; 
+            padding: 10px 25px; 
+            margin: 0; 
+            list-style: none; 
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25); 
+            flex-wrap: wrap; 
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+    
+        /* Links internos com transição suave */
+        .link-social-footer {
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 13px; 
+            color: #cbd5e1; 
+            text-decoration: none; 
+            font-weight: bold; 
+            transition: color 0.2s ease, transform 0.2s ease;
+        }
+    
+        .link-social-footer:hover {
+            color: #38bdf8 !important;
+            transform: translateY(-1px);
+        }
+    
+        /* Imagens padronizadas com recorte perfeito */
+        .img-social-footer {
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%; 
+            border: 1px solid #38bdf8; 
+            object-fit: cover;
+            flex-shrink: 0;
+        }
+    
+        /* Separadores de bolha */
+        .separador-footer {
+            color: #38bdf8; 
+            font-weight: bold; 
+            user-select: none; 
+            display: flex; 
+            align-items: center;
+        }
+    
+        /* 📱 Otimizações reativas para Telemóveis (Mobile-First) */
+        @media (max-width: 580px) {
+            .lista-nav-footer {
+                border-radius: 16px !important;
+                padding: 15px !important;
+                gap: 12px !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important; /* Transforma em grelha dupla simétrica */
+                width: 100% !important;
+                max-width: 320px !important;
+                margin: 0 auto !important;
+            }
+            
+            .separador-footer {
+                display: none !important; /* Oculta as bolhas no mobile para economizar espaço */
+            }
+    
+            .link-social-footer {
+                justify-content: center !important;
+                background: rgba(56, 189, 248, 0.05) !important;
+                padding: 8px !important;
+                border-radius: 8px !important;
+                border: 1px solid rgba(56, 189, 248, 0.1) !important;
+            }
+        }
+    </style>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2690,52 +2955,66 @@ $stmtGlobal = $pdo->prepare("
 
 
 
-
 <!-- 🛍️ SEÇÃO DE RECOMENDAÇÕES SAAS ENTERPRISE: INTERCALAÇÃO DINÂMICA LADO A LADO -->
-<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif;">
+<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; margin-top: 30px; margin-bottom: 20px; border-left: 4px solid #1877f2; padding-left: 10px; letter-spacing: 0.5px; font-family: 'Segoe UI', system-ui, sans-serif; text-align:center;">
     • Sugestões para Si
 </h4>
 
 <!-- 💻 FOLHA DE ESTILOS COMBINATÓRIA RESPONSIVA PWA -->
 <style>
+/* =========================================================================
+   📦 CONTAINER PRINCIPAL (GRID)
+   ========================================================================= */
 .vitrina-saas-grid {
     display: grid !important;
-    /* Garante rigorosamente 2 produtos lado a lado em ecrãs móveis e expande dinamicamente no PC */
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 100fr)) !important; /* 2 colunas no telemóvel, expande no PC */
     gap: 12px !important;
     width: 100% !important;
-    box-sizing: border-box !important;
     padding: 0 4px !important;
+    box-sizing: border-box !important;
 }
+
+/* =========================================================================
+   🎴 CARTÃO DE PRODUTO INTERNÁUTICO (CARD MESTRE)
+   ========================================================================= */
 .post-card-fb {
     background: #1e293b;
     border: 1px solid #334155;
     border-radius: 12px;
     padding: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    min-height: 380px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 380px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
     transition: transform 0.2s ease, border-color 0.2s ease;
 }
+
 .post-card-fb:hover {
     transform: translateY(-3px);
     border-color: #38bdf8;
 }
+
+/* =========================================================================
+   🖼️ MÍDIA E FOTOGRAFIA DO PRODUTO
+   ========================================================================= */
 .img-container-fb {
+    position: relative;
     width: 100%;
     height: 130px;
-    border-radius: 8px;
-    overflow: hidden;
     background: #070b12;
     border: 1px solid #233144;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
+    overflow: hidden;
 }
+
+/* =========================================================================
+   🏷️ ETICQUETAS E ELEMENTOS FLUTUANTES (BADGES)
+   ========================================================================= */
 .badge-stock-neon {
     position: absolute;
     top: 6px;
@@ -2743,25 +3022,39 @@ $stmtGlobal = $pdo->prepare("
     background: rgba(15, 23, 42, 0.95);
     color: #22c55e;
     padding: 2px 6px;
+    border: 1px solid rgba(34, 197, 94, 0.3);
     border-radius: 6px;
     font-size: 9.5px;
     font-weight: bold;
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    z-index: 10;
+}
+
+/* =========================================================================
+   🧠 ANIMAÇÕES REATIVAS DO MOTOR VORTEX
+   ========================================================================= */
+@keyframes fadeInComentAurelius {
+    from { 
+        opacity: 0; 
+        transform: translateY(4px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
 }
 </style>
 <?php 
 $total_posts_exibidos = 0;
 $produtos_por_loja = [];
 
-// 🔀 MOTOR DE MISTURA INICIAL: Embaralha os produtos recebidos antes da separação por loja
+// 1. 🔀 MOTOR DE MISTURA INICIAL: Embaralha os produtos recebidos antes da ordenação
 if (!empty($feed_produtos)) {
     shuffle($feed_produtos); 
     
     foreach ($feed_produtos as $post) {
-        // 🟢 INTERCONEXÃO REATIVA: Usa a coluna viva 'stock' e valida se há unidades reais
         $stock_real = isset($post['stock']) ? intval($post['stock']) : 0;
         
-        // Regra SaaS: Se o stock for 0 ou esgotar, cai da vitrina automaticamente
+        // Regra SaaS: Se o estoque for 0, oculta da vitrina automaticamente
         if ($stock_real <= 0) {
             continue; 
         }
@@ -2787,16 +3080,15 @@ while (count($produtos_por_loja) > 0) {
     }
 }
 
-// 🎰 LIMITE DINÂMICO ALEATÓRIO: Sorteia exibir entre 4 e 8 produtos a cada refresh de página
-$limite_produtos_atualizacao = rand(4, 8);
+// 🔒 AJUSTE DE LIMITE FIXO: Garante a exibição estrita de 3 produtos por atualização
+$limite_produtos_fixo = 3;
 
-// Corta o feed final para exibir apenas a quantidade sorteada simultaneamente
 if (!empty($feed_intercalado_mestre)) {
-    $feed_intercalado_mestre = array_slice($feed_intercalado_mestre, 0, $limite_produtos_atualizacao);
+    $feed_intercalado_mestre = array_slice($feed_intercalado_mestre, 0, $limite_produtos_fixo);
 }
 
 // Renderiza a Grid Responsiva Dupla PWA
-echo '<div class="vitrina-saas-grid">';
+echo '<div class="vitrina-saas-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%; box-sizing: border-box; padding: 10px;">';
 
 if (!empty($feed_intercalado_mestre)): 
 foreach ($feed_intercalado_mestre as $post): 
@@ -2808,7 +3100,7 @@ foreach ($feed_intercalado_mestre as $post):
     $preco_real   = number_format($post['preco'] ?? 0, 2, ',', '.');
     $codigo_serie = "LOTE-COS-" . $id_loja_redirecionamento . "-" . $id_post;
     
-    // Mapeamento Dinâmico Automático baseado nos teus IDs de Fornecedores reais (Removido Barbearia Branca por segurança)
+    // Mapeamento Dinâmico de Lojas Parceiras
     $loja_nome = "Parceiro ID " . $id_loja_redirecionamento;
     if ($id_loja_redirecionamento === 238) $loja_nome = "Mamadu";
     elseif ($id_loja_redirecionamento === 240) $loja_nome = "Loengo";
@@ -2831,60 +3123,99 @@ foreach ($feed_intercalado_mestre as $post):
         }
     }
     
+    // Pacote de especificações em JSON para o Modal
+    $dados_tecnicos_json = htmlspecialchars(json_encode([
+        'nome' => $produto_nome,
+        'loja' => $loja_nome,
+        'serie' => $codigo_serie,
+        'preco' => $preco_real . " Kz",
+        'tamanho' => htmlspecialchars($post['tamanho'] ?? 'Padrão'),
+        'cor' => htmlspecialchars($post['cor'] ?? 'Sob Consulta'),
+        'unidades' => $stock_total . " disponíveis",
+        'pagamento' => "Multicaixa Express, Transferência ou Cash"
+    ]), ENT_QUOTES, 'UTF-8');
+
     $total_posts_exibidos++;
 ?>
 
-    <!-- 🎴 CARD GÉMEO INTERCALADO SAAS ENTERPRISE -->
-    <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb">
-
+    <!-- 🎴 CARD INTERCALADO SAAS COM MOTOR VORTEX -->
+    <div id="post_fb_<?php echo $id_post; ?>" class="post-card-fb" style="background: #0f172a; border: 1px solid #1e293b; border-radius: 16px; padding: 15px; color: #fff; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+        
         <div>
             <!-- 👤 CABEÇALHO COMPACTO DA LOJA -->
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
-                <div style="width: 24px; height: 24px; background: #0f172a; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #1877f2; overflow: hidden; flex-shrink: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <div style="width: 28px; height: 28px; background: #1e293b; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 1.5px solid #38bdf8; overflow: hidden; flex-shrink: 0;">
                     <img src="uploads/OIP (6).webp" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='uploads/default.png';">
                 </div>
                 <div style="min-width: 0; flex: 1; text-align: left;">
-                    <strong style="color: #ffffff; font-size: 10.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase;"><?php echo $loja_nome; ?></strong>
-                    <span style="color: #64748b; font-size: 8.5px; display: block;">Sincronizado 🌍</span>
+                    <strong style="color: #ffffff; font-size: 11px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; text-transform: uppercase;"><?php echo $loja_nome; ?></strong>
+                    <span style="color: #38bdf8; font-size: 9px; display: block;">Loja Oficial Sincronizada 🌍</span>
                 </div>
             </div>
 
-            <!-- 📝 DETALHES TÉCNICOS -->
-            <div style="text-align: left; margin-bottom: 6px; line-height: 1.2;">
-                <strong style="color: #38bdf8; font-size: 12.5px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo $produto_nome; ?></strong>
-                <span style="color: #94a3b8; font-size: 9px; display: block; font-family: monospace; margin-top: 1px;">Série: <?php echo $codigo_serie; ?></span>
-                <span style="color: #64748b; font-size: 8.5px; display: block;">Especificações: <?php echo htmlspecialchars($post['tamanho'] ?? 'Padrão'); ?></span>
+            <!-- 🖼️ CONTAINER DA IMAGEM E DETALHES -->
+            <div class="img-container-fb" style="position: relative; width: 100%; height: 180px; border-radius: 8px; overflow: hidden; background: #020617; margin-bottom: 10px;">
+                <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" decoding="async" onerror="this.src='uploads/default_cosmetico.jpg';">
+                <span class="badge-stock-neon" style="position: absolute; top: 10px; right: 10px; background: #ef4444; color: #fff; font-size: 10px; font-weight: bold; padding: 3px 8px; border-radius: 10px; box-shadow: 0 0 8px rgba(239,68,68,0.5);"><?php echo $stock_total; ?> unidade</span>
             </div>
 
-            <!-- 🖼️ CONTAINER DA IMAGEM -->
-            <div class="img-container-fb">
-                <img src="<?php echo $img_post; ?>" alt="<?php echo $produto_nome; ?>" style="width: 100%; height: 100%; object-fit: cover;" decoding="async" onerror="this.src='uploads/default_cosmetico.jpg';">
-                <span class="badge-stock-neon"><?php echo $stock_total; ?> un.</span>
+            <!-- 📝 DETALHES TÉCNICOS -->
+            <div style="text-align: left; margin-bottom: 10px; line-height: 1.3;">
+                <strong style="color: #ffffff; font-size: 14px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo $produto_nome; ?></strong>
+                <span style="color: #64748b; font-size: 9.5px; display: block; font-family: monospace; margin-top: 2px;">Ref: <?php echo $codigo_serie; ?></span>
             </div>
         </div>
 
         <div>
             <!-- 💰 PREÇO MONETIZADO REAL -->
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #334155; margin-bottom: 6px;">
-                <span style="color: #64748b; font-size: 10.5px;">Preço Unid:</span>
-                <strong style="color: #22c55e; font-size: 13.5px; font-weight: 700;"><?php echo $preco_real; ?> Kz</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-top: 1px solid #1e293b; border-bottom: 1px solid #1e293b; margin-bottom: 12px;">
+                <span style="color: #94a3b8; font-size: 11px;">Preço Líquido:</span>
+                <strong style="color: #22c55e; font-size: 15px; font-weight: 700;"><?php echo $preco_real; ?> Kz</strong>
             </div>
 
-            <!-- ⚡ BOTÃO DE COMPRA DIRECIONADA -->
-            <div style="margin-top: 6px; display: flex; justify-content: center; width: 100%;">
-                <a href="<?php echo $link_destino_saas; ?>" style="display: inline-block; width: 85%; max-width: 140px; background: linear-gradient(135deg, #1877f2, #1159c7); color: #ffffff; text-align: center; padding: 6px 10px; text-decoration: none; font-weight: bold; border-radius: 20px; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(24, 119, 242, 0.15); margin: 0 auto; transition: background 0.2s;">
-                    ⚡ Ir na Loja
+            <!-- ⚡ BOTÕES DE AÇÃO -->
+            <div style="display: flex; gap: 8px; width: 100%; margin-bottom: 10px;">
+                <button type="button" onclick="abrirFichaProduto('<?php echo $dados_tecnicos_json; ?>')" style="flex: 1; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; text-align: center; padding: 8px 0; font-weight: bold; border-radius: 8px; font-size: 11px; text-transform: uppercase; cursor: pointer;">
+                    🔎 Detalhes
+                </button>
+                
+                <a href="<?php echo $link_destino_saas; ?>" style="flex: 1; text-decoration: none;">
+                    <button type="button" style="width: 100%; background: linear-gradient(135deg, #22c55e, #16a34a); color: #ffffff; text-align: center; padding: 8px 0; border: none; font-weight: bold; border-radius: 8px; font-size: 11px; text-transform: uppercase; cursor: pointer; box-shadow: 0 4px 10px rgba(34,197,94,0.2);">
+                        ⚡ Ir na Loja
+                    </button>
                 </a>
             </div>
-        </div>
 
-    </div>
+            <!-- 💬 INTERAÇÕES VORTEX -->
+            <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 8px; padding: 0 4px;">
+                <span>👍 <span id="contador_likes_<?php echo $id_post; ?>">24</span></span>
+                <span>💬 <span id="contador_coment_<?php echo $id_post; ?>">0</span> coment.</span>
+                <span>🔄 <span id="contador_partilhas_<?php echo $id_post; ?>">2</span></span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-top: 1px solid #1e293b; padding-top: 6px;">
+                <button onclick="executarGostoVirtual(this, <?php echo $id_post; ?>)" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 11px; font-weight: bold;">👍 Gostar</button>
+                <button onclick="focarCaixaComentario(<?php echo $id_post; ?>)" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 11px; font-weight: bold;">💬 Comentar</button>
+                <button onclick="executarPartilhaVirtual(this, <?php echo $id_post; ?>)" style="background: transparent; border: none; color: #64748b; cursor: pointer; font-size: 11px; font-weight: bold;">🔄 Partilhar</button>
+            </div>
+
+            <!-- 📝 CAIXA DE COMENTÁRIOS -->
+            <div id="caixa_mensagens_fb_<?php echo $id_post; ?>" style="max-height: 80px; overflow-y: auto; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; padding: 4px; background: #020617; border-radius: 6px;">
+                <p id="sem_comentarios_aviso_<?php echo $id_post; ?>" style="color: #475569; font-size: 10px; margin: 4px 0; font-style: italic; text-align: center;">Nenhum comentário...</p>
+            </div>
+
+            <form onsubmit="adicionarMensagemVirtual(event, <?php echo $id_post; ?>)" style="display: flex; gap: 4px; margin-top: 6px;">
+                <input id="input_msg_fb_<?php echo $id_post; ?>" type="text" placeholder="Escreve um comentário..." style="flex: 1; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 4px 8px; color: #fff; font-size: 11px; outline: none;">
+                <button type="submit" style="background: #38bdf8; color: #0f172a; border: none; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; cursor: pointer;">></button>
+            </form>
+        </div>
+    </div> <!-- 🎴 Fecha a div principal: .post-card-fb -->
 
 <?php 
 endforeach; 
 endif; 
 
-echo '</div>'; // Fecha a div .vitrina-saas-grid
+echo '</div>'; // 📦 Fecha a div mestra: .vitrina-saas-grid
 ?>
 
 
@@ -3896,6 +4227,9 @@ function processarEnvioMensagemAlana(origemTela) {
     }
 </style>
 
+
+
+
 <!-- SECTION DO RODAPÉ INSTITUCIONAL (TOTALMENTE ALIVIADA E LEVE) -->
 <section class="sectionn" style="background: linear-gradient(135deg, #101f38, #0b1329); border: 2px solid #38bdf8; border-radius: 16px; padding: 45px 30px; margin: 40px auto; max-width: 1000px; text-align: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.35); font-family: 'Segoe UI', Arial, sans-serif;">
     
@@ -3914,690 +4248,19 @@ function processarEnvioMensagemAlana(origemTela) {
     
     <hr style="border: 0; border-top: 1px dashed rgba(56, 189, 248, 0.2); margin: 25px 0;">
     
-    <!-- Matriz Ativa de Links -->
-    <div style="display: flex; flex-direction: column; gap: 14px; text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 25px;">
-    <p style="margin: 0;">
-        <b style="color: #38bdf8; text-transform: uppercase; margin-right: 8px; font-size: 11px; letter-spacing: 0.5px;">Produto:</b> 
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('funcionalidades')">Funcionalidades</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('modulos')">Módulos &amp; Camadas</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('precos')">Preços</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('api')">API &amp; Webhooks</span>
-    </p>
-    <p style="margin: 0;">
-        <b style="color: #38bdf8; text-transform: uppercase; margin-right: 8px; font-size: 11px; letter-spacing: 0.5px;">Recursos:</b> 
-        <a style="color:#94a3b8; text-decoration: none;" href="Video.php" class="link-SaaS-aba">Vídeo Aulas</a> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('documentacao')">Documentação</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('blog')">Blog</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('faq')">FAQ Vortex</span>
-    </p>
-    <p style="margin: 0;">
-        <b style="color: #38bdf8; text-transform: uppercase; margin-right: 8px; font-size: 11px; letter-spacing: 0.5px;">Empresa:</b> 
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('sobre')">Sobre nós</span> <span class="separador-ponto">&bull;</span>
-        <a style="color:#94a3b8; text-decoration: none;" href="Vagas.php" class="link-SaaS-aba">Carreiras</a> <span class="separador-ponto">&bull;</span>
-        <a style="color:#94a3b8; text-decoration: none;" href="Principal.php" class="link-SaaS-aba">Parceiros Nacionais</a> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('contacto')">Contacto &amp; Mapas</span>
-    </p>
-    <p style="margin: 0;">
-        <b style="color: #38bdf8; text-transform: uppercase; margin-right: 8px; font-size: 11px; letter-spacing: 0.5px;">Legal:</b> 
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('termos')">Termos de Uso</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('privacidade')">Privacidade &amp; APD</span> <span class="separador-ponto">&bull;</span>
-        <span class="link-SaaS-aba" onclick="abrirAbaRodape('cookies')">Diretiva de Cookies</span>
-    </p>
-</div>
-    <!-- Contentor Centralizado de Abas Ocultas -->
-    <div id="central_conteudos_rodape" style="width: 100%; box-sizing: border-box;">
 
-    <!-- =========================================================================
-    📍 ABA: CONTACTO, ROTAS E MAPA INTERATIVO DO HUAMBO (VERSÃO ULTRA-ROBUSTA)
-    ========================================================================= -->
-    <div id="aba_contacto" class="quadrado-conteudo-SaaS" style="padding: 25px; background: #0b1329; border: 2px solid #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);">
-    
-    <div style="border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 20px; text-align: left;">
-        <span style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.7px; display: block; margin-bottom: 4px;">🎯 GEOLOCALIZAÇÃO REGISTADA - CONJUNTO #187467105</span>
-        <h3 style="color: #38bdf8; margin: 0; font-size: 18px; font-weight: bold; font-family: sans-serif;">📍 Localização da Sede &amp; Mapas de Angola</h3>
-    </div>
-    
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 25px; width: 100%; box-sizing: border-box; align-items: center;">
-        
-        <!-- Informações Oficiais Extraídas da sua Edição Global -->
-        <div style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; text-align: left; font-family: sans-serif;">
-            <div style="background: #070b12; border: 1px solid #1e293b; padding: 14px; border-radius: 8px; margin-bottom: 15px;">
-                <p style="margin: 4px 0;"><span style="font-size: 16px;">🏬</span> <b>Empresa Mestre:</b> <span style="color: #fff; font-weight: bold;">Barbearia Branca</span></p>
-                <p style="margin: 4px 0; color: #94a3b8; font-size: 13px;">📍 Av. General Pinto Monteiro, Aviação (Imediações do Kapango), Huambo, Angola</p>
-                <p style="margin: 8px 0 4px 0;">🕒 <b>Horário Publicado:</b> <span style="color: #4ade80;">08h00 &mdash; 21h00</span></p>
-                <p style="margin: 4px 0;">💳 <b>Pagamentos:</b> Dinheiro, Cartão, Multicaixa Express e App</p>
-                <p style="margin: 4px 0;">📞 <b>Contacto Operacional:</b> +244 925 347 372</p>
-            </div>
 
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="https://openstreetmap.org" target="_blank" style="flex: 1; min-width: 140px; text-align: center; background: linear-gradient(135deg, #38bdf8, #0284c7); color: #0f172a; padding: 10px; border-radius: 6px; font-weight: bold; font-size: 11px; text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 10px rgba(56,189,248,0.2);">
-                    🌍 Ver Node no OSM
-                </a>
-            </div>
-        </div>
-        
-        <!-- Frame do Mapa Dinâmico focado nas Coordenadas Reais do Huambo obtidas no Print -->
-        <div style="width: 100%; height: 320px; border-radius: 12px; overflow: hidden; border: 2px solid #1e293b; box-shadow: 0 6px 20px rgba(0,0,0,0.5); box-sizing: border-box;">
-            <!-- 🟢 URL RESTRUTURADA COM AS COORDENADAS REAIS EXATAS DO SEU PRINT -->
-            <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
-                src="https://openstreetmap.org" 
-                style="background: #070b12; filter: contrast(1.1); border: none;">
-            </iframe>
-        </div>
 
-    </div>
-</div>
 
 
-        <div id="aba_precos" class="quadrado-conteudo-SaaS">
-            <h3 style="color: #38bdf8; margin: 0 0 10px 0;">💰 Modelo de Preços</h3>
-            <p style="color: #cbd5e1; font-size: 13px; line-height: 1.5;">Instanciação e banco de dados gratuitos (0,00 Kz). Retenção da taxa administrativa padrão de 10% unicamente sobre produtos faturados com sucesso.</p>
-        </div>
 
-        <div id="aba_api" class="quadrado-conteudo-SaaS">
 
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #a855f7; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Camada de Integração Core</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🔌 Documentação de APIs &amp; Webhooks do Ecossistema</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>💻 <b>Endpoints de Faturamento JSON:</b> Desenvolvedores credenciados e administradores da rede podem consumir rotas RESTful seguras protegidas por chaves de tokenBearer para exportar relatórios de vendas consolidadas, saldos de carteiras de parceiros de todas as províncias e status de auditoria em tempo real.</p>
-            <p>🪝 <b>Webhooks de Confirmação EMIS:</b> Sincronização em segundo plano via protocolo HTTPS POST para disparar gatilhos reativos de validação contrátil e mudança de status assim que o gateway da central EMIS acusar a liquidação do split bancário por Multicaixa Express.</p>
-            <p>📊 <b>Pauta e Agenda Externa:</b> Documentação facilitada para sincronização bidirecional em tempo real, permitindo ligar sistemas locais e aplicativos mobile de barbearias à base centralizada global do <b>Grupo Aurélius</b>.</p>
-        </div>
-    </div>
 
-    <!-- 5. ABA: DOCUMENTAÇÃO -->
-    <div id="aba_documentacao" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Central de Conhecimento</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">📖 Manuais de Operação e Guias Técnicos</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>📘 <b>Guia do Administrador (Admin.php):</b> Manual operacional completo para realizar a auditoria regulamentar de documentos, gerir a visibilidade do site público, tratar as flags de bloqueio de B.I. caducado e despachar notificações reativas.</p>
-            <p>📙 <b>Manual do Parceiro Hospedado:</b> Diretrizes fáceis para a manipulação do painel SaaS independente, inserção correta de vagas de trabalho sem duplicações, controle reativo de estoque de cosméticos e monitoramento de comissões de 10% de retaguarda.</p>
-            <p>📗 <b>Central de Ajuda de Vendas (Admin_Venda.php):</b> Procedimentos formais para o tratamento de pedidos de emprego, abertura correta do modal e controle do ecossistema de abas.</p>
-        </div>
-    </div>
 
-    <!-- 6. ABA: BLOG -->
-    <div id="aba_blog" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #22c55e; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Portal de Conteúdo</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">📰 Blog e Tendências do Mercado de Estética em Angola</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>💇 <b>Inovações Técnicas de Balcão:</b> Artigos semanais assinados por especialistas cobrindo tendências de cortes modernos em Luanda, Huambo e Benguela, técnicas de pigmentação capilar avançada, barboterapia e manicure combinada.</p>
-            <p>📈 <b>Gestão Financeira para Salões:</b> Dicas práticas corporativas para organizar o fluxo de caixa, calcular a margem de comissão de barbeiros e reduzir em até 95% o índice de faltas de clientes.</p>
-            <p>🧴 <b>Cosmética Premium:</b> Análises completas sobre a aplicação de ceras modeladoras, champôs antiqueda e óleos de crescimento capilar comercializados no nosso marketplace.</p>
-        </div>
-    </div>
 
-    <!-- 7. ABA: TERMOS DE USO -->
-    <div id="aba_termos" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Regulamento Jurídico</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">📜 CLÁUSULA I: Termos de Uso e Condições Contratuais</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. Aceitação dos Termos Legais:</b> Ao instanciar as camadas de banco de dados do seu estabelecimento no Grupo Aurélius, o parceiro aceita de forma irrevogável as presentes diretrizes regulamentares de mercado.</p>
-            <p><b>2. Autenticidade Cadastral:</b> O responsável legal obriga-se a anexar cópias nítidas da frente e do verso do seu Bilhete de Identidade (B.I. Angola). O envio de documentação adulterada, falsificada ou fora do prazo de validade cronológica estabelecido por lei resulta no bloqueio imediato do balcão.</p>
-            <p><b>3. Taxas e Tarifas da Rede:</b> Fica acordado que a plataforma reterá a taxa administrativa de comissão de até 15% sobre os faturamentos intermediados pelo portal público. Nenhuma taxa mensal será cobrada durante o período de teste Freemium de 30 dias.</p>
-            <p><b>4. Políticas de Cancelamento de Serviços:</b> O cliente retém o direito ao reembolso integral de agendamentos cancelados com até 2 horas de antecedência. Os estornos são liquidados diretamente na conta bancária de origem após a validação da fatura pelo suporte.</p>
-        </div>
-    </div>
 
-    <!-- 8. ABA: PRIVACIDADE -->
-    <div id="aba_privacidade" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Segurança de Dados</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🛡️ CLÁUSULA II: Política de Privacidade e Proteção de Dados</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. Recolha Corporativa Segura:</b> O portal armazena informações estritamente necessárias para a triagem e hospedagem SaaS, incluindo nomes comerciais, e-mails corporativos, contatos telefônicos de WhatsApp, números de B.I. e chaves de IBAN bancário para liquidação de saques.</p>
-            <p><b>2. Processamento e Transferência Dinâmica:</b> Dados coletados de candidatos a emprego (Província, Bairro de residência, data de nascimento e resumo profissional) são criptografados no servidor local e transferidos dinamicamente apenas para o banco de dados do salão selecionado, sendo proibida a comercialização de registros com terceiros.</p>
-            <p><b>3. Conformidade com a APD (Angola):</b> Operamos sob os mais rígidos preceitos de segurança digital nacionais, garantindo que o parceiro possa solicitar a exclusão permanente do seu registro da tabela <code>usuario</code> a qualquer momento através do comando de eliminação definitiva.</p>
-        </div>
-    </div>
 
-    <!-- 9. ABA: COOKIES -->
-    <div id="aba_cookies" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Diretivas Técnicas</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🍪 CLÁUSULA III: Diretiva de Cookies e Regulamento de Dados</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. O que são Cookies de Sessão?</b> São pequenos arquivos de texto armazenados localmente no navegador do utilizador para otimizar a velocidade de renderização da plataforma e salvar estados temporários.</p>
-            <p><b>2. Ativação no Portal:</b> Utilizamos cookies técnicos para gerenciar a transição responsiva de abas do motor de hospedagem e ativar a trava de segurança de 1 hora contra re-submissões abusivas de currículos na mesma vaga de emprego.</p>
-            <p><b>3. Regulamento Geral (RGPD / CPLP):</b> Em conformidade com as melhores práticas internacionais de proteção de dados, o utilizador pode desativar os cookies analíticos nas configurações do browser, ciente de que isso pode limitar recursos reativos da interface mercantil do rodapé.</p>
-        </div>
-    </div>
-    
-    <!-- 10. ABA: SOBRE NÓS -->
-    <div id="aba_sobre" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Institucional</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🇦🇴 Sobre o Grupo Aurélius</h3>
-        </div>
-        <p>Nascido na província do Huambo, o <b>Grupo Aurélius</b> é uma startup focada no desenvolvimento de engenharia de software SaaS voltada para a modernização do setor de estética e cosmética em Angola.</p>
-        <p>A nossa missão corporativa central concentra-se em três pilares fundamentais: oferecer uma infraestrutura ágil para pequenos negócios expandirem o seu faturamento, conectar profissionais qualificados a balcões técnicos com vagas em aberto, e entregar produtos de beleza premium com logística rápida diretamente nas residências dos clientes de forma autônoma e segura.</p>
-        
-        <p>🛵 <b>Atendimento Especializado ao Domicílio:</b> Rompendo as barreiras do balcão físico tradicional, a nossa plataforma conecta os clientes aos melhores profissionais de estética, cabeleireiros e barbeiros para a realização de serviços no conforto do seu lar. O agendamento é dinâmico, permitindo selecionar o especialista ideal, definir o horário e acompanhar o deslocamento técnico em tempo real pelas vias de Angola.</p>
-        
-        <p>👑 <b>Clube Premium de Descontos e Fidelidade:</b> Para os clientes que ativam a sua carteira digital e realizam depósitos antecipados na plataforma, o Grupo Aurélius garante vantagens comerciais exclusivas. Os membros ativos recebem uma redução imediata de 10% a 20% em todos os agendamentos ao domicílio e prioridade na reserva de horários em datas de alta afluência, convertendo o saldo retido em créditos de consumo automáticos.</p>
-        
-        <p>🌍 <b>Logística de Distribuição Nacional Descentralizada:</b> A nossa malha de entregas de cosméticos premium foi estruturada de forma granular para cobrir todo o território nacional. O fluxo logístico inicia-se de forma minuciosa nos <b>Bairros</b> periféricos e zonas suburbanas (como o Kapango e São Luís no Huambo, ou Talatona em Luanda), expande-se de forma integrada para as sedes dos <b>Municípios</b> e consolida-se com rotas interprovinciais que interligam com eficácia todas as <b>21 Províncias</b> de Angola, garantindo que ceras, óleos e champôs cheguem com segurança e faturamento coeso a qualquer balcão ou residência do país.</p>
 
-        </div>
-    </div>
-    <div id="aba_contacto" class="quadrado-conteudo-SaaS">
-    <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-        <span style="color: #ca8a04; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Angola GPS Node</span>
-        <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">📍 Localização da Sede &amp; Mapas de Angola</h3>
-    </div>
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
-        <div style="color: #cbd5e1; font-size: 13.5px; line-height: 1.6; flex: 1; min-width: 280px;">
-            <p style="margin: 0 0 10px 0;">A nossa central mestre opera ativamente na Província do Huambo com canais de atendimento físico e suporte corporativo multitenant:</p>
-            <p style="margin: 6px 0;">🏢 <b>Escritório Principal:</b> Bairro de São Luís / Catimba, Sede Administrativa.</p>
-            <p style="margin: 6px 0;">🕒 <b>Horário Operacional:</b> Segunda a Sábado — Das 8h00 às 22h00.</p>
-            <p style="margin: 6px 0;">🛡️ <b>Suporte ao Cliente:</b> Linhas diretas de comunicação ativas para auditoria mercantil e assistência imediata.</p>
-            <p style="margin: 6px 0;">🌍 <b>Cobertura Nacional:</b> Suporte completo a implantações SaaS corporativas em todas as 21 províncias de Angola.</p>
-        </div>
-        <div style="width: 100%; max-width: 450px; height: 320px; border-radius: 8px; overflow: hidden; border: 1px solid #1e293b; box-shadow: 0 4px 15px rgba(0,0,0,0.4);">
-        <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" 
-    src="https://openstreetmap.org" 
-    style="background: #070b12; filter: contrast(1.1); border: none;">
-</iframe>
-        </div>
-    </div>
-    <span style="display: block; font-size: 11px; color: #64748b; text-align: center; border-top: 1px dashed #1e293b; padding-top: 10px;">Sede: Huambo - Bairro de São Luís / Catimba, Território Nacional.</span>
-</div>
-
-<!-- =========================================================================
-     ❓ 2. ABA: FAQ VORTEX INTEGRADA (MÓDULO DE PERGUNTAS EXPANSÍVEIS CORRIGIDO)
-     ========================================================================= -->
-<div id="aba_faq" class="quadrado-conteudo-SaaS">
-    <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-        <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Central de Inteligência</span>
-        <h2 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">❓ Perguntas Frequentes (FAQ)</h2>
-    </div>
-
-    <h3 class="divisoria-faq-cliente">Para Clientes</h3>
-    <details class="item-sanfona-premium">
-        <summary>Como funciona o Grupo Aurélius?</summary>
-        <div class="resposta-painel">
-            <p>O Grupo Aurélius é um ecossistema tecnológico multisserviços líder na província do Huambo e em Angola. Atuamos em Agendamento Inteligente de serviços em linha, Atendimento estético qualificado ao Domicílio e E-Commerce integrado de Cosméticos com entregas descentralizadas de alta performance.</p>
-        </div>
-    </details>
-    <details class="item-sanfona-premium">
-        <summary>É possível Cancelar um serviço? Como funciona o reembolso?</summary>
-        <div class="resposta-painel">
-            <p>Sim, o cancelamento é totalmente garantido. Se o pagamento foi feito por adiantamento bancário ou retido na plataforma, basta aceder à área de agendamentos e solicitar a revogação até 2 horas antes do atendimento para o estorno integral na sua conta, sem taxas adicionais de penalização.</p>
-        </div>
-    </details>
-
-    <h3 class="divisoria-faq-parceiro">Para Profissionais &amp; Hospedagem</h3>
-    <details class="item-sanfona-premium">
-        <summary>Como funciona a Abordagem e Recepção Comercial?</summary>
-        <div class="resposta-painel">
-            <p>Como uma Startup de Hospedagem, entregamos um multiplicador de faturamento para o seu negócio: automatizamos a sua agenda local, reduzimos as faltas dos clientes através de notificações executivas de suporte e direcionamos o fluxo de tráfego das províncias direto para as empresas operacionais dos salões parceiros.</p>
-        </div>
-    </details>
-    <details class="item-sanfona-premium">
-        <summary>Existe algum período de teste gratuito? Quais são as taxas?</summary>
-        <div class="resposta-painel">
-            <p>Sim! Aplicamos o modelo Freemium de crescimento com um teste gratuito de 30 dias com acesso total ao painel Master isolado. É ideal para validar o ecossistema local e o aumento de faturamento real de balcão antes de qualquer investimento técnico.</p>
-        </div>
-    </details>
-</div>
-
-    <!-- 2. ABA: FUNCIONALIDADES -->
-    <div id="aba_funcionalidades" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Motores do Sistema</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">⚡ Funcionalidades do Ecossistema SaaS</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>🚀 <b>Hospedagem Automatizada Multi-Tenant:</b> O sistema permite a instanciação e o isolamento lógico de balcões autônomos e bases de faturamento de cada parceiro em menos de 5 minutos.</p>
-            <p>💼 <b>Painel de Recrutamento Inteligente:</b> Controle centralizado de candidaturas com motores que interceptam cliques abusivos, gerenciam a caducidade cronológica de documentos e ocultam anúncios saturados após 10 cliques.</p>
-            <p>🪪 <b>Auditoria Regulatória Nacional:</b> Verificação nativa de Bilhetes de Identidade angolanos através de algoritmos JavaScript que interceptam erros de formato e calculam o teto legal de expiração etária.</p>
-            <p>💬 <b>Mensageria Integrada wa.me:</b> Despacho imediato de notificações comerciais de validação, suspensão contratual ou admissão de profissionais via API sem necessidade de registro na agenda local.</p>
-        </div>
-    </div>
-
-    <!-- 3. ABA: MÓDULOS -->
-    <div id="aba_modulos" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Divisões de Engenharia</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">⚙️ Arquitetura de Módulos Independentes</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>🔗 <b>Core Administrativo (Admin.php):</b> Central master de auditoria para controle de visibilidade das barbearias, status de validação física de B.I. e ativação de privilégios de rede.</p>
-            <p>🛍️ <b>Marketplace Corporativo (Loja.php):</b> Módulo dedicado à exposição, controle estrito de estoque e venda em linha de cosméticos premium (ceras modeladoras, óleos capilares e champôs), integrado com filtros de categorias.</p>
-            <p>📋 <b>Módulo de Recrutamento (Vagas.php):</b> Interface pública desenvolvida para a captação contínua de talentos técnicos em Angola. Possui travas temporárias por cookies e armazenamento indexado de dados residenciais por Província e Bairro.</p>
-            <p>🛒 <b>Central Mercantil (Admin_Venda.php):</b> Subcamada corporativa que gerencia a triagem de pedidos de emprego, equipada com painéis retráteis automáticos para economia de espaço em ecrãs mobile.</p>
-        </div>
-    </div>
-
-    <!-- 4. ABA: PREÇOS -->
-    <div id="aba_precos" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Planos &amp; Contratos</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">💰 Modelo Commercial, Assinaturas e Comissões</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>👑 <b>Instanciação de Infraestrutura:</b> A criação de contas corporativas de micro-parceiros e a abertura das camadas de banco de dados no portal são 100% gratuitas (Taxa Fixada: 0,00 Kz).</p>
-            <p>📈 <b>Taxa de Intermediação Administrativa:</b> O ecossistema opera sob o modelo Freemium de crescimento. Cobramos uma comissão padrão de 10% a 15% sobre as transações de cosméticos e agendamentos processados com sucesso dentro da plataforma.</p>
-            <p>🔄 <b>Período de Teste Garantido:</b> Oferecemos 30 dias de livre acesso ao painel Master isolado para que o salão comprove o incremento real de faturamento antes de qualquer retenção financeira.</p>
-        </div>
-    </div>
-
-    <!-- 5. ABA: API -->
-    <div id="aba_api" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">🔌 Integração Core</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">🔌 Documentação de APIs &amp; Webhooks para Desenvolvedores</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>💻 <b>Endpoints de Faturamento JSON:</b> Desenvolvedores credenciados podem consumir rotas seguras protegidas por chaves de token Bearer para exportar relatórios de vendas, saldos de carteiras e status de saques de parceiros em tempo real.</p>
-            <p>🪝 <b>Webhooks de Confirmação EMIS:</b> Sincronização automatizada para disparar gatilhos de validação contrátil assim que o gateway da central acuse a liquidação do split bancário por Multicaixa Express.</p>
-            <p>📊 <b>Pauta e Agenda Externa:</b> Integração facilitada via REST API para conectar sistemas locais de gerenciamento de horários ao servidor unificado do Grupo Aurélius.</p>
-        </div>
-    </div>
-
-    <!-- 6. ABA: DOCUMENTAÇÃO -->
-    <div id="aba_documentacao" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Manuais Técnicos</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">📖 Manuais de Operação do Sistema</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>📘 <b>Guia do Administrador:</b> Instruções detalhadas para auditoria de documentos cadastrais, gestão de visibilidade no site e ativação de marcas registradas na vitrine principal.</p>
-            <p>📙 <b>Manual do Parceiro:</b> Como lançar oportunidades de trabalho, definir requisitos obrigatórios, e manipular o estoque de produtos cosméticos em segundo plano de forma independente.</p>
-            <p>📗 <b>Central de Ajuda de Vendas:</b> Procedimentos para acompanhar e processar as requisições mercantis recebidas no painel Admin_Venda.php.</p>
-        </div>
-    </div>
-
-    <!-- 7. ABA: BLOG -->
-    <div id="aba_blog" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Média &amp; Mercado</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">📰 Blog e Tendências do Mercado de Estética</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>💇 <b>Inovações Técnicas:</b> Artigos semanais assinados por especialistas cobrindo tendências de cortes modernos em Luanda e no Huambo, técnicas avançadas de pigmentação capilar e barboterapia.</p>
-            <p>📈 <b>Gestão Financeira para Salões:</b> Dicas práticas corporativas para organizar o fluxo de caixa, calcular a margem de comissão de barbeiros e reduzir em até 95% o índice de faltas de clientes.</p>
-            <p>🧴 <b>Cosmética Premium:</b> Análises completas sobre a aplicação de ceras modeladoras, champôs antiqueda e óleos de crescimento capilar comercializados no nosso marketplace.</p>
-        </div>
-    </div>
-
-    <!-- 8. ABA: TERMOS DE USO -->
-    <div id="aba_termos" class="quadrado-conteudo-SaaS">
-
-    <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Regulamento Jurídico</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">📜 CLÁUSULA I: Termos de Uso e Condições Contratuais</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. Aceitação dos Termos Legais:</b> Ao instanciar as camadas de banco de dados do seu estabelecimento no Grupo Aurélius, o parceiro aceita de forma irrevogável as presentes diretrizes regulamentares de mercado.</p>
-            <p><b>2. Autenticidade Cadastral:</b> O responsável legal obriga-se a anexar cópias nítidas da frente e do verso do seu Bilhete de Identidade (B.I. Angola). O envio de documentação adulterada, falsificada ou fora do prazo de validade cronológica de 10 anos estabelecido pelo Decreto Presidencial n.º 182/25 resulta no bloqueio imediato do balcão e cancelamento das credenciais operacionais.</p>
-            <p><b>3. Taxas e Tarifas da Rede:</b> Fica acordado que a plataforma reterá a taxa administrativa de comissão de até 15% sobre os faturamentos intermediados pelo portal público. Nenhuma taxa mensal fixa será cobrada durante o período de teste Freemium de 30 dias de infraestrutura.</p>
-            <p><b>4. Políticas de Cancelamento de Serviços:</b> O cliente retém o direito ao reembolso integral de agendamentos cancelados com até 2 horas de antecedência. Os estornos são liquidados diretamente na conta bancária de origem após a validação da fatura pelo suporte central.</p>
-        </div>
-    </div>
-
-    <!-- 8. ABA: PRIVACIDADE -->
-    <div id="aba_privacidade" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Segurança de Dados</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🛡️ CLÁUSULA II: Política de Privacidade e Proteção de Dados</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. Recolha Corporativa Segura:</b> O portal armazena informações estritamente necessárias para a triagem e hospedagem SaaS, incluindo nomes comerciais, e-mails corporativos, contatos telefônicos de WhatsApp, números de B.I. e chaves de IBAN bancário para liquidação de saques.</p>
-            <p><b>2. Processamento e Transferência Dinâmica:</b> Dados coletados de candidatos a emprego (Província, Bairro de residência, data de nascimento e resumo profissional) são criptografados no servidor local e transferidos dinamicamente apenas para o banco de dados do salão selecionado, sendo proibida a comercialização de registros com terceiros.</p>
-            <p><b>3. Conformidade com a APD (Angola):</b> Operamos sob os mais rígidos preceitos de segurança digital nacionais, garantindo que o parceiro possa solicitar a exclusão permanente do seu registro da tabela <code>usuario</code> a qualquer momento através do comando de eliminação definitiva.</p>
-        </div>
-    </div>
-
-    <!-- 9. ABA: COOKIES -->
-    <div id="aba_cookies" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #ef4444; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Armazenamento Local</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🍪 CLÁUSULA III: Diretiva de Cookies e Regulamento de Dados</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p><b>1. O que são Cookies de Sessão?</b> São pequenos arquivos de texto armazenados localmente no navegador do utilizador para otimizar a velocidade de renderização da plataforma e salvar estados temporários.</p>
-            <p><b>2. Ativação no Portal:</b> Utilizamos cookies técnicos para gerenciar a transição responsiva de abas do motor de hospedagem e ativar a trava de segurança de 1 hora contra re-submissões abusivas de currículos na mesma vaga de emprego.</p>
-            <p><b>3. Regulamento Geral (RGPD / CPLP):</b> Em conformidade com as melhores práticas internacionais de proteção de dados, o utilizador pode desativar os cookies analíticos nas configurações do browser, ciente de que isso pode limitar recursos reativos da interface mercantil do rodapé.</p>
-        </div>
-    </div>
-    
-    <!-- 10. ABA: SOBRE NÓS -->
-    <div id="aba_sobre" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Quem Somos</span>
-            <h3 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 18px;">🇦🇴 Sobre o Grupo Aurélius</h3>
-        </div>
-        <div style="color: #cbd5e1; font-size: 13px; line-height: 1.6;">
-            <p>Nascido na província do Huambo, o <b>Grupo Aurélius</b> é uma startup focada no desenvolvimento de engenharia de software SaaS voltada para a modernização do setor de estética e cosmética em Angola.</p>
-            <p>A nossa missão corporativa central concentra-se em três pilares fundamentais: oferecer uma infraestrutura ágil para pequenos negócios expandirem o seu faturamento, conectar profissionais qualificados a balcões técnicos com vagas em aberto, e entregar produtos de beleza premium com logística rápida diretamente nas residências dos clientes.</p>
-        </div>
-    </div>
-
-    <!-- 11. ABA: FAQ VORTEX INTEGRADA -->
-    <div id="aba_faq" class="quadrado-conteudo-SaaS">
-        <div style="border-bottom: 1px solid #1e293b; padding-bottom: 10px; margin-bottom: 15px;">
-            <span style="color: #38bdf8; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Central de Inteligência</span>
-            <h2 style="color: #38bdf8; margin: 5px 0 0 0; font-size: 16px;">❓ Perguntas Frequentes (FAQ)</h2>
-        </div>
-
-        <h3 class="divisoria-faq-cliente">Para Clientes</h3>
-        <details class="item-sanfona-premium">
-            <summary>Como funciona o Grupo Aurélius?</summary>
-            <div class="resposta-painel">
-                <p>O Grupo Aurélius é um ecossistema tecnológico multisserviços líder na província do Huambo e em Angola. Atuamos em Agendamento Inteligente de serviços em linha, Atendimento estético qualificado ao Domicílio e E-Commerce integrado de Cosméticos com entregas descentralizadas de alta performance.</p>
-            </div>
-        </details>
-        <details class="item-sanfona-premium">
-            <summary>É possível Cancelar um serviço? Como funciona o reembolso?</summary>
-            <div class="resposta-painel">
-                <p>Sim, o cancelamento é totalmente garantido. Se o pagamento foi feito por adiantamento bancário ou retido na plataforma, basta aceder à área de agendamentos e solicitar a revogação até 2 horas antes do atendimento para o estorno integral na sua conta, sem taxas adicionais de penalização.</p>
-            </div>
-        </details>
-
-        <h3 class="divisoria-faq-parceiro">Para Profissionais &amp; Hospedagem</h3>
-        <details class="item-sanfona-premium">
-            <summary>Como funciona a Abordagem e Recepção Comercial?</summary>
-            <div class="resposta-painel">
-                <p>Como uma Startup de Hospedagem, entregamos um multiplicador de faturamento para o seu negócio: automatizamos a sua agenda local, reduzimos as faltas dos clientes através de notificações executivas de suporte e direcionamos o fluxo de tráfego das províncias direto para as empresas operacionais dos salões parceiros.</p>
-            </div>
-        </details>
-        <details class="item-sanfona-premium">
-            <summary>Existe algum período de teste gratuito? Quais são as taxas?</summary>
-            <div class="resposta-painel">
-                <p>Sim! Aplicamos o modelo Freemium de crescimento com um teste gratuito de 30 dias com acesso total ao painel Master isolado. É ideal para validar o ecossistema local e o aumento de faturamento real de balcão antes de qualquer investimento técnico.</p>
-            </div>
-        </details>
-    </div>
-
-    <div style="font-size: 12px; color: #64748b; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; max-width: 1000px; margin: 20px auto 0 auto; padding: 15px 0 0 0; border-top: 1px dashed rgba(56, 189, 248, 0.1); box-sizing: border-box;">
-    <p style="margin: 0;">&copy; <?php echo date('Y'); ?> Aurelius. Todos os direitos reservados.</p>
-    <p style="margin: 0;">Feito em Angola 🇦🇴</p>
-</div>
-
-</div> <!-- Fim da div #central_conteudos_rodape -->
-
-
-
-
-
-
-
-<!-- Links de Filtros por Categoria Ajustados para o Principal.php -->
-<div style="width: 100%; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 30px;">
-    <a href="Principal.php" style="padding: 10px 20px; background: #1e293b; color: #fff; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #334155; transition: background 0.2s;">⭐ Todos os Itens</a>
-    <a href="Principal.php?filtro_cat=Ceras" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🧴 Pomadas de Caspa</a>
-    <a href="Principal.php?filtro_cat=Oleos" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">💧 Óleos de Crescimento</a>
-    <a href="Principal.php?filtro_cat=Shampoo" style="padding: 10px 20px; background: #0f172a; color: #38bdf8; text-decoration: none; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #0284c7; transition: background 0.2s;">🚿 Champôs Ativos</a>
-</div>
-
-
-
-<!-- 🔷 SECÇÃO DE LOJAS PARCEIRAS (MARKETPLACE - FIXADO EM 2 PARCEIROS POR VEZ) -->
-<h4 style="color: #38bdf8; text-transform: uppercase; font-weight: bold; font-size: 13px; text-align: left; margin: 30px 0 15px 0; border-left: 4px solid #38bdf8; padding-left: 10px;">🏪 Lojas e Fornecedores Oficiais</h4>
-
-<div style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important; gap: 20px !important; width: 100% !important; box-sizing: border-box !important; margin-bottom: 50px;">
-    <?php
-    // Estabelece ou reaproveita a ligação segura com a Aiven Cloud
-    $mysqli_produtos = $conexao_link ?? $conexao_aurelius;
-
-    if (!$mysqli_produtos || @mysqli_ping($mysqli_produtos) === false) {
-        $h_host = getenv('DB_HOST') ?: "://aivencloud.com";
-        $h_port = getenv('DB_PORT') ?: 22002;
-        $h_name = getenv('DB_NAME') ?: "defaultdb";
-        $h_user = getenv('DB_USER') ?: "avnadmin";
-        $h_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm";
-        
-        $mysqli_produtos = mysqli_init();
-        if ($mysqli_produtos) {
-            mysqli_ssl_set($mysqli_produtos, NULL, NULL, NULL, NULL, NULL);
-            @mysqli_real_connect($mysqli_produtos, $h_host, $h_user, $h_pass, $h_name, (int)$h_port, NULL, MYSQLI_CLIENT_SSL);
-        }
-    }
-
-    if ($mysqli_produtos && !$mysqli_produtos->connect_error) {
-        $mysqli_produtos->set_charset("utf8mb4");
-
-        // 🔒 AJUSTE DE LIMITE: Fixado estritamente em 2 lojas por atualização, ordenadas aleatoriamente
-        $limite_fixo = 2;
-
-        // 🎲 Seleciona os parceiros ativos de forma completamente misturada com o novo limite
-        $query_lojas_real = $mysqli_produtos->query("SELECT * FROM `lojas` WHERE `visivel_no_site` = 1 AND `transacao_status` = 'Confirmado' ORDER BY RAND() LIMIT $limite_fixo");
-        
-        if ($query_lojas_real && $query_lojas_real->num_rows > 0) {
-            $posicao = 1;
-            while ($loja = $query_lojas_real->fetch_assoc()) {
-                // Configuração das mídias das lojas parceiras
-                $logo_loja = (!empty($loja['logo_empresa'])) ? "uploads/" . $loja['logo_empresa'] : "OIP (6).webp";
-                $slug_rota = !empty($loja['slug_loja']) ? trim($loja['slug_loja']) : "default";
-                
-                // Mapeia e decodifica as especificações técnicas
-                $specs = json_decode($loja['especificacoes_json'], true) ?? [];
-                $controle_stock = $specs['controlo_stock'] ?? 'Geral';
-                $escala = $specs['escala_catalogo'] ?? 'Pequeno';
-                
-                // Empacota os dados comerciais para leitura rápida no JavaScript Modal
-                $info_modal = htmlspecialchars(json_encode([
-                    'name' => $loja['nome_loja'],
-                    'email' => $loja['email_mercantil'],
-                    'telefone' => $loja['telefone_corporativo'],
-                    'endereco' => $loja['endereco_armazem'],
-                    'iban' => $loja['iban_bancario'] ?? 'Não Disponível',
-                    'escala' => $escala,
-                    'stock' => $controle_stock
-                ]), ENT_QUOTES, 'UTF-8');
-                ?>
-                
-                <!-- Cartão Premium Unificado de Loja Parceira -->
-                <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 20px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s;">
-                    <div>
-                        <span style="font-size: 10px; color: #38bdf8; font-weight: bold; background: #1e293b; padding: 4px 10px; border-radius: 10px;">PARCEIRO EXIBIDO Nº <?php echo $posicao++; ?></span>
-                        <h2 style="font-size: 14px; font-weight: bold; color: #ffffff; margin: 15px 0 5px 0; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?php echo htmlspecialchars($loja['nome_loja']); ?></h2>
-                        <p style="font-size: 11px; color: #64748b; margin-bottom: 15px;">SOMOS A SOLUÇÃO PARA TI E PARA A SUA FAMÍLIA</p>
-                    </div>
-                    
-                    <!-- Logotipo Redondo da Loja -->
-                    <div style="width: 300px; height: 200px; border-radius: 20%; overflow: hidden; margin: 0 auto 15px auto; background: #fff; border: 3px solid #22d3ee;">
-                        <img src="<?php echo $logo_loja; ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-
-                    <div style="margin-bottom: 15px;">
-                        <p style="font-size: 11px; color: #94a3b8; margin: 0 0 5px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">📍 <?php echo htmlspecialchars($loja['endereco_armazem']); ?></p>
-                        <span style="font-size: 11px; color: #22c55e; font-weight: bold;">✓ Catálogo: <?php echo ucfirst($escala); ?></span>
-                    </div>
-
-                    <!-- Botões Operacionais das Lojas -->
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <!-- Botão 1: Detalhes e Variantes (Aba Reativa Pop-up) -->
-                        <button type="button" onclick="mostrarDetalhesLoja('<?php echo $info_modal; ?>')" style="width: 100%; background: #1e293b; color: #38bdf8; border: 1px solid #38bdf8; padding: 8px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
-                            🔎 Ficha Técnica
-                        </button>
-                        
-                        <!-- Botão 2: Redirecionamento Dinâmico focado em Lojas.php -->
-                        <a href="Lojas.php?slug_loja=<?php echo urlencode($slug_rota); ?>" style="text-decoration: none; width: 100%;">
-                            <button type="button" style="width: 100%; background: #22c55e; color: #ffffff; border: none; padding: 9px 0; font-size: 11px; font-weight: bold; text-transform: uppercase; border-radius: 8px; cursor: pointer;">
-                                ENTRAR NA LOJA
-                            </button>
-                        </a>
-                    </div>
-                </div>
-
-                <?php
-            }
-        } else {
-            echo "<p style='color: #64748b; font-style: italic; padding: 15px; grid-column: 1/-1; text-align: center;'>Nenhum parceiro comercial registado de momento.</p>";
-        }
-    }
-    ?>
-</div>
-<!-- 🌐 ABA POP-UP SUSPENSA (FICHA TÉCNICA REATIVA) -->
-<div id="modal_info_loja" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; padding: 15px; box-sizing: border-box;">
-    <div style="background: #0f172a; border: 2px solid #38bdf8; border-radius: 16px; width: 100%; max-width: 450px; padding: 25px; color: #fff; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.6);">
-        
-        <button onclick="fecharDetalhesLoja()" style="position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: #64748b; font-size: 20px; cursor: pointer;">✕</button>
-        
-        <h3 id="modal_nome" style="color: #38bdf8; font-size: 16px; text-transform: uppercase; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">Ficha Comercial</h3>
-        
-        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; text-align: left;">
-            <p><strong> TELEFONE: </strong> <span id="modal_telefone" style="color: #94a3b8;"></span></p>
-            <p><strong>CORREIO MERCANTIL: </strong> <span id="modal_email" style="color: #94a3b8;"></span></p>
-            <p><strong>ENDEREÇO: </strong> <span id="modal_endereco" style="color: #94a3b8;"></span></p>
-            <p><strong>TIPO DE EMPRESA: </strong> <span id="modal_escala" style="color: #eab308; font-weight: bold;"></span></p>
-           
-            <p><strong>INFORMAÇÕES GERAIS DE VARIANTES: </strong> <br> <span style="color: #a855f7;">Esta loja opera com gerenciamento dinâmico de cores, tamanhos e unidades reativas conforme a disponibilidade de stock e o seu gosto.</span></p>
-            <p><strong>CANAIS DE ABASTECIMENTO: </strong> <br> <span style="color: #ca8a04;">Parcerias logísticas integradas para distribuição nacional.</span></p>
-        </div>
-        
-        <button onclick="fecharDetalhesLoja()" style="width: 100%; background: #38bdf8; color: #0f172a; border: none; padding: 10px 0; font-size: 12px; font-weight: bold; border-radius: 8px; cursor: pointer; margin-top: 20px;">
-            FECHAR ESPECIFICAÇÕES
-        </button>
-    </div>
-</div>
-
-<script>
-function mostrarDetalhesLoja(dadosString) {
-    const dados = JSON.parse(dadosString);
-    
-    document.getElementById('modal_nome').innerText = "NOME DA LOJA: " + dados.nome;
-    document.getElementById('modal_telefone').innerText = dados.telefone;
-    document.getElementById('modal_email').innerText = dados.email;
-    document.getElementById('modal_endereco').innerText = dados.endereco;
-    document.getElementById('modal_escala').innerText = dados.escala.toUpperCase() + " (Controlo: " + dados.stock + ")";
-   
-    
-    document.getElementById('modal_info_loja').style.display = 'flex';
-}
-
-function fecharDetalhesLoja() {
-    document.getElementById('modal_info_loja').style.display = 'none';
-}
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    <!-- =================================================================
-    🎛️ MINI BARRA INFERIOR DE NAVEGAÇÃO REATIVA (100% RESPONSIVA)
-    ================================================================= -->
-    <style>
-        /* Estilos base estruturais para o rodapé */
-        .footer-aurelius {
-            background: #0b111e; 
-            padding: 20px 15px; 
-            text-align: center; 
-            border-top: 1px solid #1e293b;
-            box-sizing: border-box;
-            width: 100%;
-        }
-        
-        /* Contentor pílula principal adaptável */
-        .lista-nav-footer {
-            display: inline-flex; 
-            gap: 15px; 
-            background: #101f38; 
-            border: 2px solid #38bdf8; 
-            border-radius: 30px; 
-            padding: 10px 25px; 
-            margin: 0; 
-            list-style: none; 
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.25); 
-            flex-wrap: wrap; 
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-        }
-    
-        /* Links internos com transição suave */
-        .link-social-footer {
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 13px; 
-            color: #cbd5e1; 
-            text-decoration: none; 
-            font-weight: bold; 
-            transition: color 0.2s ease, transform 0.2s ease;
-        }
-    
-        .link-social-footer:hover {
-            color: #38bdf8 !important;
-            transform: translateY(-1px);
-        }
-    
-        /* Imagens padronizadas com recorte perfeito */
-        .img-social-footer {
-            width: 20px; 
-            height: 20px; 
-            border-radius: 50%; 
-            border: 1px solid #38bdf8; 
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-    
-        /* Separadores de bolha */
-        .separador-footer {
-            color: #38bdf8; 
-            font-weight: bold; 
-            user-select: none; 
-            display: flex; 
-            align-items: center;
-        }
-    
-        /* 📱 Otimizações reativas para Telemóveis (Mobile-First) */
-        @media (max-width: 580px) {
-            .lista-nav-footer {
-                border-radius: 16px !important;
-                padding: 15px !important;
-                gap: 12px !important;
-                display: grid !important;
-                grid-template-columns: repeat(2, 1fr) !important; /* Transforma em grelha dupla simétrica */
-                width: 100% !important;
-                max-width: 320px !important;
-                margin: 0 auto !important;
-            }
-            
-            .separador-footer {
-                display: none !important; /* Oculta as bolhas no mobile para economizar espaço */
-            }
-    
-            .link-social-footer {
-                justify-content: center !important;
-                background: rgba(56, 189, 248, 0.05) !important;
-                padding: 8px !important;
-                border-radius: 8px !important;
-                border: 1px solid rgba(56, 189, 248, 0.1) !important;
-            }
-        }
-    </style>
 
 
     <!-- 📱 RODAPÉ DE REDES SOCIAIS EM CÍRCULOS COMPACTOS (100% HORIZONTAL SEM QUEBRAS) -->

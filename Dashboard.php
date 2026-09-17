@@ -144,8 +144,8 @@ if (isset($pdo)) {
 
 
 
-    <style>
-    /* =========================================================================
+<style>
+/* =========================================================================
    🔮 CORE & RESET DO ECOSSISTEMA AURELIUS (MOBILE-FIRST)
    ========================================================================= */
 * { 
@@ -163,7 +163,6 @@ html, body {
     color: #ffffff; 
 }
 
-/* Contentor Geral com Margens Otimizadas para PC e Seguras para Telemóvel */
 body { 
     padding-bottom: 80px; 
     width: 100%;
@@ -182,115 +181,8 @@ body {
 }
 
 /* =========================================================================
-   👑 BARRA DE NAVEGAÇÃO SUPERIOR & SINO DE NOTIFICAÇÕES
-   ========================================================================= */
-nav { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    background-color: #ffffff; 
-    padding: 10px 40px; 
-    position: relative; 
-    z-index: 1000; 
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    height: 70px;
-}
-
-.logo { 
-    color: #d32f2f; 
-    cursor: pointer; 
-    text-decoration: none;
-}
-.logo h1 { font-size: 22px; font-weight: bold; line-height: 1; margin: 0; }
-.logo h1 span { color: #0b1a30; }
-.logo h6 { color: #0b1a30; font-size: 11px; margin-top: 2px; }
-
-/* Menu Desktop */
-#menuDesktop { 
-    display: flex !important; 
-    align-items: center;
-    list-style: none; 
-    gap: 12px; 
-}
-
-#menuDesktop li a { 
-    display: block; 
-    background-color: #0088cc; 
-    color: #ffffff; 
-    padding: 10px 16px; 
-    text-decoration: none; 
-    border-radius: 20px; 
-    font-size: 13px; 
-    font-weight: bold; 
-    text-align: center; 
-    border: 1px solid #006699; 
-    white-space: nowrap;
-    transition: all 0.2s ease;
-}
-
-#menuDesktop li a:hover { 
-    background-color: #0056b3; 
-    transform: translateY(-1px);
-}
-
-/* Ícone do Menu Mobile */
-.Menu-Icon { 
-    display: none !important; 
-    cursor: pointer; 
-}
-
-/* Bolha do Sino de Notificações */
-.notif-wrapper { 
-    position: relative; 
-    display: inline-block; 
-}
-
-.sino-btn { 
-    background: #1e293b; 
-    border: 1px solid #334155; 
-    color: #e2e8f0; 
-    font-size: 18px; 
-    padding: 8px 12px; 
-    border-radius: 50%; 
-    cursor: pointer; 
-    outline: none;
-}
-
-.badge-contador { 
-    position: absolute; 
-    top: -5px; 
-    right: -5px; 
-    background: #ef4444; 
-    color: white; 
-    font-size: 10px; 
-    font-weight: bold; 
-    width: 18px; 
-    height: 18px; 
-    border-radius: 50%; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    border: 2px solid #ffffff; 
-    animation: pulsoNotif 2s infinite; 
-}
-
-@keyframes pulsoNotif {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.15); box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
-    100% { transform: scale(1); }
-}
-
-/* =========================================================================
    📋 PAINÉIS DE DADOS, INPUTS & FORMULÁRIOS DA SESSÃO
    ========================================================================= */
-.painel-azul { 
-    background-color: #21409a; 
-    border: 2px dashed #0088cc; 
-    border-radius: 16px; 
-    padding: 20px; 
-    margin-bottom: 20px; 
-}
-
 .painel-titulo { 
     font-size: 15px; 
     font-weight: bold; 
@@ -312,30 +204,28 @@ nav {
     padding: 12px 16px; 
     border: 1px solid #ccc; 
     border-radius: 8px; 
-    font-size: 16px; /* Impede o zoom indesejado no iOS */
+    font-size: 16px; 
     color: #333333; 
     background-color: #ffffff; 
     outline: none;
 }
 
 /* =========================================================================
-   💇 INTERFACE DE ABAS, SERVIÇOS & EQUIPA
+   💇 INTERFACE DE ABAS, SERVIÇOS & EQUIPA (DASHBOARD)
    ========================================================================= */
-   .aba-conteudo { 
+.aba-conteudo { 
     display: none; 
 }
 .aba-conteudo.active { 
     display: block; 
 }
 
-/* Ajustado o tamanho mínimo de 140px para 160px para dar mais destaque em ecrãs pequenos */
 .grid-categorias, .grid-container { 
     display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-    gap: 16px; 
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+    gap: 20px; 
     margin-top: 15px; 
     width: 100%;
-  
 }
 
 .aba-item { 
@@ -343,14 +233,14 @@ nav {
     border: 1px solid #334155; 
     border-radius: 12px; 
     color: #ffffff; 
-    padding: 12px; /* Reduzido o padding interno para dar mais espaço à imagem */
+    padding: 16px; 
     cursor: pointer; 
     text-align: center; 
     transition: background 0.2s, transform 0.2s; 
     display: flex;
     flex-direction: column !important;
     align-items: center;
-    justify-content: space-between; /* Garante que o texto fica sempre abaixo */
+    justify-content: space-between; 
     overflow: hidden;
 }
 .aba-item:hover { 
@@ -358,94 +248,12 @@ nav {
     transform: translateY(-2px);
 }
 
-/* Otimização para as imagens dentro dos cards normais */
 .aba-item img { 
     border-radius: 8px; 
-    margin-bottom: 8px; 
+    margin-bottom: 12px; 
     object-fit: cover; 
-    height: 200px; /* Aumentado de 110px para 200px para ocupar o painel */
+    height: 220px; 
     width: 100%; 
-}
-
-/* 🟢 DESIGN DE ALTA PERFORMANCE PARA IMAGENS DOS CORTES (DASHBOARD) */
-.foto-trabalho-dashboard {
-    width: 100% !important;
-    height: 2200px !important;    /* Aumentado para preencher o painel de forma imponente */
-    object-fit: cover !important; /* Preenche o espaço completamente sem distorcer ou esticar */
-    border-radius: 12px !important; 
-    display: block !important;
-    margin: 0 auto 10px auto !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); 
-}
-/* =========================================================================
-   💰 SINALIZADORES DE MONETIZAÇÃO, PLUGINS FREEMIUM & ANÚNCIOS
-   ========================================================================= */
-.painel-freemium {
-    background: #ffffff; 
-    border: 2px dashed #340aee; 
-    border-radius: 16px;
-    padding: 16px; 
-    width: 100%; 
-    margin: 15px auto; 
-    text-align: left;
-    color: #333333;
-}
-
-.badge-premium { 
-    background: #ffc107; 
-    color: #000000; 
-    padding: 4px 10px; 
-    border-radius: 6px; 
-    font-size: 11px; 
-    font-weight: bold; 
-    float: right; 
-    text-transform: uppercase;
-}
-
-.btn-upgrade { 
-    background: #ffc107; 
-    color: #000000; 
-    border: none; 
-    padding: 10px 18px; 
-    border-radius: 8px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    margin-top: 10px; 
-    font-size: 13px;
-    transition: background 0.2s;
-}
-.btn-upgrade:hover { background: #e0a800; }
-
-.bloco-publicidade {
-    background: #fff3cd; 
-    border: 1px solid #ffeeba; 
-    border-radius: 12px;
-    padding: 15px; 
-    width: 100%; 
-    margin: 15px auto; 
-    text-align: center; 
-    color: #333333;
-}
-
-.tag-anuncio { 
-    font-size: 10px; 
-    color: #6c757d; 
-    display: block; 
-    text-transform: uppercase; 
-    letter-spacing: 1px; 
-    margin-bottom: 4px; 
-}
-
-.btn-anuncio-comissao { 
-    background: #dc3545; 
-    color: white; 
-    border: none; 
-    padding: 10px 16px; 
-    border-radius: 6px; 
-    margin-top: 10px; 
-    cursor: pointer; 
-    font-size: 13px; 
-    font-weight: bold; 
 }
 
 /* =========================================================================
@@ -474,13 +282,12 @@ nav {
     display: inline-block; 
 }
 
-/* Design de Fatura Neon em Tela */
 #faturaPainelNatural {
     background-color: rgba(11, 26, 48, 0.96) !important;
 }
 
 /* =========================================================================
-   🛍️ MERCADO GLOBAL & FLUXO DE PRODUTOS COSMÉTICOS (CARDS DE PROXIMIDADE)
+   🛍️ MERCADO GLOBAL & FLUXO DE PRODUTOS COSMÉTICOS
    ========================================================================= */
 .passo-card {
     background-color: #111827;
@@ -500,18 +307,19 @@ nav {
 
 .passo-card img {
     width: 100%;
-    max-width: 110px;
-    height: 110px;
-    object-fit: contain;
+    max-width: 100%;
+    height: 160px;
+    object-fit: cover;
     margin: 0 auto 10px auto;
     display: block;
+    border-radius: 8px;
 }
 
 /* =========================================================================
    📱 REGRAS DE ADAPTAÇÃO TOTAL PARA TELEMÓVEIS (ABAIXO DE 991PX)
    ========================================================================= */
 @media (max-width: 991px) {
-    /* Menu superior reativo */
+    /* Esconde o menu de texto do computador e revela as 3 barras */
     #menuDesktop { 
         display: none !important; 
     }
@@ -519,55 +327,44 @@ nav {
     .Menu-Icon { 
         display: block !important; 
     }
-    
-    nav { 
-        padding: 10px 15px !important; 
-        width: 100%; 
-    }
 
-    /* Ajuste de margens corporativas laterais nos telefones */
     body { 
-        width: 100% !important; 
-        margin-left: 0 !important; 
-        margin-right: 0 !important; 
         padding: 0 10px 80px 10px !important; 
     }
 
-    /* Grids reconfiguradas para 2 colunas perfeitas lado a lado */
+    /* Grids em 2 colunas perfeitas e nítidas lado a lado no telemóvel */
     .grid-inputs, .grid-categorias, .grid-container { 
         grid-template-columns: repeat(2, 1fr) !important; 
-        gap: 8px !important; 
+        gap: 12px !important; 
     }
 
-    /* Inputs expandem a 100% no formulário mobile */
     .grid-inputs input, .grid-inputs select {
         grid-column: span 2;
     }
 
-    /* Ajuste dos elementos internos dos cartões de serviços e cosméticos */
+    /* 🔥 ZOOM REATIVO: Aumenta as imagens para visualização gigante no telefone */
     .aba-item { 
-        padding: 10px 6px !important; 
+        padding: 14px 10px !important; 
     }
     
     .aba-item img { 
-        height: 195px !important; 
+        height: 220px !important; /* Zoom na imagem do serviço */
     }
 
     .passo-card { 
-        padding: 12px 8px !important; 
+        padding: 14px 10px !important; 
     }
     
     .passo-card img { 
-        height: 190px !important; 
+        height: 200px !important; /* Zoom na imagem do cosmético */
     }
 }
 
 /* =========================================================================
-   🖨️ CONTROLO EXCLUSIVO DE IMPRESSÃO LIMPA (MÓDULO CÁTEDRA)
+   🖨️ CONTROLO EXCLUSIVO DE IMPRESSÃO LIMPA 
    ========================================================================= */
 @media print {
     body * { 
-
         visibility: hidden !important; 
     }
     .no-print, nav, footer, .Menu-Icon, button, .btn-voltar, .botoes-pagamento { 
@@ -640,9 +437,9 @@ nav {
  
         <!-- 6. Emitir Última Fatura -->
         <li>
-        <a href="./fatura.php?id=<?= intval($row['id'] ?? ($venda['id'] ?? ($f['id'] ?? 118))) ?>" target="_blank" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: 0.2s;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#d32f2f'">
-        🖨️ Emitir Fatura
-    </a>
+            <a href="./fatura.php?id=<?= intval($row['id'] ?? ($venda['id'] ?? ($f['id'] ?? 118))) ?>" target="_blank" style="display: block; background-color: #d32f2f; color: white; padding: 10px 15px; text-decoration: none; border-radius: 20px; font-size: 13px; font-weight: bold; text-align: center; border: 1px solid #b91c1c; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: 0.2s;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#d32f2f'">
+                🖨️ Emitir Fatura
+            </a>
         </li>
  
         <!-- 7. Botão Sair -->
@@ -662,34 +459,40 @@ nav {
         </svg>
     </div>
 
-    <!-- MENU LATERAL RETRÁTIL (Mobile Overlay) -->
-    <div id="menuLateralMobile" style="position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background-color: #0f172a; border-right: 2px solid #0088cc; box-shadow: 5px 0 15px rgba(0,0,0,0.5); transition: 0.3s ease; padding: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 15px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
-            <strong style="color: #fff; font-size: 28px;">AURELIUS</strong>
-            <span onclick="toggleMenu()" style="font-size: 24px; color: #ef4444; cursor: pointer; font-weight: bold;">&times;</span>
+    <!-- =========================================================================
+         🚀 MENU LATERAL RETRÁTIL EXPANDIDO ATÉ AO MEIO (50% DA LARGURA)
+         ========================================================================= -->
+    <div id="menuLateralMobile" style="position: fixed; top: 0; left: -50vw; width: 50vw; height: 100vh; background-color: #0f172a; border-right: 4px solid #0088cc; box-shadow: 5px 0 15px rgba(0,0,0,0.5); transition: 0.3s ease; padding: 25px 15px; z-index: 9999; display: flex; flex-direction: column; gap: 18px; box-sizing: border-box;">
+        
+        <!-- Topo do Menu Mobile -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #1e293b; padding-bottom: 15px;">
+            <strong style="color: #fff; font-size: 24px; letter-spacing: 0.5px;">AURELIUS</strong>
+            <span onclick="toggleMenu()" style="font-size: 55px; color: #ef4444; cursor: pointer; font-weight: bold; line-height: 0.5;">&times;</span>
         </div>
      
-        <a href="Principal.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SAIR</a>
+        <!-- Links em tamanho aumentado com espaçamento confortável -->
+        <a href="Principal.php" style="background:#d32f2f; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; text-transform:uppercase;">SAIR</a>
     
-        <a href="unitel.php" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">📱 PAGAMENTOS MÓVEIS
-</a>
+        <a href="unitel.php" style="background:#ff6600; color:white; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:14px; text-align:center; text-transform:uppercase; border: 1px solid #cc5200;">📱 PAGAMENTOS MÓVEIS</a>
     
-        <a href="./fatura.php" target="_blank" style="display: inline-block; background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 12px 24px; font-size: 13px; font-weight: bold; border-radius: 20px !important; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #b91c1c; box-shadow: 0 4px 6px rgba(0,0,0,0.15); transition: 0.2s; font-family: sans-serif; text-align: center;" onmouseover="this.style.backgroundColor='#b91c1c'" onmouseout="this.style.backgroundColor='#d32f2f'">
-            🖨️ Emitir Última Fatura
+        <a href="./fatura.php" target="_blank" style="background-color: #0088cc; color: #ffffff; text-decoration: none; padding: 14px; font-size: 14px; font-weight: bold; border-radius: 10px; text-transform: uppercase; border: 1px solid #006699; text-align: center;">
+            🖨️ Emitir Fatura
         </a>
 
-        <a href="#" onclick="alternarAbas('servicos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SERVIÇOS</a>
-        <a href="#" onclick="alternarAbas('photos'); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">PHOTOS</a>
-        <a href="#" onclick="abrirAbas(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">SOBNRE NÓS</a>
-        <a href="#" onclick="abrirTermos(); toggleMenu(); return false;" style="background:#0088cc; color:white; padding:12px; text-decoration:none; border-radius:8px; font-weight:bold; text-align:center;">TERMOS & PRIVACIDADE </a>
+        <a href="#" onclick="alternarAbas('servicos'); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SERVIÇOS</a>
+        
+        <a href="#" onclick="alternarAbas('photos'); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">PHOTOS</a>
+        
+        <a href="#" onclick="abrirAbas(); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:15px; text-align:center; border: 1px solid #334155;">SOBRE NÓS</a>
+        
+        <a href="#" onclick="abrirTermos(); toggleMenu(); return false;" style="background:#1e293b; color:#38bdf8; padding:14px; text-decoration:none; border-radius:10px; font-weight:bold; font-size:13px; text-align:center; border: 1px solid #334155;">TERMOS & PRIVACIDADE</a>
     </div>
 </nav>
-
 
 <!-- =========================================================================
      📅 PAUTA DE AGENDAMENTO TÉCNICO COMPLETA — GRADIENTE PREMIUM VÍVIDO
      ========================================================================= -->
-     <div class="painel-azul" id="dadosAgendamento" style="margin-top: 25px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #00d2ff; border-radius: 16px; padding: 25px; box-shadow: 0 0 25px rgba(0, 210, 255, 0.25), inset 0 0 15px rgba(56, 189, 248, 0.1);">
+     <div class="painel-azul" id="dadosAgendamento" style="margin-top: 25px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid #00d2ff; border-radius: 16px; padding: 30px; box-shadow: 0 0 25px rgba(0, 210, 255, 0.25), inset 0 0 15px rgba(56, 189, 248, 0.1);">
      <span class="painel-titulo" style="color: #00d2ff; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 20px; text-shadow: 0 0 10px rgba(0, 210, 255, 0.4); border-left: 4px solid #22c55e; padding-left: 10px;">Dados de Atendimento da Sessão</span>
      
      <div class="grid-inputs" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px;">
@@ -789,7 +592,7 @@ nav {
  </script>
 
 
-
+<br>
     <div class="container">
     
     <!-- ABA HOME (TUDO DEVE FICAR DENTRO DELA PARA NÃO SUMIR) -->
@@ -1664,7 +1467,7 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 
 
      <!-- Secção Geral de Serviços -->
-     <div id="secao-servicos" class="aba-conteudo" style="width:100%; max-width:1200px; margin:0 auto; padding:0 15px;">
+     <div id="secao-servicos" class="aba-conteudo" style="width:100%; max-width:1200px; margin:0 auto; padding:9 5px;">
     
 <!-- Caixa de confirmação de preço (Inicia oculta) -->
 <div id="caixa-preco" class="preco-container hidden">
@@ -1707,58 +1510,98 @@ box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     
     <!-- Sub-grupo: Cortes (Inicia oculto) -->
     <div id="sub-cortes" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Corte Francês Cheio', '1.500 kz')"><div class="img-wrapper"><img src="1776692903268.jpg"></div>Corte Francês Cheio</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Corte Francês Cheio', '1.000 kz')"><div class="img-wrapper"><img src="1776692903268.jpg"></div>Corte Francês Cheio</button>
         <button class="aba-item" onclick="exibirPrecoFinal('Corte Francês Vazio', '1.000 kz')"><div class="img-wrapper"><img src="1777201603721.jpg"></div>Corte Francês Vazio</button>
         <button class="aba-item" onclick="exibirPrecoFinal('Corte de Crianças', '800 kz')"><div class="img-wrapper"><img src="1777757951670.jpg"></div>Corte de Crianças</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Corte de Adultos', '1.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Corte de Adultos</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Cortes Feminino', '1.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Cortes Feminino</button>
         <button class="aba-item" onclick="exibirPrecoFinal('Corte Careca', '500 kz')"><div class="img-wrapper"><img src="1777556066924.jpg"></div>Careca</button>
         <button class="aba-item" onclick="exibirPrecoFinal('Design e Corte de Barba', '1.500 kz')"><div class="img-wrapper"><img src="1776692182096.jpg"></div>Barba</button>
         <button class="aba-item" onclick="exibirPrecoFinal('Outros Estilos de Corte', '3.000 kz')"><div class="img-wrapper"><img src="1777986301625.jpg"></div>Outros</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Cortes com Pintura Black', '2.000 kz')"><div class="img-wrapper"><img src="1777986301625.jpg"></div>Cortes com Pintura black</button>
     </div>
 
     <!-- Sub-grupo: Pinturas (Inicia oculto) -->
     <div id="sub-pinturas" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Tintura Geral', '5.000 kz')"><div class="img-wrapper"><img src="Save (21).jpg"></div>Tintura Geral</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Mechas / Luzes', '8.000 kz')"><div class="img-wrapper"><img src="1777986265622.jpg"></div>Mechas / Luzes</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Pintura Geral Black', '900 kz')"><div class="img-wrapper"><img src="Save (21).jpg"></div>Pintura Geral Black</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Pinturas nas Pontas clorido', '6.500 kz')"><div class="img-wrapper"><img src="1777986265622.jpg"></div>Pinturas nas Pontas clorido</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Pintura Geral Loiro', '6.900 kz')"><div class="img-wrapper"><img src="Save (21).jpg"></div>Pintura Geral Loiro</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Pintura Geral Loiro', '5.500 kz')"><div class="img-wrapper"><img src="1777986265622.jpg"></div>Pintura Geral Loiro</button>
+
+        
     </div>
 
     <!-- Sub-grupo: Sobrancelhas (Inicia oculto) -->
     <div id="sub-sobrancelhas" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Design Simples', '1.000 kz')"><div class="img-wrapper"><img src="WhatsApp-Image-2021-07-27-at-11.13.51-768x768_50559e15-debf-46ab-86bb-8a217a1bf2f1.jpg"></div>Design Simples</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Design Simples', '500 kz')"><div class="img-wrapper"><img src="WhatsApp-Image-2021-07-27-at-11.13.51-768x768_50559e15-debf-46ab-86bb-8a217a1bf2f1.jpg"></div>Design Simples</button>
+
         <button class="aba-item" onclick="exibirPrecoFinal('Aplicação de Henna', '4.500 kz')"><div class="img-wrapper"><img src="sobrancelhas-com-henna-1-278x300.png"></div>Aplicação de Henna</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Sobrancelhas normal', '1.500 kz')"><div class="img-wrapper"><img src="267f5f0795a07c2c267b53553657554e(0).jpg"></div>Sobrancelhas normal</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Design Tatoo', '1.200 kz')"><div class="img-wrapper"><img src="267f5f0795a07c2c267b53553657554e(0).jpg"></div>Design Tatoo</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Design Tatoo lápis', '800 kz')"><div class="img-wrapper"><img src="267f5f0795a07c2c267b53553657554e(0).jpg"></div>Design Tatoo Lápis</button>
     </div>
 
     <!-- Sub-grupo: Maquilhagem (Inicia oculto) -->
     <div id="sub-maquilhagem" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Maquilhagem Social', '15.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Maquilhagem Social</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Maquilhagem Social', '10.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Maquilhagem Social</button>
+
         <button class="aba-item" onclick="exibirPrecoFinal('Maquilhagem Noiva', '40.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Maquilhagem Noiva</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Maquilhagem de Festas', '15.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Maquilhagem de Festas</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Maquilhagem Noturna', '12.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Maquilhagem Noturna</button>
     </div>
 
     <!-- Sub-grupo: Tratamentos (Inicia oculto) -->
     <div id="sub-tratamentos" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Hidratação Profunda', '5.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob americano</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Hidratação Profunda', '7.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob Frances</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Hidratação Profunda', '3.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Virada torta</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Hidratação Profunda', '8.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Mapunga umbundo</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Queratina / Selagem', '9.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>tranças comprida</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Tratamento Capilar', '8.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob angolano</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Tratamento Capilar', '12.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Mapunga</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Tratamento Capilar', '11.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Dreid Lox</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Tratamento Capilar', '8.600 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Tranças Chuas</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Tratamento Capilar', '8.650 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Virada</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Bob americano ', '5.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob americano</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Bob Frances', '7.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob Frances</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Virada torta', '3.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Virada torta</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Mapunga umbundo', '8.500 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Mapunga umbundo</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Bob para Crianças', '9.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob para Crianças</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Bob angolano', '8.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Bob angolano</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Mapunga', '12.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Mapunga</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Dreid Lox', '11.000 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Dreid Lox</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Tranças Chuas', '8.600 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Tranças Chuas</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Virada', '8.650 kz')"><div class="img-wrapper"><img src="1777298458880.jpg"></div>Virada</button>
     </div>
 
     <!-- Sub-grupo: Manicure (Inicia oculto) -->
     <div id="sub-manicure" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Manicure Simples', '1.200 kz')"><div class="img-wrapper"><img src="1750282483395.jpg"></div>Manicure Simples</button>
-        <button class="aba-item" onclick="exibirPrecoFinal('Aplicação Gel / Acrigel', '3.500 kz')"><div class="img-wrapper"><img src="1750281850375.jpg"></div>Aplicação Gel / Acrigel</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Manicure Simples Masculino', '1.200 kz')"><div class="img-wrapper"><img src="1750282483395.jpg"></div>Manicure Simples Masculino</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Aplicação Gel', '3.500 kz')"><div class="img-wrapper"><img src="1750281850375.jpg"></div>Aplicação Gel </button>
+
         <button class="aba-item" onclick="exibirPrecoFinal('Manutenção de Unhas', '1.000 kz')"><div class="img-wrapper"><img src="1750281735037.jpg"></div>Manutenção de Unhas</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Manicure Completo', '1.200 kz')"><div class="img-wrapper"><img src="1750282483395.jpg"></div>Manicure Completo</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Aplicação Gelinho', '3.500 kz')"><div class="img-wrapper"><img src="1750281850375.jpg"></div>Aplicação Gelinho</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Manutenção Total', '5.000 kz')"><div class="img-wrapper"><img src="1750281735037.jpg"></div>Manutenção Total</button>
     </div>
 
     <!-- Sub-grupo: Pedicure (Inicia oculto) -->
     <div id="sub-pedicure" class="grid-container sub-grupo hidden">
-        <button class="aba-item" onclick="exibirPrecoFinal('Pedicure Simples', '1.000 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Pedicure Simples</button>
+        <button class="aba-item" onclick="exibirPrecoFinal('Pedicure Simples masculino', '800 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Pedicure Simples Masculino</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Pedicure Simples Feminino', '800 kz')"><div class="img-wrapper"><img src="1754574216379.jpg"></div>Pedicure Simples Feminino</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Gelinho símples Masculino', '1.300 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Gelinho símples Masculino</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Gelinho símples Feminino', '2.000 kz')"><div class="img-wrapper"><img src="1754574216379.jpg"></div>Gelinho símples Feminino</button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Pedicuri de Gel', '1.800 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Pedicuri de Gel </button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Manicuri de Gel', '2.800 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Manicuri de Gel </button>
+
+        <button class="aba-item" onclick="exibirPrecoFinal('Desenhos nas Unhas', '2.800 kz')"><div class="img-wrapper"><img src="1753021732718.jpg"></div>Desenhos nas Unhas </button>
+
+
         <button class="aba-item" onclick="exibirPrecoFinal('Spa Completo dos Pés', '4.000 kz')"><div class="img-wrapper"><img src="1754574216379.jpg"></div>Spa Completo dos Pés</button>
     </div>
 </div>
@@ -1836,7 +1679,7 @@ try {
          <div class="passo-card-neon" style="animation-delay: 0.6s;">
              <div class="emoji-glow">📱</div>
              <h4>4. Desconto Unitel Money</h4>
-             <p>Introduza um terminal Unitel elegível (prefixos 925/935). O gateway calcula e aplica <b>2% de Desconto VIP</b> automáticos no caixa.</p>
+             <p>Introduza um terminal Unitel elegível (prefixos 9XXXXX). O gateway calcula e aplica <b>20% de Desconto VIP</b> automáticos no caixa.</p>
          </div>
  
          <!-- Instrução 5: Plano Freemium -->
