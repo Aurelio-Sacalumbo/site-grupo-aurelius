@@ -1,36 +1,26 @@
 <?php
-// =========================================================================
-// 🔮 LOGIN_LOOKNOVO.PHP - VERSÃO PREMIUN DIAMANTE (GATILHOS E LINKS REPARADOS)
-// =========================================================================
 if (!isset($_SESSION)) { 
     session_start(); 
 }
-
-date_default_timezone_set('Africa/Luanda');
-
-// Liga à base de dados central centralizada do Grupo Aurélius
 include("conect.php");
-
 $erro = array();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['entrar_looknovo'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['entrar_chickchick'])) {
     $email = $mysqli->escape_string(trim($_POST['email']));
-    $senha = md5(md5($_POST['senha'])); // Criptografia MD5 dupla do projeto
+    $senha = md5(md5($_POST['senha']));
 
-    // Consulta blindada com SELECT * indexada estritamente ao código 4 da lookNovo
-    $sql = "SELECT * FROM `usuario` WHERE `email` = '$email' AND `senha` = '$senha' AND `codigo` = 4";
+    // Consulta direta focada no Código 6 do Salão ChickChick
+    $sql = "SELECT * FROM usuario WHERE email = '$email' AND senha = '$senha' AND codigo = 6";
     $query = $mysqli->query($sql);
 
     if ($query && $query->num_rows > 0) {
         $user = $query->fetch_assoc();
-        $_SESSION['parceiro_id']   = $user['codigo'];
+        $_SESSION['parceiro_id'] = $user['codigo'];
         $_SESSION['parceiro_nome'] = $user['nome'];
-        
-        // Logou, despacha o utilizador direto para a página operacional dela
-        header("Location: Dashboard2.php");
+        header("Location: ChickChick.php");
         exit();
     } else {
-        $erro[] = "Credenciais inválidas para o painel clássico LookNovo.";
+        $erro[] = "Credenciais inválidas para o Salão ChickChick.";
     }
 }
 ?>

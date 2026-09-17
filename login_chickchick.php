@@ -1,29 +1,4 @@
-<?php
-if (!isset($_SESSION)) { 
-    session_start(); 
-}
-include("conect.php");
-$erro = array();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['entrar_chickchick'])) {
-    $email = $mysqli->escape_string(trim($_POST['email']));
-    $senha = md5(md5($_POST['senha']));
-
-    // Consulta direta focada no Código 6 do Salão ChickChick
-    $sql = "SELECT * FROM usuario WHERE email = '$email' AND senha = '$senha' AND codigo = 6";
-    $query = $mysqli->query($sql);
-
-    if ($query && $query->num_rows > 0) {
-        $user = $query->fetch_assoc();
-        $_SESSION['parceiro_id'] = $user['codigo'];
-        $_SESSION['parceiro_nome'] = $user['nome'];
-        header("Location: ChickChick.php");
-        exit();
-    } else {
-        $erro[] = "Credenciais inválidas para o Salão ChickChick.";
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>

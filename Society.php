@@ -1,26 +1,4 @@
-<?php
-if (!isset($_SESSION)) { session_start(); }
-include("conect.php");
-$erro = array();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['entrar_looknovo'])) {
-    $email = $mysqli->escape_string(trim($_POST['email']));
-    $senha = md5(md5($_POST['senha']));
-
-    $sql = "SELECT * FROM usuario WHERE email = '$email' AND senha = '$senha' AND codigo = 4";
-    $query = $mysqli->query($sql);
-
-    if ($query && $query->num_rows > 0) {
-        $user = $query->fetch_assoc();
-        $_SESSION['parceiro_id'] = $user['codigo'];
-        $_SESSION['parceiro_nome'] = $user['nome'];
-        header("Location: LookNovo.php");
-        exit();
-    } else {
-        $erro[] = "Credenciais inválidas para o LookNovo.";
-    }
-}
-?>
 <!DOCTYPE html>
 <html lang="pt-PT">
 <head>
