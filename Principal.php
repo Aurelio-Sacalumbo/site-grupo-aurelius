@@ -949,7 +949,7 @@ if ($mysqli && !$mysqli->connect_error) {
      <!-- 3. Aba Barbearias Reativa (Destaque Ativo) -->
      <li style="position: relative; flex: 1.2; min-width: 85px; text-align: center; background: #0f172a; border-radius: 8px;">
          <!-- 🟢 RESET REATIVO: Envia para o motor de limpeza das barbearias -->
-         <a href="Principal.php?marcar_lido=barbearias" style="font-size: 10.5px; font-weight: 700; text-decoration: none; color: #38bdf8; display: block; padding: 4px 2px;">Barbearias</a>
+         <a href="Video.php?marcar_lido=barbearias" style="font-size: 10.5px; font-weight: 700; text-decoration: none; color: #38bdf8; display: block; padding: 4px 2px;">Reel</a>
          <?php if (isset($total_barbearias_real) && $total_barbearias_real > 0 && !isset($_SESSION['bloqueio_notif_barbearias'])): ?>
              <span class="badge-contador" style="position: absolute; top: -1px; right: 3px; z-index: 10; width: 13px; height: 13px; font-size: 8px; line-height: 13px; text-align: center; color: white; background: #ef4444; border-radius: 50%; display: inline-block; font-weight: 700; border: 1px solid #1e293b;"><?= $total_barbearias_real ?></span>
          <?php endif; ?>
@@ -2159,7 +2159,7 @@ if (!empty($lista_lojas)) {
     </div>
 </div>
 
-🎌 GRUPO AURELIUS
+
 
 
 
@@ -2176,17 +2176,23 @@ if (!empty($lista_lojas)) {
     // Estabelece ou reaproveita a ligação segura com a Aiven Cloud
     $mysqli_produtos = $conexao_link ?? $conexao_aurelius;
 
-    if (!$mysqli_produtos || @mysqli_ping($mysqli_produtos) === false) {
-        $h_host = getenv('DB_HOST') ?: "://aivencloud.com";
+    if (!isset($mysqli_produtos) || @mysqli_ping($mysqli_produtos) === false) {
+        // Busca as variáveis do painel de controle (Render/Produção)
+        $h_host = getenv('DB_HOST') ?: "mysql-1a34c184-aureliosacalumbo42-bf60.a.aivencloud.com";
         $h_port = getenv('DB_PORT') ?: 22002;
-        $h_name = getenv('DB_NAME') ?: "defaultdb";
+        $h_name = getenv('DB_NAME') ?: "defaultdb"; // Altere para 'explicacao_domiciliar' no novo projeto
         $h_user = getenv('DB_USER') ?: "avnadmin";
-        $h_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm";
         
-        $mysqli_produtos = mysqli_init();
-        if ($mysqli_produtos) {
-            mysqli_ssl_set($mysqli_produtos, NULL, NULL, NULL, NULL, NULL);
-            @mysqli_real_connect($mysqli_produtos, $h_host, $h_user, $h_pass, $h_name, (int)$h_port, NULL, MYSQLI_CLIENT_SSL);
+        // 🔒 IMPORTANTE: Idealmente, defina DB_PASSWORD nas variáveis do sistema.
+        $h_pass = getenv('DB_PASSWORD') ?: "AVNS_6AyaHMtSplThuvy6uGm"; 
+    
+        // Executa a conexão MySQLi de forma segura
+        $mysqli_produtos = @mysqli_connect($h_host, $h_user, $h_pass, $h_name, $h_port);
+    
+        if (!$mysqli_produtos) {
+            error_log("Erro de conexão ao banco: " . mysqli_connect_error());
+        } else {
+            mysqli_set_charset($mysqli_produtos, "utf8mb4");
         }
     }
 
